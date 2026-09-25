@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "RequirementResult": {
+      "properties": {
+        "requirement_id": {
+          "title": "Requirement Id",
+          "type": "string"
+        },
+        "analysis": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Component 1 result (contracts/requirement-quality)",
+          "title": "Analysis"
+        },
+        "story": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Component 2 result (contracts/story-refinement)",
+          "title": "Story"
+        },
+        "coverage": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Component 3 result for this story (contracts/traceability)",
+          "title": "Coverage"
+        },
+        "prediction": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Component 4 result for this story (contracts/effort-estimation)",
+          "title": "Prediction"
+        }
+      },
+      "required": [
+        "requirement_id",
+        "analysis",
+        "story",
+        "coverage",
+        "prediction"
+      ],
+      "title": "RequirementResult",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "project_id": {
+      "title": "Project Id",
+      "type": "string"
+    },
+    "results": {
+      "items": {
+        "$ref": "#/$defs/RequirementResult"
+      },
+      "title": "Results",
+      "type": "array"
+    },
+    "unavailable_components": {
+      "description": "Components that could not be reached; their stages were skipped",
+      "items": {
+        "type": "string"
+      },
+      "title": "Unavailable Components",
+      "type": "array"
+    }
+  },
+  "required": [
+    "project_id",
+    "results",
+    "unavailable_components"
+  ],
+  "title": "PipelineResponse",
+  "type": "object"
+}

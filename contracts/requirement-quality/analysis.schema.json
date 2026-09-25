@@ -1,0 +1,216 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "AmbiguityResult": {
+      "properties": {
+        "is_ambiguous": {
+          "title": "Is Ambiguous",
+          "type": "boolean"
+        },
+        "score": {
+          "description": "1 = highly ambiguous",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Score",
+          "type": "number"
+        },
+        "spans": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/TextSpan"
+          },
+          "title": "Spans",
+          "type": "array"
+        }
+      },
+      "required": [
+        "is_ambiguous",
+        "score"
+      ],
+      "title": "AmbiguityResult",
+      "type": "object"
+    },
+    "QualityIssue": {
+      "properties": {
+        "type": {
+          "description": "Defect category, e.g. incomplete, inconsistent, grammar, missing_information",
+          "title": "Type",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "span": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TextSpan"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "type",
+        "message"
+      ],
+      "title": "QualityIssue",
+      "type": "object"
+    },
+    "QualityResult": {
+      "properties": {
+        "label": {
+          "description": "Overall quality category",
+          "title": "Label",
+          "type": "string"
+        },
+        "score": {
+          "description": "1 = high quality",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Score",
+          "type": "number"
+        },
+        "issues": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/QualityIssue"
+          },
+          "title": "Issues",
+          "type": "array"
+        }
+      },
+      "required": [
+        "label",
+        "score"
+      ],
+      "title": "QualityResult",
+      "type": "object"
+    },
+    "StabilityResult": {
+      "properties": {
+        "label": {
+          "enum": [
+            "stable",
+            "potentially_unstable"
+          ],
+          "title": "Label",
+          "type": "string"
+        },
+        "score": {
+          "description": "1 = interpretation fully stable under rewording",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Score",
+          "type": "number"
+        }
+      },
+      "required": [
+        "label",
+        "score"
+      ],
+      "title": "StabilityResult",
+      "type": "object"
+    },
+    "TextSpan": {
+      "properties": {
+        "start": {
+          "minimum": 0,
+          "title": "Start",
+          "type": "integer"
+        },
+        "end": {
+          "minimum": 0,
+          "title": "End",
+          "type": "integer"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "start",
+        "end",
+        "text"
+      ],
+      "title": "TextSpan",
+      "type": "object"
+    },
+    "VaguenessResult": {
+      "properties": {
+        "count": {
+          "minimum": 0,
+          "title": "Count",
+          "type": "integer"
+        },
+        "terms": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/TextSpan"
+          },
+          "title": "Terms",
+          "type": "array"
+        }
+      },
+      "required": [
+        "count"
+      ],
+      "title": "VaguenessResult",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "requirement_id": {
+      "title": "Requirement Id",
+      "type": "string"
+    },
+    "quality": {
+      "$ref": "#/$defs/QualityResult"
+    },
+    "ambiguity": {
+      "$ref": "#/$defs/AmbiguityResult"
+    },
+    "vagueness": {
+      "$ref": "#/$defs/VaguenessResult"
+    },
+    "stability": {
+      "$ref": "#/$defs/StabilityResult"
+    },
+    "confidence": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "explanation": {
+      "title": "Explanation",
+      "type": "string"
+    },
+    "model_version": {
+      "title": "Model Version",
+      "type": "string"
+    },
+    "analysed_at": {
+      "format": "date-time",
+      "title": "Analysed At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "requirement_id",
+    "quality",
+    "ambiguity",
+    "vagueness",
+    "stability",
+    "confidence",
+    "explanation",
+    "model_version",
+    "analysed_at"
+  ],
+  "title": "RequirementAnalysis",
+  "type": "object"
+}

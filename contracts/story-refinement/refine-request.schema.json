@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "requirement_id": {
+      "title": "Requirement Id",
+      "type": "string"
+    },
+    "project_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Project Id"
+    },
+    "validated_requirement": {
+      "minLength": 1,
+      "title": "Validated Requirement",
+      "type": "string"
+    },
+    "context_reference": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Project-context package to retrieve from",
+      "title": "Context Reference"
+    }
+  },
+  "required": [
+    "requirement_id",
+    "validated_requirement"
+  ],
+  "title": "RefinementRequest",
+  "type": "object"
+}

@@ -1,11 +1,16 @@
 # Requests reviews automatically. The ownership rules themselves are enforced by
 # the "Ownership guard" check using .github/ownership.json; keep the two in sync.
 
-*                                   @Nikeshala22
+*                                           @Nikeshala22
 
-/src/modules/effort-estimation/     @Nikeshala22
-/src/modules/requirement-quality/   @AmaLiyanage @Nikeshala22
-/src/modules/traceability/          @dinuwa2500 @Nikeshala22
-/src/modules/story-refinement/      @lewkes @Nikeshala22
+/src/app/(modules)/effort-estimation/       @Nikeshala22
+/src/app/(modules)/requirement-quality/     @AmaLiyanage @Nikeshala22
+/src/app/(modules)/traceability/            @dinuwa2500 @Nikeshala22
+/src/app/(modules)/story-refinement/        @lewkes @Nikeshala22
 
-/.github/                           @Nikeshala22
+/contracts/effort-estimation/               @Nikeshala22
+/contracts/requirement-quality/             @AmaLiyanage @Nikeshala22
+/contracts/traceability/                    @dinuwa2500 @Nikeshala22
+/contracts/story-refinement/                @lewkes @Nikeshala22
+
+/.github/                                   @Nikeshala22

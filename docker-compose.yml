@@ -1,0 +1,54 @@
+# Synapse-Web: the web app, the API gateway and the gateway's own database.
+# Run it on its own with `docker compose up --build` (components that are not running show as
+# "Not reachable"), or as part of the whole platform from AgilePlatform/docker-compose.yml.
+name: synapse-web
+
+services:
+  platform-db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: platform_db
+      POSTGRES_USER: platform_user
+      POSTGRES_PASSWORD: ${PLATFORM_DB_PASSWORD:-platform-local}
+    ports:
+      - "127.0.0.1:5440:5432"
+    volumes:
+      - platform-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U platform_user -d platform_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  gateway:
+    build: ./gateway
+    environment:
+      DATABASE_URL: postgresql+psycopg://platform_user:${PLATFORM_DB_PASSWORD:-platform-local}@platform-db:5432/platform_db
+      # Components are reached through the host, so each one can run in Docker or with uvicorn on your machine.
+      REQUIREMENT_QUALITY_URL: http://host.docker.internal:8001
+      STORY_REFINEMENT_URL: http://host.docker.internal:8002
+      TRACEABILITY_URL: http://host.docker.internal:8003
+      EFFORT_ESTIMATION_URL: http://host.docker.internal:8004
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      platform-db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      args:
+        # The browser calls the gateway, so this is a URL on your machine, not a container name.
+        NEXT_PUBLIC_GATEWAY_URL: http://localhost:8000
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - gateway
+
+volumes:
+  # Fixed name keeps the data whether this file runs alone or from AgilePlatform/docker-compose.yml.
+  platform-db-data:
+    name: platform-db-data

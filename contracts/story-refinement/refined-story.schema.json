@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "AcceptanceCriterion": {
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "given": {
+          "title": "Given",
+          "type": "string"
+        },
+        "when": {
+          "title": "When",
+          "type": "string"
+        },
+        "then": {
+          "title": "Then",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "given",
+        "when",
+        "then"
+      ],
+      "title": "AcceptanceCriterion",
+      "type": "object"
+    },
+    "InvestFlags": {
+      "properties": {
+        "independent": {
+          "title": "Independent",
+          "type": "boolean"
+        },
+        "negotiable": {
+          "title": "Negotiable",
+          "type": "boolean"
+        },
+        "valuable": {
+          "title": "Valuable",
+          "type": "boolean"
+        },
+        "estimable": {
+          "title": "Estimable",
+          "type": "boolean"
+        },
+        "small": {
+          "title": "Small",
+          "type": "boolean"
+        },
+        "testable": {
+          "title": "Testable",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "independent",
+        "negotiable",
+        "valuable",
+        "estimable",
+        "small",
+        "testable"
+      ],
+      "title": "InvestFlags",
+      "type": "object"
+    },
+    "QualityScores": {
+      "properties": {
+        "invest": {
+          "$ref": "#/$defs/InvestFlags"
+        },
+        "invest_score": {
+          "description": "Share of INVEST criteria met",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Invest Score",
+          "type": "number"
+        },
+        "completeness": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Completeness",
+          "type": "number"
+        },
+        "clarity": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Clarity",
+          "type": "number"
+        },
+        "testability": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Testability",
+          "type": "number"
+        },
+        "consistency": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Consistency",
+          "type": "number"
+        },
+        "context_relevance": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Context Relevance",
+          "type": "number"
+        }
+      },
+      "required": [
+        "invest",
+        "invest_score",
+        "completeness",
+        "clarity",
+        "testability",
+        "consistency",
+        "context_relevance"
+      ],
+      "title": "QualityScores",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "requirement_id": {
+      "title": "Requirement Id",
+      "type": "string"
+    },
+    "story_id": {
+      "title": "Story Id",
+      "type": "string"
+    },
+    "user_story": {
+      "title": "User Story",
+      "type": "string"
+    },
+    "acceptance_criteria": {
+      "items": {
+        "$ref": "#/$defs/AcceptanceCriterion"
+      },
+      "title": "Acceptance Criteria",
+      "type": "array"
+    },
+    "quality_scores": {
+      "$ref": "#/$defs/QualityScores"
+    },
+    "unsupported_assumptions": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Unsupported Assumptions",
+      "type": "array"
+    },
+    "processing_time_ms": {
+      "minimum": 0,
+      "title": "Processing Time Ms",
+      "type": "integer"
+    },
+    "model_metadata": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Model Metadata",
+      "type": "object"
+    }
+  },
+  "required": [
+    "requirement_id",
+    "story_id",
+    "user_story",
+    "acceptance_criteria",
+    "quality_scores",
+    "processing_time_ms",
+    "model_metadata"
+  ],
+  "title": "RefinedStory",
+  "type": "object"
+}

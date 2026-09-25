@@ -1,0 +1,12 @@
+{
+  "project_id": "SYN",
+  "stories": [
+    {
+      "story_id": "REQ-1-S1",
+      "user_story": "As a student, I want to book an available tutor so that I get help at a convenient time.",
+      "acceptance_criteria": [
+        "Given I am logged in, when I pick a free slot, then the booking is created."
+      ]
+    }
+  ]
+}

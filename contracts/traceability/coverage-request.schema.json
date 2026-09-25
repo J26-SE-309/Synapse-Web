@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "StoryRef": {
+      "properties": {
+        "story_id": {
+          "title": "Story Id",
+          "type": "string"
+        },
+        "user_story": {
+          "title": "User Story",
+          "type": "string"
+        },
+        "acceptance_criteria": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Acceptance Criteria",
+          "type": "array"
+        }
+      },
+      "required": [
+        "story_id",
+        "user_story"
+      ],
+      "title": "StoryRef",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "project_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Project Id"
+    },
+    "stories": {
+      "items": {
+        "$ref": "#/$defs/StoryRef"
+      },
+      "minItems": 1,
+      "title": "Stories",
+      "type": "array"
+    }
+  },
+  "required": [
+    "stories"
+  ],
+  "title": "CoverageRequest",
+  "type": "object"
+}

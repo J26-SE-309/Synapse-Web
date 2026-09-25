@@ -40,41 +40,49 @@ describe('ownership.json', () => {
 
 describe('ownerOf', () => {
   it('maps module files to their branch', () => {
-    assert.equal(ownerOf('src/modules/traceability/graph/Graph.tsx', config), 'lakviru');
-    assert.equal(ownerOf('src/modules/effort-estimation/index.ts', config), 'nikeshala');
+    assert.equal(ownerOf('src/app/(modules)/traceability/graph/Graph.tsx', config), 'lakviru');
+    assert.equal(ownerOf('src/app/(modules)/effort-estimation/index.ts', config), 'nikeshala');
   });
 
   it('does not match a sibling folder that only shares a name prefix', () => {
-    assert.equal(ownerOf('src/modules/traceability-old/x.ts', config), null);
+    assert.equal(ownerOf('src/app/(modules)/traceability-old/x.ts', config), null);
   });
 
-  it('treats everything outside the modules as shared', () => {
+  it('gives each developer their component contract', () => {
+    assert.equal(ownerOf('contracts/traceability/coverage-response.schema.json', config), 'lakviru');
+    assert.equal(ownerOf('contracts/story-refinement/examples/refined-story.json', config), 'sathmi');
+  });
+
+  it('treats everything outside the modules and contracts as shared', () => {
     assert.equal(ownerOf('package.json', config), null);
-    assert.equal(ownerOf('src/shared/Button.tsx', config), null);
+    assert.equal(ownerOf('src/shared/components/Sidebar.tsx', config), null);
+    assert.equal(ownerOf('src/app/layout.tsx', config), null);
+    assert.equal(ownerOf('gateway/app/orchestration.py', config), null);
+    assert.equal(ownerOf('contracts/common/pipeline-run-request.schema.json', config), null);
   });
 });
 
 describe('pull requests into dev', () => {
   it('passes when a developer only changes their own module', () => {
-    const { errors } = check({}, files('src/modules/requirement-quality/Page.tsx', 'src/modules/requirement-quality/Page.test.tsx'));
+    const { errors } = check({}, files('src/app/(modules)/requirement-quality/Page.tsx', 'src/app/(modules)/requirement-quality/Page.test.tsx'));
     assert.deepEqual(errors, []);
   });
 
   it("blocks changes to another developer's module", () => {
-    const { errors } = check({}, files('src/modules/requirement-quality/a.ts', 'src/modules/story-refinement/b.ts'));
+    const { errors } = check({}, files('src/app/(modules)/requirement-quality/a.ts', 'src/app/(modules)/story-refinement/b.ts'));
     assert.equal(errors.length, 1);
     assert.match(errors[0], /story-refinement\/b\.ts.*sathmi/);
   });
 
   it("blocks deleting another developer's file", () => {
-    const { errors } = check({}, [{ filename: 'src/modules/traceability/old.ts', status: 'removed' }]);
+    const { errors } = check({}, [{ filename: 'src/app/(modules)/traceability/old.ts', status: 'removed' }]);
     assert.equal(errors.length, 1);
     assert.match(errors[0], /lakviru/);
   });
 
   it("blocks renaming a file out of another developer's module", () => {
     const { errors } = check({}, [
-      { filename: 'src/modules/requirement-quality/stolen.ts', previous_filename: 'src/modules/traceability/stolen.ts', status: 'renamed' },
+      { filename: 'src/app/(modules)/requirement-quality/stolen.ts', previous_filename: 'src/app/(modules)/traceability/stolen.ts', status: 'renamed' },
     ]);
     assert.equal(errors.length, 1);
     assert.match(errors[0], /traceability\/stolen\.ts/);
@@ -86,7 +94,7 @@ describe('pull requests into dev', () => {
   });
 
   it("does not let lead approval unlock another developer's module", () => {
-    const { errors } = check({}, files('src/modules/traceability/x.ts'), true);
+    const { errors } = check({}, files('src/app/(modules)/traceability/x.ts'), true);
     assert.equal(errors.length, 1);
   });
 
@@ -99,38 +107,38 @@ describe('pull requests into dev', () => {
   it('lets the lead branch change shared and CI files without approval', () => {
     const { errors } = check(
       { headRef: 'nikeshala', author: 'Nikeshala22' },
-      files('src/modules/effort-estimation/a.ts', 'package.json', '.github/ownership.json'),
+      files('src/app/(modules)/effort-estimation/a.ts', 'package.json', '.github/ownership.json'),
     );
     assert.deepEqual(errors, []);
   });
 
   it("still blocks the lead branch from changing another developer's module", () => {
-    const { errors } = check({ headRef: 'nikeshala', author: 'Nikeshala22' }, files('src/modules/requirement-quality/a.ts'));
+    const { errors } = check({ headRef: 'nikeshala', author: 'Nikeshala22' }, files('src/app/(modules)/requirement-quality/a.ts'));
     assert.equal(errors.length, 1);
   });
 
   it('blocks pull requests from branches that are not developer branches', () => {
-    const { errors } = check({ headRef: 'feature/x' }, files('src/modules/requirement-quality/a.ts'));
+    const { errors } = check({ headRef: 'feature/x' }, files('src/app/(modules)/requirement-quality/a.ts'));
     assert.match(errors[0], /must come from a developer branch/);
   });
 
   it('blocks a pull request opened from someone else’s branch', () => {
-    const { errors } = check({ headRef: 'lakviru', author: 'AmaLiyanage' }, files('src/modules/traceability/a.ts'));
+    const { errors } = check({ headRef: 'lakviru', author: 'AmaLiyanage' }, files('src/app/(modules)/traceability/a.ts'));
     assert.match(errors[0], /belongs to @dinuwa2500/);
   });
 
   it("allows the lead to open a pull request from a developer's branch", () => {
-    const { errors } = check({ headRef: 'lakviru', author: 'Nikeshala22' }, files('src/modules/traceability/a.ts'));
+    const { errors } = check({ headRef: 'lakviru', author: 'Nikeshala22' }, files('src/app/(modules)/traceability/a.ts'));
     assert.deepEqual(errors, []);
   });
 
   it('matches GitHub logins case-insensitively', () => {
-    const { errors } = check({ author: 'amaliyanage' }, files('src/modules/requirement-quality/a.ts'));
+    const { errors } = check({ author: 'amaliyanage' }, files('src/app/(modules)/requirement-quality/a.ts'));
     assert.deepEqual(errors, []);
   });
 
   it('blocks pull requests from forks', () => {
-    const { errors } = check({ headRepo: 'someone/Synapse-Web' }, files('src/modules/requirement-quality/a.ts'));
+    const { errors } = check({ headRepo: 'someone/Synapse-Web' }, files('src/app/(modules)/requirement-quality/a.ts'));
     assert.match(errors[0], /not from a fork/);
   });
 });

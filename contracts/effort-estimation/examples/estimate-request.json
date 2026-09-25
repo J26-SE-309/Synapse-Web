@@ -1,0 +1,25 @@
+{
+  "project_id": "SYN",
+  "sprint_id": "SPRINT-7",
+  "stories": [
+    {
+      "story_id": "REQ-1-S1",
+      "title": "As a student, I want to book an available tutor so that I get help at a convenient time.",
+      "description": "A student can book an available tutoring session by selecting a tutor, date and time.",
+      "acceptance_criteria": [
+        "Given I am logged in, when I pick a free slot, then the booking is created."
+      ],
+      "issue_type": "Story",
+      "priority": "Major",
+      "upstream": {
+        "ambiguity_score": 0.35,
+        "vague_term_count": 1,
+        "missing_info_flag_count": 0,
+        "ac_completeness_score": 0.6,
+        "traceability_coverage_pct": 0.25,
+        "unlinked_artifact_count": 2,
+        "has_linked_tests": false
+      }
+    }
+  ]
+}
