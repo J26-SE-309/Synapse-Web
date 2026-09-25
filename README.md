@@ -31,12 +31,38 @@ Synapse Web is the single user interface for the Synapse platform. It brings tog
 
 ### Contribution Rules
 
-1. Work only on your own branch. Do not push to anyone else's branch.
-2. Nobody pushes directly to `dev` or `main`.
+1. Work only on your own branch. Each personal branch accepts pushes only from its owner and [@Nikeshala22](https://github.com/Nikeshala22).
+2. Nobody pushes directly to `dev` or `main`, including the lead. All changes arrive through pull requests.
 3. To get your work into `dev`, open a pull request from your branch into `dev`.
-4. Every pull request into `dev` must pass the automated checks. These checks confirm that the change does not break, modify or remove another developer's work.
-5. [@Nikeshala22](https://github.com/Nikeshala22) reviews the pull request and merges it once the checks pass.
-6. `main` is updated from `dev` by [@Nikeshala22](https://github.com/Nikeshala22) when `dev` is stable.
+4. Every pull request into `dev` must pass the automated checks below. They confirm that the change does not break, modify or remove another developer's work.
+5. [@Nikeshala22](https://github.com/Nikeshala22) reviews the pull request and is the only person who can merge it, once the checks pass.
+6. `main` is updated only by a pull request from `dev`, merged by [@Nikeshala22](https://github.com/Nikeshala22) when `dev` is stable.
+
+### Module Ownership
+
+Each developer owns one folder. Keep your pages, components, hooks, API clients and tests inside it.
+
+| Branch | Owner | Service | Your folder |
+|---|---|---|---|
+| `nikeshala` | [@Nikeshala22](https://github.com/Nikeshala22) | Effort Estimation and Sprint Risk Predictor | `src/modules/effort-estimation/` |
+| `ama` | [@AmaLiyanage](https://github.com/AmaLiyanage) | Requirement Quality and Ambiguity Analyzer | `src/modules/requirement-quality/` |
+| `lakviru` | [@dinuwa2500](https://github.com/dinuwa2500) | Requirement Traceability Engine | `src/modules/traceability/` |
+| `sathmi` | [@lewkes](https://github.com/lewkes) | User Story Refinement and Acceptance Criteria Generator | `src/modules/story-refinement/` |
+
+Everything outside these folders is **shared** (for example `package.json`, `src/shared/`, routing and app config). `.github/` is **lead-only**. Ownership is defined in [`.github/ownership.json`](.github/ownership.json).
+
+### Pull Request Checks
+
+| Check | What it does |
+|---|---|
+| **Ownership guard** | Fails if the pull request adds, edits, deletes or renames a file in another developer's folder. Fails if it changes shared files, until [@Nikeshala22](https://github.com/Nikeshala22) approves the pull request. Fails if a non-lead branch changes `.github/`. Also makes sure pull requests into `dev` come from a developer branch opened by its owner (or the lead), and pull requests into `main` come only from `dev`. |
+| **Build and test** | Installs dependencies, then runs lint, type-check, **everyone's** tests and the production build. A change that breaks another module fails here even if it never touches that module's files. |
+
+Merging also requires your branch to be up to date with `dev`, so the checks always run against everyone's latest work.
+
+**Changing a shared file?** Say why in the pull request description. Once Nikeshala approves it, she re-runs the failed **Ownership guard** check (*Checks* tab → *Re-run jobs*). An approval only covers the commit it was given on, so pushing new commits needs a fresh approval.
+
+> The guard's rules are read from `main`. Changes to `.github/ownership.json` take effect once they reach `main`.
 
 ### Keeping Your Branch Up to Date
 

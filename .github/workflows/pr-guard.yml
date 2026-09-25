@@ -1,0 +1,35 @@
+name: PR guard
+
+# pull_request_target always runs this file as it exists on the default branch (main),
+# so a pull request cannot weaken the rules it is checked against. The job never
+# checks out or runs pull request code; it only reads the changed-file list and
+# reviews through the GitHub API.
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, edited]
+    branches: [dev, main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: pr-guard-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  ownership-guard:
+    name: Ownership guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out the guard from main (not the pull request)
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github
+          persist-credentials: false
+
+      - name: Check changed files against .github/ownership.json
+        run: node .github/scripts/ownership-guard.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

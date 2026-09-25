@@ -1,0 +1,29 @@
+{
+  "lead": "Nikeshala22",
+  "leadBranch": "nikeshala",
+  "integrationBranch": "dev",
+  "releaseBranch": "main",
+  "developers": {
+    "nikeshala": {
+      "github": "Nikeshala22",
+      "service": "Effort Estimation and Sprint Risk Predictor",
+      "paths": ["src/modules/effort-estimation/"]
+    },
+    "ama": {
+      "github": "AmaLiyanage",
+      "service": "Requirement Quality and Ambiguity Analyzer",
+      "paths": ["src/modules/requirement-quality/"]
+    },
+    "lakviru": {
+      "github": "dinuwa2500",
+      "service": "Requirement Traceability Engine",
+      "paths": ["src/modules/traceability/"]
+    },
+    "sathmi": {
+      "github": "lewkes",
+      "service": "User Story Refinement and Acceptance Criteria Generator",
+      "paths": ["src/modules/story-refinement/"]
+    }
+  },
+  "leadOnlyPaths": [".github/"]
+}

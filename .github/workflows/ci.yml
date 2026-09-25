@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Detect the frontend project
+        id: detect
+        run: |
+          if [ ! -f package.json ]; then
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Build and test::No package.json yet, so there is nothing to install, lint, test or build."
+          elif [ ! -f package-lock.json ]; then
+            echo "::error title=Build and test::package.json exists but package-lock.json is missing. Run npm install and commit package-lock.json."
+            exit 1
+          else
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v7
+        if: steps.detect.outputs.present == 'true'
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Install dependencies
+        if: steps.detect.outputs.present == 'true'
+        run: npm ci
+
+      - name: Lint
+        if: steps.detect.outputs.present == 'true'
+        run: npm run lint --if-present
+
+      - name: Type-check
+        if: steps.detect.outputs.present == 'true'
+        run: npm run typecheck --if-present
+
+      # Runs every developer's tests, so a change that breaks someone else's
+      # module fails here even if it never touches their files.
+      - name: Test
+        if: steps.detect.outputs.present == 'true'
+        run: npm run test --if-present
+
+      - name: Build
+        if: steps.detect.outputs.present == 'true'
+        run: npm run build --if-present
+
+  guard-self-test:
+    name: Guard self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github
+          persist-credentials: false
+
+      - name: Test the ownership guard and ownership.json
+        run: node --test .github/scripts/ownership-guard.test.mjs
