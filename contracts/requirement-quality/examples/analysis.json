@@ -1,0 +1,25 @@
+{
+  "requirement_id": "REQ-1",
+  "quality": {
+    "label": "not_analysed",
+    "score": 0.5,
+    "issues": []
+  },
+  "ambiguity": {
+    "is_ambiguous": false,
+    "score": 0.0,
+    "spans": []
+  },
+  "vagueness": {
+    "count": 0,
+    "terms": []
+  },
+  "stability": {
+    "label": "stable",
+    "score": 1.0
+  },
+  "confidence": 0.0,
+  "explanation": "Placeholder result: the analysis models are not implemented yet.",
+  "model_version": "stub",
+  "analysed_at": "2026-09-25T16:11:51.844682Z"
+}

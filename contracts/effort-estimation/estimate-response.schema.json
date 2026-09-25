@@ -1,0 +1,239 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "ModelConfiguration": {
+      "properties": {
+        "encoder": {
+          "title": "Encoder",
+          "type": "string"
+        },
+        "learner": {
+          "title": "Learner",
+          "type": "string"
+        },
+        "formulation": {
+          "enum": [
+            "single_task",
+            "multi_task",
+            "chained"
+          ],
+          "title": "Formulation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "encoder",
+        "learner",
+        "formulation"
+      ],
+      "title": "ModelConfiguration",
+      "type": "object"
+    },
+    "Prediction": {
+      "properties": {
+        "story_id": {
+          "title": "Story Id",
+          "type": "string"
+        },
+        "project_id": {
+          "title": "Project Id",
+          "type": "string"
+        },
+        "predicted_story_points": {
+          "minimum": 0,
+          "title": "Predicted Story Points",
+          "type": "number"
+        },
+        "effort_category": {
+          "enum": [
+            "small",
+            "medium",
+            "large",
+            "extra_large"
+          ],
+          "title": "Effort Category",
+          "type": "string"
+        },
+        "prediction_interval": {
+          "$ref": "#/$defs/PredictionInterval"
+        },
+        "sprint_risk_level": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "title": "Sprint Risk Level",
+          "type": "string"
+        },
+        "spillover_probability": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Spillover Probability",
+          "type": "number"
+        },
+        "confidence_score": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence Score",
+          "type": "number"
+        },
+        "key_risk_reasons": {
+          "items": {
+            "$ref": "#/$defs/RiskReason"
+          },
+          "title": "Key Risk Reasons",
+          "type": "array"
+        },
+        "recommendations": {
+          "items": {
+            "$ref": "#/$defs/Recommendation"
+          },
+          "title": "Recommendations",
+          "type": "array"
+        },
+        "model_configuration": {
+          "$ref": "#/$defs/ModelConfiguration"
+        },
+        "selection_mode": {
+          "enum": [
+            "auto",
+            "pinned"
+          ],
+          "title": "Selection Mode",
+          "type": "string"
+        },
+        "feature_groups_used": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Feature Groups Used",
+          "type": "array"
+        },
+        "model_version": {
+          "title": "Model Version",
+          "type": "string"
+        },
+        "generated_at": {
+          "format": "date-time",
+          "title": "Generated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "story_id",
+        "project_id",
+        "predicted_story_points",
+        "effort_category",
+        "prediction_interval",
+        "sprint_risk_level",
+        "spillover_probability",
+        "confidence_score",
+        "key_risk_reasons",
+        "recommendations",
+        "model_configuration",
+        "selection_mode",
+        "feature_groups_used",
+        "model_version",
+        "generated_at"
+      ],
+      "title": "Prediction",
+      "type": "object"
+    },
+    "PredictionInterval": {
+      "properties": {
+        "lower": {
+          "minimum": 0,
+          "title": "Lower",
+          "type": "number"
+        },
+        "upper": {
+          "minimum": 0,
+          "title": "Upper",
+          "type": "number"
+        }
+      },
+      "required": [
+        "lower",
+        "upper"
+      ],
+      "title": "PredictionInterval",
+      "type": "object"
+    },
+    "Recommendation": {
+      "properties": {
+        "action": {
+          "enum": [
+            "split_story",
+            "refine_requirement",
+            "add_acceptance_criteria",
+            "create_tests",
+            "resolve_dependency",
+            "reduce_sprint_scope"
+          ],
+          "title": "Action",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "triggered_by": {
+          "title": "Triggered By",
+          "type": "string"
+        }
+      },
+      "required": [
+        "action",
+        "message",
+        "triggered_by"
+      ],
+      "title": "Recommendation",
+      "type": "object"
+    },
+    "RiskReason": {
+      "properties": {
+        "factor": {
+          "description": "Planning factor shown to users, e.g. 'Requirement ambiguity'",
+          "title": "Factor",
+          "type": "string"
+        },
+        "direction": {
+          "enum": [
+            "increases",
+            "decreases"
+          ],
+          "title": "Direction",
+          "type": "string"
+        },
+        "weight": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Weight",
+          "type": "number"
+        }
+      },
+      "required": [
+        "factor",
+        "direction",
+        "weight"
+      ],
+      "title": "RiskReason",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "predictions": {
+      "items": {
+        "$ref": "#/$defs/Prediction"
+      },
+      "title": "Predictions",
+      "type": "array"
+    }
+  },
+  "required": [
+    "predictions"
+  ],
+  "title": "EstimateResponse",
+  "type": "object"
+}

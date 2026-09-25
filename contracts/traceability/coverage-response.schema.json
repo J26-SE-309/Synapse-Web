@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "LinkedArtifact": {
+      "properties": {
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "symbol": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Function, class or test name inside the file",
+          "title": "Symbol"
+        },
+        "kind": {
+          "enum": [
+            "code",
+            "test"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "source": {
+          "description": "Explicit '# Trace:' tag or embedding similarity",
+          "enum": [
+            "tag",
+            "semantic"
+          ],
+          "title": "Source",
+          "type": "string"
+        },
+        "similarity": {
+          "maximum": 1,
+          "minimum": -1,
+          "title": "Similarity",
+          "type": "number"
+        },
+        "rationale": {
+          "title": "Rationale",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "kind",
+        "source",
+        "similarity",
+        "rationale"
+      ],
+      "title": "LinkedArtifact",
+      "type": "object"
+    },
+    "StoryCoverage": {
+      "properties": {
+        "story_id": {
+          "title": "Story Id",
+          "type": "string"
+        },
+        "coverage_pct": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Coverage Pct",
+          "type": "number"
+        },
+        "linked_artifacts": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/LinkedArtifact"
+          },
+          "title": "Linked Artifacts",
+          "type": "array"
+        },
+        "unlinked_artifact_count": {
+          "minimum": 0,
+          "title": "Unlinked Artifact Count",
+          "type": "integer"
+        },
+        "has_linked_tests": {
+          "title": "Has Linked Tests",
+          "type": "boolean"
+        },
+        "trace_gaps": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Trace Gaps",
+          "type": "array"
+        },
+        "model_version": {
+          "title": "Model Version",
+          "type": "string"
+        },
+        "analysed_at": {
+          "format": "date-time",
+          "title": "Analysed At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "story_id",
+        "coverage_pct",
+        "unlinked_artifact_count",
+        "has_linked_tests",
+        "model_version",
+        "analysed_at"
+      ],
+      "title": "StoryCoverage",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "items": {
+      "items": {
+        "$ref": "#/$defs/StoryCoverage"
+      },
+      "title": "Items",
+      "type": "array"
+    }
+  },
+  "required": [
+    "items"
+  ],
+  "title": "CoverageResponse",
+  "type": "object"
+}
