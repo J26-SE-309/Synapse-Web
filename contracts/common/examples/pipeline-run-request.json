@@ -1,0 +1,10 @@
+{
+  "project_id": "SYN",
+  "sprint_id": "SPRINT-7",
+  "requirements": [
+    {
+      "requirement_id": "REQ-1",
+      "text": "A student can book an available tutoring session by selecting a tutor, date and time."
+    }
+  ]
+}

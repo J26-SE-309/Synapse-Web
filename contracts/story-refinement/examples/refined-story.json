@@ -1,0 +1,34 @@
+{
+  "requirement_id": "REQ-1",
+  "story_id": "REQ-1-S1",
+  "user_story": "Placeholder story for: A student can book an available tutoring session by selecting a tutor, date and time.",
+  "acceptance_criteria": [
+    {
+      "id": "AC1",
+      "given": "(placeholder)",
+      "when": "(placeholder)",
+      "then": "(placeholder)"
+    }
+  ],
+  "quality_scores": {
+    "invest": {
+      "independent": false,
+      "negotiable": false,
+      "valuable": false,
+      "estimable": false,
+      "small": false,
+      "testable": false
+    },
+    "invest_score": 0.0,
+    "completeness": 0.0,
+    "clarity": 0.0,
+    "testability": 0.0,
+    "consistency": 0.0,
+    "context_relevance": 0.0
+  },
+  "unsupported_assumptions": [],
+  "processing_time_ms": 0,
+  "model_metadata": {
+    "model_version": "stub"
+  }
+}

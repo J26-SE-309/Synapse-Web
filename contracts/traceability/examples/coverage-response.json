@@ -1,0 +1,16 @@
+{
+  "items": [
+    {
+      "story_id": "REQ-1-S1",
+      "coverage_pct": 0.0,
+      "linked_artifacts": [],
+      "unlinked_artifact_count": 0,
+      "has_linked_tests": false,
+      "trace_gaps": [
+        "Placeholder result: traceability analysis is not implemented yet."
+      ],
+      "model_version": "stub",
+      "analysed_at": "2026-09-25T16:11:54.596213Z"
+    }
+  ]
+}

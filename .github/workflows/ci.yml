@@ -64,6 +64,21 @@ jobs:
         if: steps.detect.outputs.present == 'true'
         run: npm run build --if-present
 
+      # The gateway's tests also validate every example in contracts/ against its JSON Schema,
+      # so a contract change that breaks the orchestration or its own examples fails here.
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: gateway/pyproject.toml
+
+      - name: Gateway and contract tests
+        working-directory: gateway
+        run: |
+          pip install -e ".[dev]"
+          ruff check .
+          pytest
+
   guard-self-test:
     name: Guard self-test
     runs-on: ubuntu-latest

@@ -1,0 +1,110 @@
+{
+  "project_id": "SYN",
+  "results": [
+    {
+      "requirement_id": "REQ-1",
+      "analysis": {
+        "requirement_id": "REQ-1",
+        "quality": {
+          "label": "not_analysed",
+          "score": 0.5,
+          "issues": []
+        },
+        "ambiguity": {
+          "is_ambiguous": false,
+          "score": 0.0,
+          "spans": []
+        },
+        "vagueness": {
+          "count": 0,
+          "terms": []
+        },
+        "stability": {
+          "label": "stable",
+          "score": 1.0
+        },
+        "confidence": 0.0,
+        "explanation": "Placeholder result: the analysis models are not implemented yet.",
+        "model_version": "stub",
+        "analysed_at": "2026-09-25T16:11:51.844682Z"
+      },
+      "story": {
+        "requirement_id": "REQ-1",
+        "story_id": "REQ-1-S1",
+        "user_story": "Placeholder story for: A student can book an available tutoring session by selecting a tutor, date and time.",
+        "acceptance_criteria": [
+          {
+            "id": "AC1",
+            "given": "(placeholder)",
+            "when": "(placeholder)",
+            "then": "(placeholder)"
+          }
+        ],
+        "quality_scores": {
+          "invest": {
+            "independent": false,
+            "negotiable": false,
+            "valuable": false,
+            "estimable": false,
+            "small": false,
+            "testable": false
+          },
+          "invest_score": 0.0,
+          "completeness": 0.0,
+          "clarity": 0.0,
+          "testability": 0.0,
+          "consistency": 0.0,
+          "context_relevance": 0.0
+        },
+        "unsupported_assumptions": [],
+        "processing_time_ms": 0,
+        "model_metadata": {
+          "model_version": "stub"
+        }
+      },
+      "coverage": {
+        "story_id": "REQ-1-S1",
+        "coverage_pct": 0.0,
+        "linked_artifacts": [],
+        "unlinked_artifact_count": 0,
+        "has_linked_tests": false,
+        "trace_gaps": [
+          "Placeholder result: traceability analysis is not implemented yet."
+        ],
+        "model_version": "stub",
+        "analysed_at": "2026-09-25T16:11:54.596213Z"
+      },
+      "prediction": {
+        "story_id": "REQ-1-S1",
+        "project_id": "SYN",
+        "predicted_story_points": 3.0,
+        "effort_category": "medium",
+        "prediction_interval": {
+          "lower": 1.0,
+          "upper": 5.0
+        },
+        "sprint_risk_level": "low",
+        "spillover_probability": 0.0,
+        "confidence_score": 0.0,
+        "key_risk_reasons": [],
+        "recommendations": [],
+        "model_configuration": {
+          "encoder": "none",
+          "learner": "none",
+          "formulation": "single_task"
+        },
+        "selection_mode": "auto",
+        "feature_groups_used": [
+          "textual",
+          "dependency",
+          "metadata",
+          "requirement_quality",
+          "traceability"
+        ],
+        "model_version": "stub",
+        "generated_at": "2026-09-25T16:11:55.860207Z"
+      }
+    }
+  ],
+  "unavailable_components": []
+}

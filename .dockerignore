@@ -1,0 +1,12 @@
+# Build context of the web app image: only what `next build` needs.
+.git
+.github
+node_modules
+.next
+coverage
+gateway
+contracts
+**/.venv
+**/__pycache__
+.env
+.env.*
