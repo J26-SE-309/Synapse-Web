@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "configuration_id": {
+      "title": "Configuration Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "configuration_id"
+  ],
+  "title": "PinRequest",
+  "type": "object"
+}

@@ -1,0 +1,137 @@
+{
+  "prediction_id": "616ff53e-e312-4692-a7ba-2e7ee9c0807c",
+  "project_id": "TUTOR",
+  "sprint_id": "TUTOR-S4",
+  "created_at": "2026-09-26T17:40:06.644225",
+  "prediction": {
+    "story_id": "ST-101",
+    "project_id": "TUTOR",
+    "predicted_story_points": 2.69,
+    "effort_category": "medium",
+    "prediction_interval": {
+      "lower": 1.02,
+      "upper": 5.74
+    },
+    "sprint_risk_level": "high",
+    "spillover_probability": 0.8049,
+    "confidence_score": 0.2049,
+    "key_risk_reasons": [
+      {
+        "factor": "Team delivery history",
+        "direction": "increases",
+        "weight": 0.349
+      },
+      {
+        "factor": "Sprint load and timing",
+        "direction": "increases",
+        "weight": 0.229
+      },
+      {
+        "factor": "Story metadata",
+        "direction": "increases",
+        "weight": 0.223
+      }
+    ],
+    "recommendations": [],
+    "model_configuration": {
+      "encoder": "fasttext",
+      "learner": "lightgbm",
+      "formulation": "single_task"
+    },
+    "selection_mode": "auto",
+    "feature_groups_used": [
+      "textual",
+      "dependency",
+      "metadata"
+    ],
+    "model_version": "arena-v1/fasttext-lightgbm@cc31492",
+    "generated_at": "2026-09-26T17:40:06Z",
+    "prediction_id": "616ff53e-e312-4692-a7ba-2e7ee9c0807c",
+    "interval_coverage": 0.8,
+    "at_risk": true,
+    "confidence_level": "low",
+    "configuration_id": "fasttext-lightgbm",
+    "selection_reason": "pooled winner: the team has fewer than 3 closed sprints (or its history is unknown)",
+    "degraded_feature_groups": [
+      "requirement_quality",
+      "traceability",
+      "acceptance_criteria",
+      "historical_sprint",
+      "sprint_context"
+    ],
+    "feature_sources": {
+      "textual": "text",
+      "requirement_quality": "proxy",
+      "dependency": "request",
+      "traceability": "missing",
+      "acceptance_criteria": "proxy",
+      "historical_sprint": "missing",
+      "sprint_context": "missing",
+      "metadata": "request"
+    },
+    "explanation_method": "TreeSHAP"
+  },
+  "features": {
+    "title_length": 15,
+    "description_length": 0,
+    "description_has_code": false,
+    "user_story_format": true,
+    "mentions_tests": false,
+    "ambiguity_score": 0.0,
+    "vague_term_count": 0,
+    "missing_info_flag_count": 1,
+    "has_acceptance_criteria": false,
+    "ac_completeness_score": 0.0,
+    "invest_independent": true,
+    "invest_valuable": true,
+    "invest_testable": false,
+    "traceability_coverage_pct": null,
+    "unlinked_artifact_count": null,
+    "has_linked_tests": null,
+    "has_epic": null,
+    "linked_issue_count": 0,
+    "blocker_count": 0,
+    "dep_out_degree": 0,
+    "dep_in_degree": 0,
+    "team_velocity_rolling": null,
+    "velocity_variance": null,
+    "history_sprints": null,
+    "mean_cycle_time_hours": null,
+    "historical_spillover_rate": null,
+    "reopen_rate": null,
+    "sprint_length_days": null,
+    "days_into_sprint": 0.0,
+    "parallel_sprints": null,
+    "sprint_committed_points": 3.0,
+    "commitment_to_velocity_ratio": null,
+    "wip_at_commitment": null,
+    "in_progress_at_commitment": false,
+    "added_mid_sprint": false,
+    "story_points": 5.0,
+    "issue_type": null,
+    "priority_level": "unknown",
+    "project_key": "TUTOR"
+  },
+  "feedback": [
+    {
+      "prediction_id": "616ff53e-e312-4692-a7ba-2e7ee9c0807c",
+      "decision": "adjust",
+      "target": "estimate",
+      "recommendation_action": null,
+      "adjusted_story_points": 5.0,
+      "reason": "Needs the calendar change too",
+      "id": "89b83cea-6bca-4b74-b51c-dfe84fe7c2ed",
+      "created_at": "2026-09-26T17:40:06.703868"
+    }
+  ],
+  "outcomes": [
+    {
+      "prediction_id": "616ff53e-e312-4692-a7ba-2e7ee9c0807c",
+      "completed_in_sprint": true,
+      "actual_story_points": 5.0,
+      "reopened": false,
+      "id": "970c3010-25b0-453e-9d44-b7bf3938fbd2",
+      "created_at": "2026-09-26T17:40:06.684920"
+    }
+  ]
+}

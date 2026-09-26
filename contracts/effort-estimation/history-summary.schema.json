@@ -1,0 +1,240 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "HistorySprint": {
+      "properties": {
+        "sprint_id": {
+          "title": "Sprint Id",
+          "type": "string"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "started_at": {
+          "format": "date-time",
+          "title": "Started At",
+          "type": "string"
+        },
+        "planned_end": {
+          "format": "date-time",
+          "title": "Planned End",
+          "type": "string"
+        },
+        "closed_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Empty while the sprint runs",
+          "title": "Closed At"
+        },
+        "stories": {
+          "title": "Stories",
+          "type": "integer"
+        },
+        "committed_points": {
+          "description": "Points of its stories when committed",
+          "title": "Committed Points",
+          "type": "number"
+        },
+        "completed_points": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Points finished in it, once closed (velocity)",
+          "title": "Completed Points"
+        },
+        "spilled_over": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Stories not done by its end, once closed (R1)",
+          "title": "Spilled Over"
+        }
+      },
+      "required": [
+        "sprint_id",
+        "started_at",
+        "planned_end",
+        "stories",
+        "committed_points"
+      ],
+      "title": "HistorySprint",
+      "type": "object"
+    },
+    "TeamContext": {
+      "description": "The team's recent delivery, as the platform knows it. Unknown history means a cold start: the pooled\nconfiguration answers and the confidence is lowered.",
+      "properties": {
+        "velocity_mean": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Mean points finished, last 3 sprints",
+          "title": "Velocity Mean"
+        },
+        "velocity_variance": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Variance of points, last 5 sprints",
+          "title": "Velocity Variance"
+        },
+        "closed_sprints": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "How many sprints the team has closed",
+          "title": "Closed Sprints"
+        },
+        "mean_cycle_time_hours": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mean Cycle Time Hours"
+        },
+        "spillover_rate": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Share of recent stories spilled",
+          "title": "Spillover Rate"
+        },
+        "reopen_rate": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reopen Rate"
+        }
+      },
+      "title": "TeamContext",
+      "type": "object"
+    }
+  },
+  "description": "What the models see about a project's team now (FR5), and its sprints, newest first.",
+  "properties": {
+    "project_id": {
+      "title": "Project Id",
+      "type": "string"
+    },
+    "as_of": {
+      "format": "date-time",
+      "title": "As Of",
+      "type": "string"
+    },
+    "sources": {
+      "description": "Where the records came from: imported, tawos or synthetic",
+      "items": {
+        "type": "string"
+      },
+      "title": "Sources",
+      "type": "array"
+    },
+    "closed_sprints": {
+      "title": "Closed Sprints",
+      "type": "integer"
+    },
+    "cold_start": {
+      "description": "Fewer closed sprints than the models need to trust the team history",
+      "title": "Cold Start",
+      "type": "boolean"
+    },
+    "sprints_needed": {
+      "description": "Closed sprints still needed to leave the cold start",
+      "title": "Sprints Needed",
+      "type": "integer"
+    },
+    "team_context": {
+      "$ref": "#/$defs/TeamContext"
+    },
+    "sprints": {
+      "items": {
+        "$ref": "#/$defs/HistorySprint"
+      },
+      "title": "Sprints",
+      "type": "array"
+    }
+  },
+  "required": [
+    "project_id",
+    "as_of",
+    "sources",
+    "closed_sprints",
+    "cold_start",
+    "sprints_needed",
+    "team_context",
+    "sprints"
+  ],
+  "title": "HistorySummary",
+  "type": "object"
+}
