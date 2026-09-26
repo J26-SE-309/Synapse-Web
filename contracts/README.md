@@ -12,9 +12,9 @@ copy that the other components, the gateway and the web app build against.
 | `effort-estimation/` | Nikeshala (@Nikeshala22) | `POST /api/v1/estimate` request and response (proposal Appendix C) |
 | `common/` | shared (lead approval) | `POST /api/v1/pipeline/run`: the gateway's orchestration request and response |
 
-Each folder has `<name>.schema.json` (JSON Schema, draft 2020-12) and `examples/<name>.json`. The example
-payloads currently come from the placeholder services (`model_version: "stub"`); they show the shape, not
-real results.
+Each folder has `<name>.schema.json` (JSON Schema, draft 2020-12) and `examples/<name>.json`. Most example
+payloads still come from placeholder services (`model_version: "stub"`); effort-estimation's come from its
+trained models. They show the shape, not results to rely on.
 
 ## How the pipeline uses them
 

@@ -118,6 +118,75 @@
           "format": "date-time",
           "title": "Generated At",
           "type": "string"
+        },
+        "prediction_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Audit record id (FR21); for feedback (FR19)",
+          "title": "Prediction Id"
+        },
+        "interval_coverage": {
+          "default": 0.8,
+          "description": "Share of stories whose points fall in the interval",
+          "title": "Interval Coverage",
+          "type": "number"
+        },
+        "at_risk": {
+          "default": false,
+          "description": "The risk passes the threshold chosen for recall >= 0.70",
+          "title": "At Risk",
+          "type": "boolean"
+        },
+        "confidence_level": {
+          "default": "low",
+          "description": "Band shown to users",
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ],
+          "title": "Confidence Level",
+          "type": "string"
+        },
+        "configuration_id": {
+          "default": "",
+          "title": "Configuration Id",
+          "type": "string"
+        },
+        "selection_reason": {
+          "default": "",
+          "title": "Selection Reason",
+          "type": "string"
+        },
+        "degraded_feature_groups": {
+          "default": [],
+          "description": "Groups served by a proxy or missing (FR17)",
+          "items": {
+            "type": "string"
+          },
+          "title": "Degraded Feature Groups",
+          "type": "array"
+        },
+        "feature_sources": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "component, request, text, proxy or missing",
+          "title": "Feature Sources",
+          "type": "object"
+        },
+        "explanation_method": {
+          "default": "",
+          "title": "Explanation Method",
+          "type": "string"
         }
       },
       "required": [
@@ -229,6 +298,25 @@
       },
       "title": "Predictions",
       "type": "array"
+    },
+    "configuration_id": {
+      "default": "",
+      "title": "Configuration Id",
+      "type": "string"
+    },
+    "selection_mode": {
+      "default": "auto",
+      "enum": [
+        "auto",
+        "pinned"
+      ],
+      "title": "Selection Mode",
+      "type": "string"
+    },
+    "selection_reason": {
+      "default": "",
+      "title": "Selection Reason",
+      "type": "string"
     }
   },
   "required": [
