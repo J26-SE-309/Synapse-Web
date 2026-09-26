@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 
-import { ModulePlaceholder } from "@/shared/components/ModulePlaceholder";
+import { OverviewView } from "./_components/OverviewView";
 
 export const metadata: Metadata = { title: "Effort & Sprint Risk" };
 
-// Owned by @Nikeshala22. Replace the placeholder with this module's pages and keep the module's
-// components, hooks and API calls in private folders here (e.g. _components/, _lib/).
+// Owned by @Nikeshala22. The module's pages are listed in _nav.ts; components, hooks and API calls live in
+// _components/ and _lib/.
 export default function EffortEstimationPage() {
-  return <ModulePlaceholder slug="effort-estimation" />;
+  return <OverviewView />;
 }
