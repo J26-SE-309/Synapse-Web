@@ -1,0 +1,220 @@
+{
+  "arena": "arena-v1",
+  "pooled_winner": "fasttext-lightgbm",
+  "weights": {
+    "effort_sa": 0.35,
+    "risk_f1": 0.25,
+    "calibration": 0.25,
+    "latency": 0.15
+  },
+  "configurations": [
+    {
+      "configuration_id": "fasttext-lightgbm",
+      "label": "FastText + LightGBM",
+      "role": "Dense embeddings at low cost",
+      "configuration": {
+        "encoder": "fasttext",
+        "learner": "lightgbm",
+        "formulation": "single_task"
+      },
+      "status": "available",
+      "loaded": true,
+      "eligible": true,
+      "failed_requirements": [],
+      "composite": 0.6553,
+      "metrics": {
+        "mae": 1.7575,
+        "sa": 27.0753,
+        "roc_auc": 0.6785,
+        "f1": 0.6932,
+        "ece": 0.0321,
+        "coverage_0.8": 0.7864,
+        "latency_p95": 0.0634
+      }
+    },
+    {
+      "configuration_id": "tfidf-rf",
+      "label": "TF-IDF + Random Forest",
+      "role": "Interpretable lexical baseline",
+      "configuration": {
+        "encoder": "tfidf",
+        "learner": "random_forest",
+        "formulation": "single_task"
+      },
+      "status": "available",
+      "loaded": false,
+      "eligible": true,
+      "failed_requirements": [],
+      "composite": 0.632,
+      "metrics": {
+        "mae": 1.8504,
+        "sa": 23.2232,
+        "roc_auc": 0.6846,
+        "f1": 0.6908,
+        "ece": 0.038,
+        "coverage_0.8": 0.8128,
+        "latency_p95": 0.1663
+      }
+    },
+    {
+      "configuration_id": "tfidf-svm",
+      "label": "TF-IDF + SVR / SVM",
+      "role": "Classical baseline used in prior literature",
+      "configuration": {
+        "encoder": "tfidf",
+        "learner": "svm",
+        "formulation": "single_task"
+      },
+      "status": "available",
+      "loaded": false,
+      "eligible": true,
+      "failed_requirements": [],
+      "composite": 0.6284,
+      "metrics": {
+        "mae": 1.7043,
+        "sa": 29.2856,
+        "roc_auc": 0.6465,
+        "f1": 0.6787,
+        "ece": 0.0413,
+        "coverage_0.8": 0.8101,
+        "latency_p95": 0.4457
+      }
+    },
+    {
+      "configuration_id": "sbert-lightgbm",
+      "label": "SBERT + LightGBM",
+      "role": "Faster variant on wide feature matrices",
+      "configuration": {
+        "encoder": "sbert",
+        "learner": "lightgbm",
+        "formulation": "single_task"
+      },
+      "status": "available",
+      "loaded": false,
+      "eligible": true,
+      "failed_requirements": [],
+      "composite": 0.5839,
+      "metrics": {
+        "mae": 1.761,
+        "sa": 26.9332,
+        "roc_auc": 0.6717,
+        "f1": 0.6891,
+        "ece": 0.0375,
+        "coverage_0.8": 0.8026,
+        "latency_p95": 0.977
+      }
+    },
+    {
+      "configuration_id": "sbert-xgboost",
+      "label": "SBERT + XGBoost",
+      "role": "Semantic encoding with a strong tabular learner",
+      "configuration": {
+        "encoder": "sbert",
+        "learner": "xgboost",
+        "formulation": "single_task"
+      },
+      "status": "available",
+      "loaded": false,
+      "eligible": true,
+      "failed_requirements": [],
+      "composite": 0.5787,
+      "metrics": {
+        "mae": 1.7688,
+        "sa": 26.6074,
+        "roc_auc": 0.6721,
+        "f1": 0.6911,
+        "ece": 0.0368,
+        "coverage_0.8": 0.8104,
+        "latency_p95": 1.0402
+      }
+    },
+    {
+      "configuration_id": "stack",
+      "label": "Stacked ensemble",
+      "role": "Combines complementary learner strengths",
+      "configuration": {
+        "encoder": "several",
+        "learner": "stack",
+        "formulation": "single_task"
+      },
+      "status": "available",
+      "loaded": false,
+      "eligible": true,
+      "failed_requirements": [],
+      "composite": 0.5787,
+      "metrics": {
+        "mae": 1.7439,
+        "sa": 27.6402,
+        "roc_auc": 0.6772,
+        "f1": 0.6907,
+        "ece": 0.033,
+        "coverage_0.8": 0.7927,
+        "latency_p95": 1.0998
+      }
+    },
+    {
+      "configuration_id": "sbert-catboost",
+      "label": "SBERT + CatBoost",
+      "role": "Strong handling of categorical project metadata",
+      "configuration": {
+        "encoder": "sbert",
+        "learner": "catboost",
+        "formulation": "single_task"
+      },
+      "status": "available",
+      "loaded": false,
+      "eligible": true,
+      "failed_requirements": [],
+      "composite": 0.5762,
+      "metrics": {
+        "mae": 1.7988,
+        "sa": 25.3625,
+        "roc_auc": 0.6695,
+        "f1": 0.6908,
+        "ece": 0.0367,
+        "coverage_0.8": 0.8101,
+        "latency_p95": 1.0148
+      }
+    },
+    {
+      "configuration_id": "sbert-mtl",
+      "label": "SBERT + multi-task MLP (M3)",
+      "role": "Tests the joint effort-and-risk hypothesis",
+      "configuration": {
+        "encoder": "sbert",
+        "learner": "mlp",
+        "formulation": "multi_task"
+      },
+      "status": "available",
+      "loaded": false,
+      "eligible": true,
+      "failed_requirements": [],
+      "composite": 0.573,
+      "metrics": {
+        "mae": 1.7619,
+        "sa": 26.8959,
+        "roc_auc": 0.6236,
+        "f1": 0.6786,
+        "ece": 0.0344,
+        "coverage_0.8": 0.7942,
+        "latency_p95": 1.0962
+      }
+    },
+    {
+      "configuration_id": "distilbert",
+      "label": "Fine-tuned DistilBERT",
+      "role": "Upper bound on contextual representation",
+      "configuration": {
+        "encoder": "distilbert",
+        "learner": "distilbert",
+        "formulation": "single_task"
+      },
+      "status": "planned",
+      "loaded": false,
+      "eligible": null,
+      "failed_requirements": [],
+      "composite": null,
+      "metrics": {}
+    }
+  ]
+}

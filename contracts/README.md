@@ -9,10 +9,12 @@ copy that the other components, the gateway and the web app build against.
 | `requirement-quality/` | Ama (@AmaLiyanage) | `POST /api/v1/analyze` request and response |
 | `story-refinement/` | Sathmi (@lewkes) | `POST /api/v1/refine` request and response |
 | `traceability/` | Lakviru (@dinuwa2500) | `POST /api/v1/coverage` request and response |
-| `effort-estimation/` | Nikeshala (@Nikeshala22) | `POST /api/v1/estimate` request and response (proposal Appendix C) |
+| `effort-estimation/` | Nikeshala (@Nikeshala22) | `POST /api/v1/estimate` request and response (proposal Appendix C); a project's sprint history (`history-summary`, `history-import`, and `sprint-record` / `sprint-update` for the platform's sprints, sent one at a time); reading back past predictions (`prediction-page`, `prediction-detail`, `project-summary`); and the model selector (`models`, `pin-request` / `pin`, `compare-request` / `compare-response`) |
 | `common/` | shared (lead approval) | `POST /api/v1/pipeline/run`: the gateway's orchestration request and response |
 
-Each folder has `<name>.schema.json` (JSON Schema, draft 2020-12) and `examples/<name>.json`. Most example
+Each folder has `<name>.schema.json` (JSON Schema, draft 2020-12) and `examples/<name>.json`. The one non-JSON
+contract, effort-estimation's sprint-history CSV import, is shown in `effort-estimation/examples/sprint-history.csv`
+(its columns are described in that repository's README, "Sprint history"). Most example
 payloads still come from placeholder services (`model_version: "stub"`); effort-estimation's come from its
 trained models. They show the shape, not results to rely on.
 

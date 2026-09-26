@@ -1,6 +1,27 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$defs": {
+    "CompareResult": {
+      "properties": {
+        "configuration_id": {
+          "title": "Configuration Id",
+          "type": "string"
+        },
+        "predictions": {
+          "items": {
+            "$ref": "#/$defs/Prediction"
+          },
+          "title": "Predictions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "configuration_id",
+        "predictions"
+      ],
+      "title": "CompareResult",
+      "type": "object"
+    },
     "ModelConfiguration": {
       "properties": {
         "encoder": {
@@ -292,36 +313,17 @@
     }
   },
   "properties": {
-    "predictions": {
+    "results": {
       "items": {
-        "$ref": "#/$defs/Prediction"
+        "$ref": "#/$defs/CompareResult"
       },
-      "title": "Predictions",
+      "title": "Results",
       "type": "array"
-    },
-    "configuration_id": {
-      "default": "",
-      "title": "Configuration Id",
-      "type": "string"
-    },
-    "selection_mode": {
-      "default": "auto",
-      "enum": [
-        "auto",
-        "pinned"
-      ],
-      "title": "Selection Mode",
-      "type": "string"
-    },
-    "selection_reason": {
-      "default": "",
-      "title": "Selection Reason",
-      "type": "string"
     }
   },
   "required": [
-    "predictions"
+    "results"
   ],
-  "title": "EstimateResponse",
+  "title": "CompareResponse",
   "type": "object"
 }

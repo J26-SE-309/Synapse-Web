@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "ModelConfiguration": {
+      "properties": {
+        "encoder": {
+          "title": "Encoder",
+          "type": "string"
+        },
+        "learner": {
+          "title": "Learner",
+          "type": "string"
+        },
+        "formulation": {
+          "enum": [
+            "single_task",
+            "multi_task",
+            "chained"
+          ],
+          "title": "Formulation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "encoder",
+        "learner",
+        "formulation"
+      ],
+      "title": "ModelConfiguration",
+      "type": "object"
+    },
+    "ModelSummary": {
+      "properties": {
+        "configuration_id": {
+          "title": "Configuration Id",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "role": {
+          "title": "Role",
+          "type": "string"
+        },
+        "configuration": {
+          "$ref": "#/$defs/ModelConfiguration"
+        },
+        "status": {
+          "enum": [
+            "available",
+            "not installed",
+            "planned"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "loaded": {
+          "title": "Loaded",
+          "type": "boolean"
+        },
+        "eligible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Eligible"
+        },
+        "failed_requirements": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Failed Requirements",
+          "type": "array"
+        },
+        "composite": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Composite"
+        },
+        "metrics": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "default": {},
+          "title": "Metrics",
+          "type": "object"
+        }
+      },
+      "required": [
+        "configuration_id",
+        "label",
+        "role",
+        "configuration",
+        "status",
+        "loaded"
+      ],
+      "title": "ModelSummary",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "arena": {
+      "title": "Arena",
+      "type": "string"
+    },
+    "pooled_winner": {
+      "title": "Pooled Winner",
+      "type": "string"
+    },
+    "weights": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "title": "Weights",
+      "type": "object"
+    },
+    "configurations": {
+      "items": {
+        "$ref": "#/$defs/ModelSummary"
+      },
+      "title": "Configurations",
+      "type": "array"
+    }
+  },
+  "required": [
+    "arena",
+    "pooled_winner",
+    "weights",
+    "configurations"
+  ],
+  "title": "ModelsResponse",
+  "type": "object"
+}
