@@ -10,7 +10,7 @@ copy that the other components, the gateway and the web app build against.
 | `story-refinement/` | Sathmi (@lewkes) | `POST /api/v1/refine` request and response |
 | `traceability/` | Lakviru (@dinuwa2500) | `POST /api/v1/coverage` request and response |
 | `effort-estimation/` | Nikeshala (@Nikeshala22) | `POST /api/v1/estimate` request and response (proposal Appendix C); a project's sprint history (`history-summary`, `history-import`, and `sprint-record` / `sprint-update` for the platform's sprints, sent one at a time); reading back past predictions (`prediction-page`, `prediction-detail`, `project-summary`); and the model selector (`models`, `pin-request` / `pin`, `compare-request` / `compare-response`) |
-| `common/` | shared (lead approval) | `POST /api/v1/pipeline/run`: the gateway's orchestration request and response |
+| `common/` | shared (lead approval) | The gateway's own endpoints: `POST /api/v1/pipeline/run` (the orchestration request and response), and the platform's projects (`project`, `project-create`, `project-update` for `/api/v1/projects`) |
 
 Each folder has `<name>.schema.json` (JSON Schema, draft 2020-12) and `examples/<name>.json`. The one non-JSON
 contract, effort-estimation's sprint-history CSV import, is shown in `effort-estimation/examples/sprint-history.csv`
@@ -42,4 +42,5 @@ component's output into the next one's input. Most importantly, Component 4's `u
 2. If you rename or remove a field, or make one required, tell the components that read it (see the table above)
    and say so in the pull request description. Adding optional fields is safe.
 3. CI runs `gateway/tests/test_contracts.py`: every example must match its schema, and `common/` must match the
-   gateway's own models.
+   gateway's own models. The web app's tests also read some schemas, so its form rules stay the same as the
+   contract's.
