@@ -5,6 +5,16 @@ import json
 import jsonschema
 import pytest
 
+from app.api.v1.backlog import (
+    ImportResult,
+    Sprint,
+    SprintCreate,
+    SprintUpdate,
+    Story,
+    StoryCreate,
+    StoryImport,
+    StoryUpdate,
+)
 from app.api.v1.projects import Project, ProjectCreate, ProjectUpdate
 from app.orchestration import PipelineRequest, PipelineResponse
 from tests.conftest import CONTRACTS
@@ -32,6 +42,14 @@ def test_example_matches_its_schema(path):
         ("project", Project),
         ("project-create", ProjectCreate),
         ("project-update", ProjectUpdate),
+        ("story", Story),
+        ("story-create", StoryCreate),
+        ("story-update", StoryUpdate),
+        ("story-import", StoryImport),
+        ("story-import-result", ImportResult),
+        ("sprint", Sprint),
+        ("sprint-create", SprintCreate),
+        ("sprint-update", SprintUpdate),
     ],
 )
 def test_common_contracts_match_the_gateway_code(name, model):

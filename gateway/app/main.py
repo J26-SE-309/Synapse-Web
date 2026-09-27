@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__, db
 from app.api import health
-from app.api.v1 import pipeline, projects, proxy
+from app.api.v1 import backlog, pipeline, projects, proxy
 from app.config import get_settings
 
 
@@ -36,6 +36,7 @@ def create_app(transport: httpx2.AsyncBaseTransport | None = None) -> FastAPI:
     # The gateway's own endpoints must be registered before the catch-all proxy route.
     app.include_router(pipeline.router, prefix="/api/v1")
     app.include_router(projects.router, prefix="/api/v1")
+    app.include_router(backlog.router, prefix="/api/v1")
     app.include_router(proxy.router, prefix="/api/v1")
     return app
 
