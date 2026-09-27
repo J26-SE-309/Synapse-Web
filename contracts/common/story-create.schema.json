@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "story_id": {
+      "anyOf": [
+        {
+          "maxLength": 200,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Empty: the next free id like PROJECT-7",
+      "title": "Story Id"
+    },
+    "title": {
+      "maxLength": 300,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "description": {
+      "default": "",
+      "maxLength": 10000,
+      "title": "Description",
+      "type": "string"
+    },
+    "acceptance_criteria": {
+      "items": {
+        "maxLength": 1000,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 30,
+      "title": "Acceptance Criteria",
+      "type": "array"
+    },
+    "issue_type": {
+      "anyOf": [
+        {
+          "enum": [
+            "Story",
+            "Task",
+            "Bug",
+            "Improvement",
+            "New Feature"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Issue Type"
+    },
+    "priority": {
+      "anyOf": [
+        {
+          "enum": [
+            "Blocker",
+            "Critical",
+            "Major",
+            "Minor",
+            "Trivial"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Priority"
+    },
+    "story_points": {
+      "anyOf": [
+        {
+          "maximum": 1000,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The team's estimate",
+      "title": "Story Points"
+    },
+    "epic": {
+      "anyOf": [
+        {
+          "maxLength": 200,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The epic it belongs to, if any",
+      "title": "Epic"
+    },
+    "blocked_by": {
+      "default": 0,
+      "description": "Open issues blocking it",
+      "maximum": 1000,
+      "minimum": 0,
+      "title": "Blocked By",
+      "type": "integer"
+    },
+    "depends_on": {
+      "default": 0,
+      "description": "Issues it needs first",
+      "maximum": 1000,
+      "minimum": 0,
+      "title": "Depends On",
+      "type": "integer"
+    },
+    "needed_by": {
+      "default": 0,
+      "description": "Issues that need it first",
+      "maximum": 1000,
+      "minimum": 0,
+      "title": "Needed By",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "title"
+  ],
+  "title": "StoryCreate",
+  "type": "object"
+}

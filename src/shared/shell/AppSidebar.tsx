@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 
 import { usePlatformHealth } from "@/shared/hooks/usePlatformHealth";
 import { cn } from "@/shared/lib/utils";
-import { isCurrent, NAV_MODULES, OVERVIEW, type NavModule } from "@/shared/navigation";
+import { isCurrent, NAV_MODULES, PLATFORM_PAGES, type NavModule } from "@/shared/navigation";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/shared/ui/collapsible";
 import {
   Sidebar,
@@ -119,8 +119,6 @@ function PlatformHealthSummary() {
 export function AppSidebar() {
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
-  const overviewCurrent = pathname === OVERVIEW.href;
-  const OverviewIcon = OVERVIEW.icon;
 
   return (
     <Sidebar collapsible="icon">
@@ -148,14 +146,20 @@ export function AppSidebar() {
           <SidebarGroupLabel>Platform</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={overviewCurrent} tooltip={OVERVIEW.title}>
-                  <Link href="/" aria-current={overviewCurrent ? "page" : undefined} onClick={() => setOpenMobile(false)}>
-                    <OverviewIcon aria-hidden />
-                    <span>{OVERVIEW.title}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              {PLATFORM_PAGES.map((page) => {
+                const current = isCurrent(pathname, page.href, page.href === "/");
+                const Icon = page.icon;
+                return (
+                  <SidebarMenuItem key={page.href}>
+                    <SidebarMenuButton asChild isActive={current} tooltip={page.title}>
+                      <Link href={page.href} aria-current={current ? "page" : undefined} onClick={() => setOpenMobile(false)}>
+                        <Icon aria-hidden />
+                        <span>{page.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

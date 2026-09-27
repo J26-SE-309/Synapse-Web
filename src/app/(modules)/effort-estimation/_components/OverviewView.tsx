@@ -106,8 +106,8 @@ function Overview({ project }: { project: Project }) {
         description="Story effort and sprint risk with calibrated confidence, the reasons behind them and what to do about them."
         actions={
           <Button asChild>
-            <Link href="/effort-estimation/plan">
-              Plan a sprint <ArrowRightIcon aria-hidden />
+            <Link href="/sprints">
+              Estimate a sprint <ArrowRightIcon aria-hidden />
             </Link>
           </Button>
         }

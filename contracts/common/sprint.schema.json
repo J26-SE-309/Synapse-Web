@@ -1,0 +1,243 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "EffortSync": {
+      "properties": {
+        "status": {
+          "description": "not_sent: a planned sprint is not sent; failed: the last change did not reach the service",
+          "enum": [
+            "not_sent",
+            "sent",
+            "failed"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "sent_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Sent At"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Error"
+        }
+      },
+      "required": [
+        "status",
+        "sent_at",
+        "error"
+      ],
+      "title": "EffortSync",
+      "type": "object"
+    },
+    "SprintItem": {
+      "properties": {
+        "story_id": {
+          "title": "Story Id",
+          "type": "string"
+        },
+        "committed_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "When it was committed: the start, or when it was added",
+          "title": "Committed At"
+        },
+        "added_mid_sprint": {
+          "title": "Added Mid Sprint",
+          "type": "boolean"
+        },
+        "points_at_commit": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Points At Commit"
+        },
+        "left_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "When it was taken out before the end",
+          "title": "Left At"
+        },
+        "points_at_close": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Points At Close"
+        },
+        "done_in_sprint": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Known at the close",
+          "title": "Done In Sprint"
+        }
+      },
+      "required": [
+        "story_id",
+        "committed_at",
+        "added_mid_sprint",
+        "points_at_commit",
+        "left_at",
+        "points_at_close",
+        "done_in_sprint"
+      ],
+      "title": "SprintItem",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "project_id": {
+      "title": "Project Id",
+      "type": "string"
+    },
+    "sprint_id": {
+      "title": "Sprint Id",
+      "type": "string"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "goal": {
+      "title": "Goal",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "planned",
+        "active",
+        "closed"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "length_days": {
+      "title": "Length Days",
+      "type": "integer"
+    },
+    "capacity_points": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Capacity Points"
+    },
+    "started_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Started At"
+    },
+    "planned_end": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Planned End"
+    },
+    "closed_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Closed At"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "items": {
+      "description": "Every story that has been in the sprint, including ones taken out",
+      "items": {
+        "$ref": "#/$defs/SprintItem"
+      },
+      "title": "Items",
+      "type": "array"
+    },
+    "effort_sync": {
+      "$ref": "#/$defs/EffortSync"
+    }
+  },
+  "required": [
+    "project_id",
+    "sprint_id",
+    "name",
+    "goal",
+    "status",
+    "length_days",
+    "capacity_points",
+    "started_at",
+    "planned_end",
+    "closed_at",
+    "created_at",
+    "items",
+    "effort_sync"
+  ],
+  "title": "Sprint",
+  "type": "object"
+}
