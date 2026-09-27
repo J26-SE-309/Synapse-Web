@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "project_id": {
+      "title": "Project Id",
+      "type": "string"
+    },
+    "sprint_id": {
+      "title": "Sprint Id",
+      "type": "string"
+    },
+    "closed": {
+      "title": "Closed",
+      "type": "boolean"
+    },
+    "stories": {
+      "title": "Stories",
+      "type": "integer"
+    },
+    "outcomes_recorded": {
+      "description": "Outcomes (FR19) recorded or updated for the stories' predictions",
+      "title": "Outcomes Recorded",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "project_id",
+    "sprint_id",
+    "closed",
+    "stories",
+    "outcomes_recorded"
+  ],
+  "title": "SprintUpdate",
+  "type": "object"
+}

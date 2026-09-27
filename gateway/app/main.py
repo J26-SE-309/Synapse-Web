@@ -7,9 +7,9 @@ import httpx2
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app import __version__
+from app import __version__, db
 from app.api import health
-from app.api.v1 import pipeline, proxy
+from app.api.v1 import backlog, pipeline, projects, proxy
 from app.config import get_settings
 
 
@@ -19,6 +19,8 @@ def create_app(transport: httpx2.AsyncBaseTransport | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        if db.database_ok():  # the tables are created or updated before the first request
+            db.migrate()
         async with httpx2.AsyncClient(transport=transport, timeout=settings.service_timeout_seconds) as client:
             app.state.http_client = client
             yield
@@ -31,8 +33,10 @@ def create_app(transport: httpx2.AsyncBaseTransport | None = None) -> FastAPI:
         allow_headers=["*"],
     )
     app.include_router(health.router)
-    # The pipeline must be registered before the catch-all proxy route.
+    # The gateway's own endpoints must be registered before the catch-all proxy route.
     app.include_router(pipeline.router, prefix="/api/v1")
+    app.include_router(projects.router, prefix="/api/v1")
+    app.include_router(backlog.router, prefix="/api/v1")
     app.include_router(proxy.router, prefix="/api/v1")
     return app
 

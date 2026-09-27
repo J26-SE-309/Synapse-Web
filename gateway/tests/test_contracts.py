@@ -5,6 +5,17 @@ import json
 import jsonschema
 import pytest
 
+from app.api.v1.backlog import (
+    ImportResult,
+    Sprint,
+    SprintCreate,
+    SprintUpdate,
+    Story,
+    StoryCreate,
+    StoryImport,
+    StoryUpdate,
+)
+from app.api.v1.projects import Project, ProjectCreate, ProjectUpdate
 from app.orchestration import PipelineRequest, PipelineResponse
 from tests.conftest import CONTRACTS
 
@@ -24,8 +35,23 @@ def test_example_matches_its_schema(path):
 
 
 @pytest.mark.parametrize(
-    ("name", "model"), [("pipeline-run-request", PipelineRequest), ("pipeline-run-response", PipelineResponse)]
+    ("name", "model"),
+    [
+        ("pipeline-run-request", PipelineRequest),
+        ("pipeline-run-response", PipelineResponse),
+        ("project", Project),
+        ("project-create", ProjectCreate),
+        ("project-update", ProjectUpdate),
+        ("story", Story),
+        ("story-create", StoryCreate),
+        ("story-update", StoryUpdate),
+        ("story-import", StoryImport),
+        ("story-import-result", ImportResult),
+        ("sprint", Sprint),
+        ("sprint-create", SprintCreate),
+        ("sprint-update", SprintUpdate),
+    ],
 )
-def test_pipeline_contract_matches_the_gateway_code(name, model):
+def test_common_contracts_match_the_gateway_code(name, model):
     stored = json.loads((CONTRACTS / "common" / f"{name}.schema.json").read_text(encoding="utf-8"))
     assert stored == {"$schema": "https://json-schema.org/draft/2020-12/schema", **model.model_json_schema()}

@@ -1,0 +1,211 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "SprintStory": {
+      "description": "A story in the sprint, as the platform knows it now.",
+      "properties": {
+        "story_id": {
+          "title": "Story Id",
+          "type": "string"
+        },
+        "issue_type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Story, Task, Bug, Improvement or New Feature",
+          "title": "Issue Type"
+        },
+        "committed_at": {
+          "description": "When it was committed to the sprint (its start for a planned story)",
+          "format": "date-time",
+          "title": "Committed At",
+          "type": "string"
+        },
+        "left_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "When it was taken out before the end",
+          "title": "Left At"
+        },
+        "points_at_commit": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Points At Commit"
+        },
+        "points_at_close": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Points At Close"
+        },
+        "done_in_sprint": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Finished in this sprint (known once it closes)",
+          "title": "Done In Sprint"
+        },
+        "spilled_over": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Not done by the end of the story's first sprint (R1); left empty, the service derives it at the close",
+          "title": "Spilled Over"
+        },
+        "reopened": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Reopened after done, then or in the next sprint (R6)",
+          "title": "Reopened"
+        },
+        "started_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Started At"
+        },
+        "resolved_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Resolved At"
+        },
+        "hours_in_progress": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Hours In Progress"
+        }
+      },
+      "required": [
+        "story_id",
+        "committed_at"
+      ],
+      "title": "SprintStory",
+      "type": "object"
+    }
+  },
+  "description": "A sprint as the platform knows it now. Send it whenever it changes (it starts, a story is added, taken out\nor done, it closes): it replaces the service's copy of this sprint.",
+  "properties": {
+    "name": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Name"
+    },
+    "started_at": {
+      "format": "date-time",
+      "title": "Started At",
+      "type": "string"
+    },
+    "planned_end": {
+      "format": "date-time",
+      "title": "Planned End",
+      "type": "string"
+    },
+    "closed_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Empty while the sprint runs",
+      "title": "Closed At"
+    },
+    "stories": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/SprintStory"
+      },
+      "maxItems": 2000,
+      "title": "Stories",
+      "type": "array"
+    }
+  },
+  "required": [
+    "started_at",
+    "planned_end"
+  ],
+  "title": "SprintRecord",
+  "type": "object"
+}

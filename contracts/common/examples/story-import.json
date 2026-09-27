@@ -1,0 +1,30 @@
+{
+  "stories": [
+    {
+      "title": "As a student I want to book an available tutoring session so that I can get help",
+      "description": "Pick a tutor, a date and a free time slot. Only logged-in students can book.",
+      "acceptance_criteria": [
+        "Given a free slot, when I book it, then it is reserved for me",
+        "Given a slot someone else booked, when I open it, then I cannot book it"
+      ],
+      "issue_type": "Story",
+      "priority": "Major",
+      "story_points": 5,
+      "epic": "Booking",
+      "depends_on": 1,
+      "needed_by": 2
+    },
+    {
+      "title": "Pay for a booked session",
+      "issue_type": "Story",
+      "priority": "Critical",
+      "story_points": 3
+    }
+  ],
+  "synthetic": false,
+  "sprint": {
+    "sprint_id": "TUTOR-S5",
+    "length_days": 14,
+    "capacity_points": 30
+  }
+}

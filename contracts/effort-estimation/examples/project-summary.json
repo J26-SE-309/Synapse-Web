@@ -1,0 +1,22 @@
+{
+  "project_id": "TUTOR",
+  "sprint_id": null,
+  "predictions": 2,
+  "stories": 2,
+  "first_at": "2026-09-26T17:40:06.644225",
+  "last_at": "2026-09-26T17:40:06.644225",
+  "by_risk_level": {
+    "high": 2
+  },
+  "by_configuration": {
+    "fasttext-lightgbm": 2
+  },
+  "pinned": 0,
+  "feedback": {
+    "adjust": 1
+  },
+  "outcomes": 2,
+  "completed_share": 0.5,
+  "mean_spillover_probability": 0.8049,
+  "effort_mae": 2.41
+}

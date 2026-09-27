@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "description": {
+      "title": "Description",
+      "type": "string"
+    },
+    "data_source": {
+      "description": "platform: created in Synapse; tawos or synthetic: development data, not for evaluation",
+      "enum": [
+        "platform",
+        "tawos",
+        "synthetic"
+      ],
+      "title": "Data Source",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "description",
+    "data_source",
+    "created_at"
+  ],
+  "title": "Project",
+  "type": "object"
+}

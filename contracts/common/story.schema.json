@@ -1,0 +1,196 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "project_id": {
+      "title": "Project Id",
+      "type": "string"
+    },
+    "story_id": {
+      "title": "Story Id",
+      "type": "string"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "description": {
+      "title": "Description",
+      "type": "string"
+    },
+    "acceptance_criteria": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Acceptance Criteria",
+      "type": "array"
+    },
+    "issue_type": {
+      "anyOf": [
+        {
+          "enum": [
+            "Story",
+            "Task",
+            "Bug",
+            "Improvement",
+            "New Feature"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Issue Type"
+    },
+    "priority": {
+      "anyOf": [
+        {
+          "enum": [
+            "Blocker",
+            "Critical",
+            "Major",
+            "Minor",
+            "Trivial"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Priority"
+    },
+    "story_points": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Story Points"
+    },
+    "epic": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Epic"
+    },
+    "blocked_by": {
+      "title": "Blocked By",
+      "type": "integer"
+    },
+    "depends_on": {
+      "title": "Depends On",
+      "type": "integer"
+    },
+    "needed_by": {
+      "title": "Needed By",
+      "type": "integer"
+    },
+    "status": {
+      "enum": [
+        "to_do",
+        "in_progress",
+        "done"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "sprint_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "The sprint it is in now; empty in the backlog",
+      "title": "Sprint Id"
+    },
+    "source": {
+      "enum": [
+        "manual",
+        "import",
+        "refinement"
+      ],
+      "title": "Source",
+      "type": "string"
+    },
+    "synthetic": {
+      "description": "Made-up data for development and demonstrations, never evidence",
+      "title": "Synthetic",
+      "type": "boolean"
+    },
+    "started_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Started At"
+    },
+    "resolved_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Resolved At"
+    },
+    "reopened": {
+      "title": "Reopened",
+      "type": "boolean"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_id",
+    "story_id",
+    "title",
+    "description",
+    "acceptance_criteria",
+    "issue_type",
+    "priority",
+    "story_points",
+    "epic",
+    "blocked_by",
+    "depends_on",
+    "needed_by",
+    "status",
+    "sprint_id",
+    "source",
+    "synthetic",
+    "started_at",
+    "resolved_at",
+    "reopened",
+    "created_at",
+    "updated_at"
+  ],
+  "title": "Story",
+  "type": "object"
+}

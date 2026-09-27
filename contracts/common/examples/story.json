@@ -1,0 +1,26 @@
+{
+  "project_id": "TUTOR",
+  "story_id": "TUTOR-1",
+  "title": "As a student I want to book an available tutoring session so that I can get help",
+  "description": "Pick a tutor, a date and a free time slot. Only logged-in students can book.",
+  "acceptance_criteria": [
+    "Given a free slot, when I book it, then it is reserved for me",
+    "Given a slot someone else booked, when I open it, then I cannot book it"
+  ],
+  "issue_type": "Story",
+  "priority": "Major",
+  "story_points": 5,
+  "epic": "Booking",
+  "blocked_by": 0,
+  "depends_on": 1,
+  "needed_by": 2,
+  "status": "in_progress",
+  "sprint_id": "TUTOR-S4",
+  "source": "refinement",
+  "synthetic": false,
+  "started_at": "2026-09-15T08:30:00Z",
+  "resolved_at": null,
+  "reopened": false,
+  "created_at": "2026-09-10T09:00:00Z",
+  "updated_at": "2026-09-15T08:30:00Z"
+}
