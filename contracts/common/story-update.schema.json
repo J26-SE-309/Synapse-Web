@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Only the fields given change. sprint_id moves the story into that sprint, or with null back to the backlog.",
+  "properties": {
+    "title": {
+      "anyOf": [
+        {
+          "maxLength": 300,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Title"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "maxLength": 10000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Description"
+    },
+    "acceptance_criteria": {
+      "anyOf": [
+        {
+          "items": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 30,
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Acceptance Criteria"
+    },
+    "issue_type": {
+      "anyOf": [
+        {
+          "enum": [
+            "Story",
+            "Task",
+            "Bug",
+            "Improvement",
+            "New Feature"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Issue Type"
+    },
+    "priority": {
+      "anyOf": [
+        {
+          "enum": [
+            "Blocker",
+            "Critical",
+            "Major",
+            "Minor",
+            "Trivial"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Priority"
+    },
+    "story_points": {
+      "anyOf": [
+        {
+          "maximum": 1000,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Story Points"
+    },
+    "epic": {
+      "anyOf": [
+        {
+          "maxLength": 200,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Epic"
+    },
+    "blocked_by": {
+      "anyOf": [
+        {
+          "maximum": 1000,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Blocked By"
+    },
+    "depends_on": {
+      "anyOf": [
+        {
+          "maximum": 1000,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Depends On"
+    },
+    "needed_by": {
+      "anyOf": [
+        {
+          "maximum": 1000,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Needed By"
+    },
+    "status": {
+      "anyOf": [
+        {
+          "enum": [
+            "to_do",
+            "in_progress",
+            "done"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Status"
+    },
+    "sprint_id": {
+      "anyOf": [
+        {
+          "maxLength": 100,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Sprint Id"
+    }
+  },
+  "title": "StoryUpdate",
+  "type": "object"
+}

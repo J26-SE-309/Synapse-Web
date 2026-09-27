@@ -1,6 +1,8 @@
 import {
   GaugeIcon,
+  IterationCwIcon,
   LayoutDashboardIcon,
+  ListTodoIcon,
   ListChecksIcon,
   NetworkIcon,
   ScanSearchIcon,
@@ -42,6 +44,13 @@ const PAGES: Partial<Record<ModuleSlug, NavPage[]>> = {
 
 export const OVERVIEW: NavPage = { href: "/", title: "Overview", icon: LayoutDashboardIcon };
 
+/** The platform's own pages: the project's backlog and its sprints, which every component works from. */
+export const PLATFORM_PAGES: NavPage[] = [
+  OVERVIEW,
+  { href: "/backlog", title: "Backlog", icon: ListTodoIcon },
+  { href: "/sprints", title: "Sprints", icon: IterationCwIcon },
+];
+
 export const NAV_MODULES: NavModule[] = MODULES.map((entry) => ({
   slug: entry.slug,
   href: `/${entry.slug}`,
@@ -64,9 +73,16 @@ export interface Crumb {
   href: string;
 }
 
-/** Where a path is, from the platform down: e.g. Effort & Sprint Risk › Sprint planning. */
+/** Where a path is, from the platform down: e.g. Effort & Sprint Risk › Models, or Sprints › TUTOR-S4. */
 export function breadcrumbs(pathname: string): Crumb[] {
   if (pathname === "/") return [{ title: OVERVIEW.title, href: "/" }];
+  const platform = PLATFORM_PAGES.find((entry) => entry.href !== "/" && within(pathname, entry.href));
+  if (platform) {
+    const crumbs: Crumb[] = [{ title: platform.title, href: platform.href }];
+    const rest = pathname.slice(platform.href.length + 1);
+    if (rest) crumbs.push({ title: decodeURIComponent(rest.split("/")[0]), href: pathname });
+    return crumbs;
+  }
   const found = NAV_MODULES.find((entry) => within(pathname, entry.href));
   if (!found) return [];
   const crumbs: Crumb[] = [{ title: found.title, href: found.href }];

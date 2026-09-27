@@ -34,9 +34,9 @@ function Outcome({ outcome }: { outcome: OutcomeBrief | null | undefined }) {
   );
 }
 
-function Log({ project }: { project: Project }) {
-  const [draft, setDraft] = useState<PredictionFilters>({});
-  const [filters, setFilters] = useState<PredictionFilters>({});
+function Log({ project, initialFilters }: { project: Project; initialFilters: PredictionFilters }) {
+  const [draft, setDraft] = useState<PredictionFilters>(initialFilters);
+  const [filters, setFilters] = useState<PredictionFilters>(initialFilters);
   const pages = usePredictionPages(project.id, filters);
   const models = useModels();
   const labels = Object.fromEntries((models.data?.configurations ?? []).map((model) => [model.configuration_id, model.label]));
@@ -117,13 +117,13 @@ function Log({ project }: { project: Project }) {
             <EmptyHeader>
               <EmptyTitle>{filtered ? "No prediction matches" : "No predictions yet"}</EmptyTitle>
               <EmptyDescription>
-                {filtered ? "Try another sprint or story id." : "Estimates made on the sprint planning page appear here."}
+                {filtered ? "Try another sprint or story id." : "Estimate a sprint from its page, under Sprints, and every story's estimate appears here."}
               </EmptyDescription>
             </EmptyHeader>
             {!filtered ? (
               <EmptyContent>
                 <Button asChild>
-                  <Link href="/effort-estimation/plan">Plan a sprint</Link>
+                  <Link href="/sprints">Go to sprints</Link>
                 </Button>
               </EmptyContent>
             ) : null}
@@ -206,6 +206,6 @@ function Log({ project }: { project: Project }) {
   );
 }
 
-export function PredictionLogView() {
-  return <ProjectGate>{(project) => <Log key={project.id} project={project} />}</ProjectGate>;
+export function PredictionLogView({ initialFilters = {} }: { initialFilters?: PredictionFilters }) {
+  return <ProjectGate>{(project) => <Log key={project.id} project={project} initialFilters={initialFilters} />}</ProjectGate>;
 }

@@ -1,33 +1,10 @@
 import pytest
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import inspect
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
 
 from app import db, devdata
 
-
-def memory_engine():
-    # One connection shared by the test and the thread pool the endpoints run in.
-    return create_engine("sqlite+pysqlite:///:memory:", poolclass=StaticPool,
-                         connect_args={"check_same_thread": False})
-
-
-@pytest.fixture
-def database(client, monkeypatch):
-    """A fresh in-memory database, migrated like the real one, behind the client's sessions."""
-    engine = memory_engine()
-    assert db.migrate(engine)
-    sessions = sessionmaker(bind=engine, autoflush=False)
-
-    def session():
-        with sessions() as opened:
-            yield opened
-
-    client.app.dependency_overrides[db.get_session] = session
-    monkeypatch.setattr(db, "engine", engine)
-    monkeypatch.setattr(db, "SessionLocal", sessions)
-    return engine
-
+from .conftest import memory_engine
 
 TUTOR = {"id": "TUTOR", "name": "Tutoring app", "description": "Booking and paying for tutoring sessions"}
 

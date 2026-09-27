@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "sprint_id": {
+      "anyOf": [
+        {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Empty: the next free id like PROJECT-S3",
+      "title": "Sprint Id"
+    },
+    "name": {
+      "anyOf": [
+        {
+          "maxLength": 80,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Empty: Sprint 3",
+      "title": "Name"
+    },
+    "goal": {
+      "default": "",
+      "maxLength": 1000,
+      "title": "Goal",
+      "type": "string"
+    },
+    "length_days": {
+      "default": 14,
+      "maximum": 60,
+      "minimum": 1,
+      "title": "Length Days",
+      "type": "integer"
+    },
+    "capacity_points": {
+      "anyOf": [
+        {
+          "exclusiveMinimum": 0,
+          "maximum": 10000,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Empty: the effort service uses the team's velocity",
+      "title": "Capacity Points"
+    }
+  },
+  "title": "SprintCreate",
+  "type": "object"
+}

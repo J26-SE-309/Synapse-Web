@@ -65,6 +65,7 @@ export async function gatewayFetch<T>(path: string, init: RequestInit = {}): Pro
           : `${init.method ?? "GET"} ${path} failed with status ${response.status}`;
     throw new GatewayError(response.status, message, detail);
   }
+  if (response.status === 204) return undefined as T; // e.g. a DELETE: nothing to read
   return (await response.json()) as T;
 }
 
