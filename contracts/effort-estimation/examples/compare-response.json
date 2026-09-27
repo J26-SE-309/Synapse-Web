@@ -1,0 +1,145 @@
+{
+  "results": [
+    {
+      "configuration_id": "fasttext-lightgbm",
+      "predictions": [
+        {
+          "story_id": "ST-101",
+          "project_id": "TUTOR",
+          "predicted_story_points": 2.88,
+          "effort_category": "medium",
+          "prediction_interval": {
+            "lower": 1.13,
+            "upper": 6.06
+          },
+          "sprint_risk_level": "high",
+          "spillover_probability": 0.8049,
+          "confidence_score": 0.2066,
+          "key_risk_reasons": [
+            {
+              "factor": "Team delivery history",
+              "direction": "increases",
+              "weight": 0.337
+            },
+            {
+              "factor": "Sprint load and timing",
+              "direction": "increases",
+              "weight": 0.259
+            },
+            {
+              "factor": "Story metadata",
+              "direction": "increases",
+              "weight": 0.214
+            }
+          ],
+          "recommendations": [],
+          "model_configuration": {
+            "encoder": "fasttext",
+            "learner": "lightgbm",
+            "formulation": "single_task"
+          },
+          "selection_mode": "pinned",
+          "feature_groups_used": [
+            "textual",
+            "dependency",
+            "metadata"
+          ],
+          "model_version": "arena-v1/fasttext-lightgbm@cc31492",
+          "generated_at": "2026-09-26T17:40:06Z",
+          "prediction_id": null,
+          "interval_coverage": 0.8,
+          "at_risk": true,
+          "confidence_level": "low",
+          "configuration_id": "fasttext-lightgbm",
+          "selection_reason": "requested for comparison",
+          "degraded_feature_groups": [
+            "requirement_quality",
+            "traceability",
+            "acceptance_criteria",
+            "historical_sprint",
+            "sprint_context"
+          ],
+          "feature_sources": {
+            "textual": "text",
+            "requirement_quality": "proxy",
+            "dependency": "request",
+            "traceability": "missing",
+            "acceptance_criteria": "proxy",
+            "historical_sprint": "missing",
+            "sprint_context": "missing",
+            "metadata": "request"
+          },
+          "explanation_method": "TreeSHAP"
+        }
+      ]
+    },
+    {
+      "configuration_id": "tfidf-rf",
+      "predictions": [
+        {
+          "story_id": "ST-101",
+          "project_id": "TUTOR",
+          "predicted_story_points": 3.94,
+          "effort_category": "medium",
+          "prediction_interval": {
+            "lower": 1.5,
+            "upper": 8.77
+          },
+          "sprint_risk_level": "high",
+          "spillover_probability": 0.6928,
+          "confidence_score": 0.1427,
+          "key_risk_reasons": [
+            {
+              "factor": "Story size and content",
+              "direction": "increases",
+              "weight": 0.583
+            },
+            {
+              "factor": "Team delivery history",
+              "direction": "increases",
+              "weight": 0.381
+            }
+          ],
+          "recommendations": [],
+          "model_configuration": {
+            "encoder": "tfidf",
+            "learner": "random_forest",
+            "formulation": "single_task"
+          },
+          "selection_mode": "pinned",
+          "feature_groups_used": [
+            "textual",
+            "dependency",
+            "metadata"
+          ],
+          "model_version": "arena-v1/tfidf-rf@cc31492",
+          "generated_at": "2026-09-26T17:40:11Z",
+          "prediction_id": null,
+          "interval_coverage": 0.8,
+          "at_risk": true,
+          "confidence_level": "low",
+          "configuration_id": "tfidf-rf",
+          "selection_reason": "requested for comparison",
+          "degraded_feature_groups": [
+            "requirement_quality",
+            "traceability",
+            "acceptance_criteria",
+            "historical_sprint",
+            "sprint_context"
+          ],
+          "feature_sources": {
+            "textual": "text",
+            "requirement_quality": "proxy",
+            "dependency": "request",
+            "traceability": "missing",
+            "acceptance_criteria": "proxy",
+            "historical_sprint": "missing",
+            "sprint_context": "missing",
+            "metadata": "request"
+          },
+          "explanation_method": "feature-group occlusion"
+        }
+      ]
+    }
+  ]
+}

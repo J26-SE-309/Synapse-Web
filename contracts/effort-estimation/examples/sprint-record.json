@@ -1,0 +1,28 @@
+{
+  "name": "Sprint 4",
+  "started_at": "2026-09-13T17:40:06Z",
+  "planned_end": "2026-09-27T17:40:06Z",
+  "closed_at": "2026-09-26T17:45:06Z",
+  "stories": [
+    {
+      "story_id": "ST-101",
+      "issue_type": "Story",
+      "committed_at": "2026-09-13T17:40:06Z",
+      "points_at_commit": 5,
+      "points_at_close": 5,
+      "done_in_sprint": true,
+      "started_at": "2026-09-14T17:40:06Z",
+      "resolved_at": "2026-09-19T17:40:06Z",
+      "hours_in_progress": 30
+    },
+    {
+      "story_id": "ST-102",
+      "issue_type": "Story",
+      "committed_at": "2026-09-13T17:40:06Z",
+      "points_at_commit": 3,
+      "points_at_close": 5,
+      "done_in_sprint": false,
+      "started_at": "2026-09-17T17:40:06Z"
+    }
+  ]
+}

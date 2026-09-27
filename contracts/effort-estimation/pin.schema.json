@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "project_id": {
+      "title": "Project Id",
+      "type": "string"
+    },
+    "configuration_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Configuration Id"
+    },
+    "pinned_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Pinned At"
+    }
+  },
+  "required": [
+    "project_id",
+    "configuration_id"
+  ],
+  "title": "Pin",
+  "type": "object"
+}

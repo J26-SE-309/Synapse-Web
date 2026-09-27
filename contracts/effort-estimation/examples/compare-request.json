@@ -1,0 +1,14 @@
+{
+  "project_id": "TUTOR",
+  "stories": [
+    {
+      "story_id": "ST-101",
+      "title": "As a student I want to book a tutoring session so that I get help",
+      "story_points": 5
+    }
+  ],
+  "configurations": [
+    "fasttext-lightgbm",
+    "tfidf-rf"
+  ]
+}

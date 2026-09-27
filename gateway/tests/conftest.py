@@ -4,6 +4,9 @@ from pathlib import Path
 import httpx2
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from app import db
 from app.main import create_app
@@ -48,6 +51,8 @@ class FakeComponents:
             template = example(component, "coverage-response")["items"][0]
             items = [{**template, "story_id": s["story_id"]} for s in body["stories"]]
             return httpx2.Response(200, json={"items": items})
+        if component == "effort-estimation" and path.startswith("/api/v1/projects/") and "/sprints/" in path:
+            return httpx2.Response(200, json=example(component, "sprint-update"))
         if (component, path) == ("effort-estimation", "/api/v1/estimate"):
             template = example(component, "estimate-response")["predictions"][0]
             return httpx2.Response(
@@ -69,3 +74,26 @@ def client(components, monkeypatch):
     monkeypatch.setattr(db, "database_ok", lambda: False)
     with TestClient(create_app(transport=httpx2.MockTransport(components.handler))) as test_client:
         yield test_client
+
+
+def memory_engine():
+    # One connection shared by the test and the thread pool the endpoints run in.
+    return create_engine("sqlite+pysqlite:///:memory:", poolclass=StaticPool,
+                         connect_args={"check_same_thread": False})
+
+
+@pytest.fixture
+def database(client, monkeypatch):
+    """A fresh in-memory database, migrated like the real one, behind the client's sessions."""
+    engine = memory_engine()
+    assert db.migrate(engine)
+    sessions = sessionmaker(bind=engine, autoflush=False)
+
+    def session():
+        with sessions() as opened:
+            yield opened
+
+    client.app.dependency_overrides[db.get_session] = session
+    monkeypatch.setattr(db, "engine", engine)
+    monkeypatch.setattr(db, "SessionLocal", sessions)
+    return engine
