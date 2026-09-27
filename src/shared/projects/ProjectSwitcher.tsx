@@ -17,7 +17,6 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-  CommandSeparator,
 } from "@/shared/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 
@@ -98,8 +97,8 @@ export function ProjectSwitcher({ className }: { className?: string }) {
                   ))}
                 </CommandGroup>
               ))}
-              <CommandSeparator />
-              <CommandGroup>
+              {/* A border, not a CommandSeparator: a listbox may only contain options and groups (axe). */}
+              <CommandGroup className="border-t">
                 <CommandItem
                   value="__new-project"
                   onSelect={() => {
