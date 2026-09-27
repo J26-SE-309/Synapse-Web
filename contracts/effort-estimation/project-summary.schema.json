@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A project's predictions at a glance, and how they turned out so far.",
+  "properties": {
+    "project_id": {
+      "title": "Project Id",
+      "type": "string"
+    },
+    "sprint_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Sprint Id"
+    },
+    "predictions": {
+      "title": "Predictions",
+      "type": "integer"
+    },
+    "stories": {
+      "title": "Stories",
+      "type": "integer"
+    },
+    "first_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "First At"
+    },
+    "last_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Last At"
+    },
+    "by_risk_level": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "By Risk Level",
+      "type": "object"
+    },
+    "by_configuration": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "By Configuration",
+      "type": "object"
+    },
+    "pinned": {
+      "description": "Predictions from a configuration the product owner pinned",
+      "title": "Pinned",
+      "type": "integer"
+    },
+    "feedback": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "description": "Decisions: accept, adjust, reject",
+      "title": "Feedback",
+      "type": "object"
+    },
+    "outcomes": {
+      "description": "Predictions whose outcome is known",
+      "title": "Outcomes",
+      "type": "integer"
+    },
+    "completed_share": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Share of those stories done in their sprint",
+      "title": "Completed Share"
+    },
+    "mean_spillover_probability": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "What the models predicted for those stories, to compare with 1 - completed_share",
+      "title": "Mean Spillover Probability"
+    },
+    "effort_mae": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Mean absolute error against the actual points",
+      "title": "Effort Mae"
+    }
+  },
+  "required": [
+    "project_id",
+    "predictions",
+    "stories",
+    "by_risk_level",
+    "by_configuration",
+    "pinned",
+    "feedback",
+    "outcomes"
+  ],
+  "title": "ProjectSummary",
+  "type": "object"
+}

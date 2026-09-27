@@ -5,7 +5,7 @@ node_modules
 .next
 coverage
 gateway
-contracts
+# contracts/ stays: pages load its examples (the example backlog on Sprint planning).
 **/.venv
 **/__pycache__
 .env

@@ -1,0 +1,213 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "OutcomeBrief": {
+      "properties": {
+        "completed_in_sprint": {
+          "title": "Completed In Sprint",
+          "type": "boolean"
+        },
+        "actual_story_points": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Actual Story Points"
+        },
+        "reopened": {
+          "default": false,
+          "title": "Reopened",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "completed_in_sprint"
+      ],
+      "title": "OutcomeBrief",
+      "type": "object"
+    },
+    "PredictionBrief": {
+      "description": "A past prediction in brief, with the latest decision on it and what happened.",
+      "properties": {
+        "prediction_id": {
+          "title": "Prediction Id",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "story_id": {
+          "title": "Story Id",
+          "type": "string"
+        },
+        "sprint_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sprint Id"
+        },
+        "configuration_id": {
+          "title": "Configuration Id",
+          "type": "string"
+        },
+        "model_version": {
+          "title": "Model Version",
+          "type": "string"
+        },
+        "selection_mode": {
+          "enum": [
+            "auto",
+            "pinned"
+          ],
+          "title": "Selection Mode",
+          "type": "string"
+        },
+        "predicted_story_points": {
+          "title": "Predicted Story Points",
+          "type": "number"
+        },
+        "prediction_interval": {
+          "$ref": "#/$defs/PredictionInterval"
+        },
+        "effort_category": {
+          "title": "Effort Category",
+          "type": "string"
+        },
+        "spillover_probability": {
+          "title": "Spillover Probability",
+          "type": "number"
+        },
+        "sprint_risk_level": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "title": "Sprint Risk Level",
+          "type": "string"
+        },
+        "confidence_score": {
+          "title": "Confidence Score",
+          "type": "number"
+        },
+        "confidence_level": {
+          "title": "Confidence Level",
+          "type": "string"
+        },
+        "feedback": {
+          "anyOf": [
+            {
+              "enum": [
+                "accept",
+                "adjust",
+                "reject"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The latest decision",
+          "title": "Feedback"
+        },
+        "outcome": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OutcomeBrief"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "What happened, once known"
+        }
+      },
+      "required": [
+        "prediction_id",
+        "created_at",
+        "story_id",
+        "configuration_id",
+        "model_version",
+        "selection_mode",
+        "predicted_story_points",
+        "prediction_interval",
+        "effort_category",
+        "spillover_probability",
+        "sprint_risk_level",
+        "confidence_score",
+        "confidence_level"
+      ],
+      "title": "PredictionBrief",
+      "type": "object"
+    },
+    "PredictionInterval": {
+      "properties": {
+        "lower": {
+          "minimum": 0,
+          "title": "Lower",
+          "type": "number"
+        },
+        "upper": {
+          "minimum": 0,
+          "title": "Upper",
+          "type": "number"
+        }
+      },
+      "required": [
+        "lower",
+        "upper"
+      ],
+      "title": "PredictionInterval",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "project_id": {
+      "title": "Project Id",
+      "type": "string"
+    },
+    "predictions": {
+      "description": "Newest first",
+      "items": {
+        "$ref": "#/$defs/PredictionBrief"
+      },
+      "title": "Predictions",
+      "type": "array"
+    },
+    "next_offset": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Pass as offset for the next page; empty at the end",
+      "title": "Next Offset"
+    }
+  },
+  "required": [
+    "project_id",
+    "predictions"
+  ],
+  "title": "PredictionPage",
+  "type": "object"
+}

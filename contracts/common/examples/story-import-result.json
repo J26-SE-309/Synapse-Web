@@ -1,0 +1,68 @@
+{
+  "stories": [
+    {
+      "project_id": "TUTOR",
+      "story_id": "TUTOR-1",
+      "title": "As a student I want to book an available tutoring session so that I can get help",
+      "description": "Pick a tutor, a date and a free time slot. Only logged-in students can book.",
+      "acceptance_criteria": [
+        "Given a free slot, when I book it, then it is reserved for me",
+        "Given a slot someone else booked, when I open it, then I cannot book it"
+      ],
+      "issue_type": "Story",
+      "priority": "Major",
+      "story_points": 5,
+      "epic": "Booking",
+      "blocked_by": 0,
+      "depends_on": 1,
+      "needed_by": 2,
+      "status": "in_progress",
+      "sprint_id": "TUTOR-S4",
+      "source": "refinement",
+      "synthetic": false,
+      "started_at": "2026-09-15T08:30:00Z",
+      "resolved_at": null,
+      "reopened": false,
+      "created_at": "2026-09-10T09:00:00Z",
+      "updated_at": "2026-09-15T08:30:00Z"
+    }
+  ],
+  "sprint": {
+    "project_id": "TUTOR",
+    "sprint_id": "TUTOR-S4",
+    "name": "Sprint 4",
+    "goal": "Students can book and pay",
+    "status": "active",
+    "length_days": 14,
+    "capacity_points": 30,
+    "started_at": "2026-09-14T09:00:00Z",
+    "planned_end": "2026-09-28T09:00:00Z",
+    "closed_at": null,
+    "created_at": "2026-09-11T10:00:00Z",
+    "items": [
+      {
+        "story_id": "TUTOR-1",
+        "committed_at": "2026-09-14T09:00:00Z",
+        "added_mid_sprint": false,
+        "points_at_commit": 5,
+        "left_at": null,
+        "points_at_close": null,
+        "done_in_sprint": null
+      },
+      {
+        "story_id": "TUTOR-7",
+        "committed_at": "2026-09-17T11:20:00Z",
+        "added_mid_sprint": true,
+        "points_at_commit": 2,
+        "left_at": null,
+        "points_at_close": null,
+        "done_in_sprint": null
+      }
+    ],
+    "effort_sync": {
+      "status": "sent",
+      "sent_at": "2026-09-17T11:20:01Z",
+      "error": null
+    }
+  }
+}

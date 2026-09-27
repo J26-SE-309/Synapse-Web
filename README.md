@@ -8,8 +8,8 @@
 
 Synapse Web is the single user interface for the Synapse platform, plus the pieces all four components share:
 
-- **Web app** (Next.js 16, React 19, TypeScript, Tailwind CSS): one page area per component.
-- **API gateway and orchestration engine** (`gateway/`, FastAPI): the only address the web app calls. It forwards `/api/v1/<component>/...` to each component's service and runs the full pipeline (`POST /api/v1/pipeline/run`): quality analysis, then story refinement, then traceability, then effort and sprint-risk prediction.
+- **Web app** (Next.js 16, React 19, TypeScript, Tailwind CSS 4, shadcn/ui on Radix): one page area per component inside a shared shell (sidebar, top bar with the project picker, light and dark themes).
+- **API gateway and orchestration engine** (`gateway/`, FastAPI): the only address the web app calls. It forwards `/api/v1/<component>/...` to each component's service and runs the full pipeline (`POST /api/v1/pipeline/run`): quality analysis, then story refinement, then traceability, then effort and sprint-risk prediction. It also owns the platform's **projects** (`/api/v1/projects`), which every component keys its data by, and each project's **backlog and sprints** (`/api/v1/projects/{id}/stories`, `/sprints`).
 - **Contracts** (`contracts/`): the JSON Schemas of the data the components exchange.
 
 All four developers work in this repository, each on their own branch.
@@ -21,13 +21,23 @@ Synapse-Web/
 ├── src/
 │   ├── app/
 │   │   ├── layout.tsx, page.tsx      # app shell and overview page (shared)
+│   │   ├── (platform)/               # the platform's own pages: backlog/, sprints/ (shared)
 │   │   └── (modules)/                # one folder per component, owned by its developer
 │   │       ├── requirement-quality/  #   Ama
 │   │       ├── story-refinement/     #   Sathmi
 │   │       ├── traceability/         #   Lakviru
 │   │       └── effort-estimation/    #   Nikeshala
-│   └── shared/                       # API client, components, hooks, module list (shared)
-├── gateway/                          # FastAPI API gateway and orchestration engine (port 8000)
+│   ├── shared/                       # shared:
+│   │   ├── ui/                       #   the UI kit (shadcn/ui on Radix): buttons, forms, dialogs, tables, charts…
+│   │   ├── shell/                    #   sidebar, top bar, skip link
+│   │   ├── projects/                 #   the project picker, "New project" and ProjectGate
+│   │   ├── backlog/                  #   the Backlog and Sprints pages, story and sprint forms
+│   │   ├── sprint-panels.ts          #   what each component shows on a sprint's page
+│   │   ├── theme/                    #   light / dark / system
+│   │   ├── components/, hooks/, api/ #   page header, status badges, the gateway client
+│   │   └── navigation.ts             #   the sidebar and breadcrumbs (modules register their _nav.ts here)
+│   └── test/                         # test setup and the accessibility check (axe.ts)
+├── gateway/                          # FastAPI API gateway, orchestration engine and projects (port 8000)
 ├── contracts/                        # JSON Schemas + examples, one folder per component
 ├── docker-compose.yml                # web app + gateway + the gateway's own database
 └── .github/                          # CI, ownership rules (lead-only)
@@ -75,6 +85,30 @@ Each developer owns their module's route folder and their component's contract f
 | `sathmi` | [@lewkes](https://github.com/lewkes) | User Story Refinement and Acceptance Criteria Generator | `src/app/(modules)/story-refinement/` and `contracts/story-refinement/` |
 
 Everything outside these folders is **shared** (for example `package.json`, `src/shared/`, `src/app/layout.tsx`, `gateway/` and `contracts/common/`). `.github/` is **lead-only**. Ownership is defined in [`.github/ownership.json`](.github/ownership.json).
+
+## Building a Module's Pages
+
+The shell, theme and UI kit are shared, so every module looks and behaves the same. Build your pages from them:
+
+| Need | Use |
+|---|---|
+| Buttons, inputs, selects, dialogs, menus, tables, tabs, toasts, charts | `@/shared/ui/*` (shadcn/ui on Radix: keyboard and screen-reader support built in). Missing one? `npx shadcn@latest add <name>` puts it in `src/shared/ui/` (a shared file, so it needs Nikeshala's approval). |
+| A page title | `PageHeader` from `@/shared/components/PageHeader`: the page's one `<h1>`, its description and actions. Sections below use `<h2>`. |
+| The chosen project | Wrap project pages in `<ProjectGate>{(project) => …}</ProjectGate>` (`@/shared/projects/ProjectGate`); it asks for a project when none is chosen. `useProject()` gives the id elsewhere. |
+| Your pages in the sidebar | List them in `src/app/(modules)/<your-module>/_nav.ts` (yours), and register that list once in `src/shared/navigation.ts` (shared). |
+| Calling your service | `gatewayFetch("api/v1/<your-module>/…")` with TanStack Query; `describeError(error)` turns any failure into a sentence for people. |
+| Your part of a sprint's page | Build a panel in your folder that takes `{ project, sprint, stories }` (`SprintPanelProps`), and register it once in `src/shared/sprint-panels.ts` (shared). The effort module's `SprintEstimates` is the example. |
+| The project's stories and sprints | `useStories(projectId)`, `useSprints(projectId)` from `@/shared/backlog/api`; types in `@/shared/backlog/types`. |
+
+**Theme.** Indigo accent on cool grey (slate), in light and dark; people choose Light, Dark or System in the top bar. Use the colour tokens, never fixed colours, so both themes work: `bg-background`, `bg-card`, `text-foreground`, `text-muted-foreground`, `border`, `bg-primary` / `text-primary`. Green, amber and red (`text-success`, `text-warning`, `text-danger` and their `-soft` backgrounds) are kept for status and risk.
+
+**Validation in the browser.** Forms use React Hook Form with a Zod schema whose rules are your contract's (lengths, minimums, required fields), so problems show before anything is sent; the service still checks everything. On each field: a `<FieldLabel>`, `aria-invalid`, and a `<FieldError>` tied to it with `aria-describedby`. Put a server's 422 back on the field it names. A test should read your `contracts/<module>/*.schema.json` and check the form's limits match it (see `src/shared/projects/schema.test.ts`).
+
+**Accessibility (NFR11, WCAG 2.1 AA).** Never show meaning by colour alone (add a word or icon), keep everything usable with the keyboard, and check components in tests with `accessibilityProblems()` from `src/test/axe.ts` (it must return `[]`). Colour contrast is checked in a real browser, in both themes.
+
+**Projects.** Projects belong to the platform: the gateway stores them (`GET` / `POST /api/v1/projects`, `GET` / `PATCH /api/v1/projects/{id}`, contracts in `contracts/common/project*.schema.json`), and the top bar's picker lists them. Keys are short capitals like `TUTOR` and never change, because every component stores its data under them.
+
+**Backlog and sprints.** They belong to the platform too, not to a component. The **Backlog** page holds every story with its details (description, acceptance criteria, type, priority, points, epic, dependencies); stories are added by hand, imported from a JSON file, or, later, arrive from story refinement. On **Sprints**, the team plans a sprint, adds stories from the backlog, starts it (the stories are committed), moves stories along (To do, In progress, Done) and closes it (unfinished stories go back to the backlog as spilled over). The components give their opinion on a sprint's page: effort and spillover risk today. Every change to a started sprint is sent to the effort service (`PUT /api/v1/projects/{id}/sprints/{id}` there), which records each story's outcome against its estimate and builds the team's history; if it is unreachable, the sprint page says so and offers to send it again. Contracts: `contracts/common/story*.schema.json` and `sprint*.schema.json`.
 
 ### Pull Request Checks
 
@@ -133,6 +167,12 @@ py -3.12 -m venv .venv
 ```
 
 Open http://localhost:8000/docs. The gateway expects the components on ports 8001–8004 (see `gateway/.env.example`); components that are not running show as *Not reachable* in the web app. Tests: `.venv\Scripts\python -m pytest` and `.venv\Scripts\ruff check .` from `gateway/`.
+
+The gateway creates and updates its tables itself at start-up (Alembic migrations in `gateway/app/migrations`), so start its database first (`docker compose up -d platform-db`). To try the pages with the effort service's development teams, add them as projects (they are labelled *Synthetic* or *TAWOS replay* in the picker and can be removed again):
+
+```powershell
+.venv\Scripts\python -m app.devdata load     # or: list, delete
+```
 
 ### Everything in Docker
 

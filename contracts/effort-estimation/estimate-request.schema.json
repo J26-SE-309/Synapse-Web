@@ -1,6 +1,67 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$defs": {
+    "SprintContext": {
+      "properties": {
+        "length_days": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Length Days"
+        },
+        "parallel_sprints": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Other sprints of the project running",
+          "title": "Parallel Sprints"
+        },
+        "wip": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Issues of the sprint already in progress",
+          "title": "Wip"
+        },
+        "capacity_points": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Planned capacity (default: velocity)",
+          "title": "Capacity Points"
+        }
+      },
+      "title": "SprintContext",
+      "type": "object"
+    },
     "StoryInput": {
       "properties": {
         "story_id": {
@@ -35,6 +96,7 @@
             }
           ],
           "default": null,
+          "description": "Story, Task, Bug, Improvement or New Feature",
           "title": "Issue Type"
         },
         "priority": {
@@ -47,6 +109,7 @@
             }
           ],
           "default": null,
+          "description": "Jira priority name, e.g. Major or High",
           "title": "Priority"
         },
         "story_points": {
@@ -65,21 +128,70 @@
         },
         "blocker_count": {
           "default": 0,
+          "description": "Open issues this story is blocked by",
           "minimum": 0,
           "title": "Blocker Count",
           "type": "integer"
         },
         "dep_in_degree": {
           "default": 0,
+          "description": "Issues that depend on this story",
           "minimum": 0,
           "title": "Dep In Degree",
           "type": "integer"
         },
         "dep_out_degree": {
           "default": 0,
+          "description": "Issues this story depends on",
           "minimum": 0,
           "title": "Dep Out Degree",
           "type": "integer"
+        },
+        "linked_issue_count": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "All linked issues, any link type",
+          "title": "Linked Issue Count"
+        },
+        "has_epic": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The story belongs to an epic (unknown if left out)",
+          "title": "Has Epic"
+        },
+        "in_progress": {
+          "default": false,
+          "description": "Work on the story has already started",
+          "title": "In Progress",
+          "type": "boolean"
+        },
+        "added_mid_sprint": {
+          "default": false,
+          "description": "Added after the sprint started",
+          "title": "Added Mid Sprint",
+          "type": "boolean"
+        },
+        "days_into_sprint": {
+          "default": 0,
+          "description": "Days after the sprint start it was added",
+          "minimum": 0,
+          "title": "Days Into Sprint",
+          "type": "number"
         },
         "upstream": {
           "$ref": "#/$defs/UpstreamSignals",
@@ -102,8 +214,99 @@
       "title": "StoryInput",
       "type": "object"
     },
+    "TeamContext": {
+      "description": "The team's recent delivery, as the platform knows it. Unknown history means a cold start: the pooled\nconfiguration answers and the confidence is lowered.",
+      "properties": {
+        "velocity_mean": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Mean points finished, last 3 sprints",
+          "title": "Velocity Mean"
+        },
+        "velocity_variance": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Variance of points, last 5 sprints",
+          "title": "Velocity Variance"
+        },
+        "closed_sprints": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "How many sprints the team has closed",
+          "title": "Closed Sprints"
+        },
+        "mean_cycle_time_hours": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mean Cycle Time Hours"
+        },
+        "spillover_rate": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Share of recent stories spilled",
+          "title": "Spillover Rate"
+        },
+        "reopen_rate": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reopen Rate"
+        }
+      },
+      "title": "TeamContext",
+      "type": "object"
+    },
     "UpstreamSignals": {
-      "description": "Features supplied by Components 1-3 through the gateway. Any of them may be missing (FR17).",
+      "description": "Features supplied by Components 1-3 through the gateway. Any of them may be missing (FR17): the service\nthen uses its own proxies computed from the story text and flags the group as degraded.",
       "properties": {
         "ambiguity_score": {
           "anyOf": [
@@ -243,6 +446,41 @@
       "minItems": 1,
       "title": "Stories",
       "type": "array"
+    },
+    "team_context": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TeamContext"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "sprint_context": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SprintContext"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "pinned_configuration": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Answer with this configuration (FR12)",
+      "title": "Pinned Configuration"
     }
   },
   "required": [
