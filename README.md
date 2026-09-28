@@ -82,7 +82,7 @@ Each developer owns their module's route folder and their component's contract f
 | `nikeshala` | [@Nikeshala22](https://github.com/Nikeshala22) | Effort Estimation and Sprint Risk Predictor | `src/app/(modules)/effort-estimation/` and `contracts/effort-estimation/` |
 | `ama` | [@AmaLiyanage](https://github.com/AmaLiyanage) | Requirement Quality and Ambiguity Analyzer | `src/app/(modules)/requirement-quality/` and `contracts/requirement-quality/` |
 | `lakviru` | [@dinuwa2500](https://github.com/dinuwa2500) | Requirement Traceability Engine | `src/app/(modules)/traceability/` and `contracts/traceability/` |
-| `sathmi` | [@lewkes](https://github.com/lewkes) | User Story Refinement and Acceptance Criteria Generator | `src/app/(modules)/story-refinement/` and `contracts/story-refinement/` |
+| `sathmi` | [@Sathmi-Ruwanya](https://github.com/Sathmi-Ruwanya) | User Story Refinement and Acceptance Criteria Generator | `src/app/(modules)/story-refinement/` and `contracts/story-refinement/` |
 
 Everything outside these folders is **shared** (for example `package.json`, `src/shared/`, `src/app/layout.tsx`, `gateway/` and `contracts/common/`). `.github/` is **lead-only**. Ownership is defined in [`.github/ownership.json`](.github/ownership.json).
 

@@ -29,7 +29,7 @@
       ]
     },
     "sathmi": {
-      "github": "lewkes",
+      "github": "Sathmi-Ruwanya",
       "service": "User Story Refinement and Acceptance Criteria Generator",
       "paths": [
         "src/app/(modules)/story-refinement/",
