@@ -7,7 +7,7 @@ copy that the other components, the gateway and the web app build against.
 | Folder | Owner | Contents |
 |---|---|---|
 | `requirement-quality/` | Ama (@AmaLiyanage) | `POST /api/v1/analyze` request and response |
-| `story-refinement/` | Sathmi (@lewkes) | `POST /api/v1/refine` request and response |
+| `story-refinement/` | Sathmi (@Sathmi-Ruwanya) | `POST /api/v1/refine` request and response |
 | `traceability/` | Lakviru (@dinuwa2500) | `POST /api/v1/coverage` request and response |
 | `effort-estimation/` | Nikeshala (@Nikeshala22) | `POST /api/v1/estimate` request and response (proposal Appendix C); a project's sprint history (`history-summary`, `history-import`, and `sprint-record` / `sprint-update` for the platform's sprints, sent one at a time); reading back past predictions (`prediction-page`, `prediction-detail`, `project-summary`); and the model selector (`models`, `pin-request` / `pin`, `compare-request` / `compare-response`) |
 | `common/` | shared (lead approval) | The gateway's own endpoints: `POST /api/v1/pipeline/run` (the orchestration request and response), the platform's projects (`project`, `project-create`, `project-update` for `/api/v1/projects`), and each project's backlog and sprints (`story*`, `sprint*` for `/api/v1/projects/{id}/stories` and `/sprints`) |

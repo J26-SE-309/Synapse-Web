@@ -18,7 +18,7 @@ describe("ModulePlaceholder", () => {
     vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(() => {})));
     renderWithQueryClient(<ModulePlaceholder slug="story-refinement" />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("User Story Refinement");
-    expect(screen.getByText("Owner: @lewkes")).toBeInTheDocument();
+    expect(screen.getByText("Owner: @Sathmi-Ruwanya")).toBeInTheDocument();
     expect(screen.getByText("src/app/(modules)/story-refinement/")).toBeInTheDocument();
     expect(screen.getByText("Checking…")).toBeInTheDocument();
   });
