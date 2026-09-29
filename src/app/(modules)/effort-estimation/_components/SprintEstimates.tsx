@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 
 import { describeError } from "@/shared/api/gateway";
-import type { SprintPanelProps } from "@/shared/sprint-panels";
+import type { SprintPanelProps } from "@/shared/module-slots";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";

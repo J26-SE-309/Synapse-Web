@@ -22,6 +22,8 @@ export interface Story {
   depends_on: number;
   needed_by: number;
   status: StoryStatus;
+  /** Its place in the backlog and in its sprint: lower comes first. */
+  rank: number;
   /** The sprint it is in now; null in the backlog. */
   sprint_id: string | null;
   source: "manual" | "import" | "refinement";
@@ -52,6 +54,8 @@ export type StoryUpdate = Partial<Omit<StoryCreate, "story_id">> & {
   status?: StoryStatus;
   /** A sprint's id moves the story into it; null takes it back to the backlog. */
   sprint_id?: string | null;
+  /** Its new place: lower comes first. */
+  rank?: number;
 };
 
 export interface SprintItem {
@@ -111,10 +115,25 @@ export interface ImportResult {
 export const STATUS_LABELS: Record<StoryStatus, string> = { to_do: "To do", in_progress: "In progress", done: "Done" };
 export const SPRINT_STATUS_LABELS: Record<SprintStatus, string> = { planned: "Planned", active: "Active", closed: "Closed" };
 
-/** The stories in a sprint now (not the ones taken out), in the sprint's order. */
+/** The stories in a sprint now (not the ones taken out), in backlog order. */
 export function storiesIn(sprint: Sprint, stories: Story[]): Story[] {
   const byId = new Map(stories.map((story) => [story.story_id, story]));
-  return sprint.items.filter((item) => item.left_at === null).flatMap((item) => byId.get(item.story_id) ?? []);
+  return sprint.items
+    .filter((item) => item.left_at === null)
+    .flatMap((item) => byId.get(item.story_id) ?? [])
+    .sort(byRank);
+}
+
+export function byRank(a: Pick<Story, "rank" | "story_id">, b: Pick<Story, "rank" | "story_id">): number {
+  return a.rank - b.rank || a.story_id.localeCompare(b.story_id, undefined, { numeric: true });
+}
+
+/** A rank that puts a story between two neighbours (either may be missing: the start or end of a list). */
+export function rankBetween(before: number | undefined, after: number | undefined): number {
+  if (before === undefined && after === undefined) return 1;
+  if (before === undefined) return after! - 1;
+  if (after === undefined) return before + 1;
+  return (before + after) / 2;
 }
 
 export function totalPoints(stories: Pick<Story, "story_points">[]): number {

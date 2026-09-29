@@ -16,6 +16,7 @@ export function story(id: string, fields: Partial<Story> = {}): Story {
     depends_on: 0,
     needed_by: 0,
     status: "to_do",
+    rank: Number(id.split("-").pop()) || 1,
     sprint_id: "TUTOR-S4",
     source: "manual",
     synthetic: false,
