@@ -15,6 +15,7 @@
   "depends_on": 1,
   "needed_by": 2,
   "status": "in_progress",
+  "rank": 1.0,
   "sprint_id": "TUTOR-S4",
   "source": "refinement",
   "synthetic": false,
