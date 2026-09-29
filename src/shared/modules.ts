@@ -29,7 +29,7 @@ export const MODULES: readonly PlatformModule[] = [
     slug: "story-refinement",
     name: "User Story Refinement and Acceptance Criteria Generator",
     shortName: "Story Refinement",
-    owner: "lewkes",
+    owner: "Sathmi-Ruwanya",
     description: "Turns validated requirements into user stories with testable acceptance criteria.",
     apiPort: 8002,
   },
