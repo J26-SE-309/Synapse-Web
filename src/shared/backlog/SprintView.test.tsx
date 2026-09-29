@@ -136,3 +136,36 @@ describe("a sprint's page", () => {
     expect(await accessibilityProblems(container)).toEqual([]);
   });
 });
+
+describe("an active sprint's board", () => {
+  it("shows the stories in their columns and moves one from its menu", async () => {
+    const requests: { url: string; method: string; body?: unknown }[] = [];
+    const board = [
+      story("TUTOR-1", { title: "Book a session", status: "in_progress" }),
+      story("TUTOR-2", { title: "Pay for a session" }),
+      story("TUTOR-3", { title: "Cancel a booking", status: "done", resolved_at: "2026-09-15T10:00:00Z" }),
+    ];
+    const fetch = gateway(ACTIVE, requests);
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) =>
+      url.endsWith("/projects/TUTOR/stories") ? new Response(JSON.stringify(board)) : fetch(url, init),
+    ));
+    const { container } = renderSprint();
+    const user = userEvent.setup();
+
+    const todo = await screen.findByRole("list", { name: "To do" });
+    expect(within(todo).getByText("Pay for a session")).toBeInTheDocument();
+    expect(within(screen.getByRole("list", { name: "In progress" })).getByText("Book a session")).toBeInTheDocument();
+    expect(within(screen.getByRole("list", { name: "Done" })).getByText("Cancel a booking")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Burndown" })).toBeInTheDocument();
+    expect(await accessibilityProblems(container)).toEqual([]);
+
+    await user.click(within(todo).getByRole("button", { name: "Actions for TUTOR-2" }));
+    await user.click(await screen.findByRole("menuitem", { name: "In progress" }));
+    await waitFor(() =>
+      expect(requests.find((request) => request.method === "PATCH")).toMatchObject({ body: { status: "in_progress" } }),
+    );
+
+    await user.click(screen.getByRole("radio", { name: "List" }));
+    expect(screen.getByRole("table", { name: "Stories in Sprint 4" })).toBeInTheDocument();
+  });
+});
