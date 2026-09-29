@@ -32,17 +32,19 @@ function values(sprint: Sprint): SprintFormValues {
   };
 }
 
-/** Plan a new sprint, or change one that has not closed (sprint given). */
+/** Plan a new sprint, or change one that has not closed (sprint given). A new sprint opens unless `stay`. */
 export function SprintFormDialog({
   projectId,
   sprint,
   open,
   onOpenChange,
+  stay = false,
 }: {
   projectId: string;
   sprint?: Sprint;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  stay?: boolean;
 }) {
   const form = useForm<SprintFormValues>({
     resolver: zodResolver(sprintFormSchema),
@@ -71,7 +73,7 @@ export function SprintFormDialog({
         const created = await create.mutateAsync(body);
         toast.success(`Planned ${created.name}`, { description: created.sprint_id });
         onOpenChange(false);
-        router.push(`/sprints/${encodeURIComponent(created.sprint_id)}`);
+        if (!stay) router.push(`/sprints/${encodeURIComponent(created.sprint_id)}`);
       }
     } catch (error) {
       if (error instanceof GatewayError && error.status === 409 && !sprint) {

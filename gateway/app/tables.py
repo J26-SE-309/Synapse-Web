@@ -68,6 +68,9 @@ class Story(Base):
     depends_on: Mapped[int] = mapped_column(Integer, default=0)  # issues it needs first
     needed_by: Mapped[int] = mapped_column(Integer, default=0)  # issues that need it first
     status: Mapped[str] = mapped_column(String(12), default="to_do")  # to_do, in_progress, done
+    # Its place in the backlog (and in a sprint): lower comes first. A story dropped between two others takes a
+    # rank between theirs, so reordering changes one row.
+    rank: Mapped[float] = mapped_column(Float, default=0.0)
     # The sprint it is in now: none in the backlog; a story done in a sprint stays with that sprint.
     sprint_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     source: Mapped[str] = mapped_column(String(12), default="manual")  # manual, import, refinement

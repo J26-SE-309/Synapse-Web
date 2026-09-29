@@ -13,7 +13,7 @@ from typing import Annotated, Literal
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response, status
 from pydantic import BaseModel, ConfigDict, Field, model_validator
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -51,7 +51,7 @@ class StoryCreate(BaseModel):
     needed_by: int = Field(default=0, ge=0, le=1000, description="Issues that need it first")
 
 
-NOT_NULL = {"title", "description", "acceptance_criteria", "blocked_by", "depends_on", "needed_by", "status"}
+NOT_NULL = {"title", "description", "acceptance_criteria", "blocked_by", "depends_on", "needed_by", "status", "rank"}
 
 
 class StoryUpdate(BaseModel):
@@ -71,6 +71,7 @@ class StoryUpdate(BaseModel):
     needed_by: int | None = Field(default=None, ge=0, le=1000)
     status: StoryStatus | None = None
     sprint_id: str | None = Field(default=None, max_length=100)
+    rank: float | None = Field(default=None, description="Its new place: lower comes first (between two neighbours)")
 
     @model_validator(mode="after")
     def _required_stay_set(self):
@@ -96,6 +97,7 @@ class Story(BaseModel):
     depends_on: int
     needed_by: int
     status: StoryStatus
+    rank: float = Field(description="Its place in the backlog and in its sprint: lower comes first")
     sprint_id: str | None = Field(description="The sprint it is in now; empty in the backlog")
     source: Literal["manual", "import", "refinement"]
     synthetic: bool = Field(description="Made-up data for development and demonstrations, never evidence")
@@ -244,14 +246,18 @@ def _sprint_out(session: Session, sprint: tables.Sprint) -> Sprint:
     return Sprint(**fields, items=items, effort_sync=sync)
 
 
+def _last_rank(session: Session, project_id: str) -> float:
+    return session.scalar(select(func.max(tables.Story.rank)).filter_by(project_id=project_id)) or 0.0
+
+
 def _new_story(session: Session, project_id: str, request: StoryCreate, source: str, synthetic: bool,
-               taken: set[str]) -> tables.Story:
+               taken: set[str], rank: float) -> tables.Story:
     story_id = request.story_id or _next_id(taken, f"{project_id}-")[0]
     if story_id in taken:
         raise _conflict(f"A story with the id '{story_id}' already exists in this project")
     taken.add(story_id)
     story = tables.Story(project_id=project_id, **request.model_dump(exclude={"story_id"}), story_id=story_id,
-                         status="to_do", source=source, synthetic=synthetic, reopened=False)
+                         status="to_do", source=source, synthetic=synthetic, reopened=False, rank=rank)
     session.add(story)
     return story
 
@@ -325,11 +331,11 @@ def _push(background: BackgroundTasks, request: Request, project_id: str, sprint
 
 @router.get("/projects/{project_id}/stories", response_model=list[Story])
 def list_stories(project_id: str, session: DbSession) -> list[Story]:
-    """Every story of the project, oldest first; each says which sprint it is in (none: the backlog)."""
+    """Every story of the project in backlog order (rank); each says which sprint it is in (none: the backlog)."""
     try:
         _project(session, project_id)
         rows = session.scalars(select(tables.Story).filter_by(project_id=project_id))
-        return [Story.model_validate(row) for row in sorted(rows, key=lambda row: (row.created_at,
+        return [Story.model_validate(row) for row in sorted(rows, key=lambda row: (row.rank, row.created_at,
                                                                                     _natural(row.story_id)))]
     except SQLAlchemyError:
         raise _unavailable() from None
@@ -340,7 +346,7 @@ def create_story(project_id: str, request: StoryCreate, session: DbSession) -> S
     try:
         _project(session, project_id)
         taken = set(session.scalars(select(tables.Story.story_id).filter_by(project_id=project_id)))
-        story = _new_story(session, project_id, request, "manual", False, taken)
+        story = _new_story(session, project_id, request, "manual", False, taken, _last_rank(session, project_id) + 1)
         session.commit()
         return Story.model_validate(story)
     except SQLAlchemyError:
@@ -354,8 +360,9 @@ def import_stories(project_id: str, request: StoryImport, session: DbSession) ->
     try:
         _project(session, project_id)
         taken = set(session.scalars(select(tables.Story.story_id).filter_by(project_id=project_id)))
-        stories = [_new_story(session, project_id, story, "import", request.synthetic, taken)
-                   for story in request.stories]
+        last = _last_rank(session, project_id)
+        stories = [_new_story(session, project_id, story, "import", request.synthetic, taken, last + index)
+                   for index, story in enumerate(request.stories, start=1)]
         sprint = _new_sprint(session, project_id, request.sprint) if request.sprint else None
         session.flush()
         if sprint is not None:

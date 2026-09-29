@@ -1,6 +1,17 @@
 "use client";
 
-import { CircleCheckIcon, PencilIcon, PlayIcon, PlusIcon, SendIcon, SquareIcon, Trash2Icon, TriangleAlertIcon } from "lucide-react";
+import {
+  CircleCheckIcon,
+  ColumnsIcon,
+  ListIcon,
+  PencilIcon,
+  PlayIcon,
+  PlusIcon,
+  SendIcon,
+  SquareIcon,
+  Trash2Icon,
+  TriangleAlertIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -10,7 +21,7 @@ import { describeError, GatewayError } from "@/shared/api/gateway";
 import { PageHeader } from "@/shared/components/PageHeader";
 import type { Project } from "@/shared/projects/api";
 import { ProjectGate } from "@/shared/projects/ProjectGate";
-import { SPRINT_PANELS } from "@/shared/sprint-panels";
+import { SPRINT_PANELS } from "@/shared/module-slots";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/alert";
 import {
   AlertDialog,
@@ -28,75 +39,130 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/shared/ui/em
 import { Progress } from "@/shared/ui/progress";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Spinner } from "@/shared/ui/spinner";
+import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/toggle-group";
 
 import { AddStoriesDialog } from "./AddStoriesDialog";
+import { Burndown } from "./Burndown";
 import { useDeleteSprint, useSprintAction, useSprints, useStories } from "./api";
 import { formatDate, formatDateTime, formatPoints, SprintStatusBadge } from "./badges";
+import { daysLeft } from "./planning";
+import { SprintBoard } from "./SprintBoard";
 import { SprintFormDialog } from "./SprintFormDialog";
+import { sprintStats } from "./sprint-stats";
+import { StoryDetailsSheet } from "./StoryDetailsSheet";
 import { StoryFormDialog } from "./StoryFormDialog";
 import { StoryTable } from "./StoryTable";
 import { storiesIn, totalPoints, type Sprint, type Story } from "./types";
 
 type Confirm = "start" | "close" | "delete" | null;
 
-function Summary({ sprint, stories }: { sprint: Sprint; stories: Story[] }) {
-  const points = totalPoints(stories);
-  const donePoints = totalPoints(
-    stories.filter((story) =>
-      sprint.status === "closed"
-        ? sprint.items.find((item) => item.story_id === story.story_id)?.done_in_sprint
-        : story.status === "done",
-    ),
-  );
-  const capacity = sprint.capacity_points;
-  const over = capacity !== null && points > capacity;
+function Stat({ label, value, children }: { label: string; value: React.ReactNode; children?: React.ReactNode }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-3">
-      <Card size="sm">
-        <CardHeader>
-          <CardDescription>Committed</CardDescription>
-          <CardTitle className="text-2xl tabular-nums">
-            {formatPoints(points)} <span className="text-base font-normal text-muted-foreground">points</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          {stories.length} {stories.length === 1 ? "story" : "stories"}
-          {stories.some((story) => story.story_points === null) ? ", some without an estimate" : ""}
-        </CardContent>
-      </Card>
-      <Card size="sm">
-        <CardHeader>
-          <CardDescription>Capacity</CardDescription>
-          <CardTitle className="text-2xl tabular-nums">
-            {capacity === null ? "–" : formatPoints(capacity)}{" "}
-            {capacity !== null ? <span className="text-base font-normal text-muted-foreground">points</span> : null}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm">
-          {capacity === null ? (
-            <span className="text-muted-foreground">Not set: the effort estimate uses the team&apos;s velocity.</span>
-          ) : over ? (
-            <span className="inline-flex items-center gap-1 font-medium text-warning">
-              <TriangleAlertIcon aria-hidden className="size-4" /> {formatPoints(points - capacity)} points over capacity
-            </span>
+    <Card size="sm" className="gap-2">
+      <CardHeader>
+        <CardDescription>{label}</CardDescription>
+        <CardTitle className="text-xl tabular-nums">{value}</CardTitle>
+      </CardHeader>
+      {children ? <CardContent className="space-y-1.5 text-xs text-muted-foreground">{children}</CardContent> : null}
+    </Card>
+  );
+}
+
+function Stats({ sprint, stories }: { sprint: Sprint; stories: Story[] }) {
+  const stats = sprintStats(sprint, stories);
+  const left = daysLeft(sprint);
+  const over = stats.capacity !== null && stats.committed > stats.capacity;
+  const muted = "text-sm font-normal text-muted-foreground";
+  return (
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <Stat
+        label="Time"
+        value={
+          sprint.status === "planned" ? (
+            <>
+              {sprint.length_days} <span className={muted}>days</span>
+            </>
+          ) : sprint.status === "closed" ? (
+            "Closed"
           ) : (
-            <span className="text-muted-foreground">{formatPoints(capacity - points)} points to spare</span>
-          )}
-        </CardContent>
-      </Card>
-      <Card size="sm">
-        <CardHeader>
-          <CardDescription>Done</CardDescription>
-          <CardTitle className="text-2xl tabular-nums">
-            {formatPoints(donePoints)} <span className="text-base font-normal text-muted-foreground">of {formatPoints(points)} points</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Progress value={points > 0 ? (donePoints / points) * 100 : 0} aria-label="Points done" />
-        </CardContent>
-      </Card>
+            <>
+              Day {Math.min(stats.elapsedDays + 1, stats.lengthDays)} <span className={muted}>of {stats.lengthDays}</span>
+            </>
+          )
+        }
+      >
+        {sprint.status === "active" ? (
+          <>
+            <Progress value={(stats.elapsedDays / stats.lengthDays) * 100} aria-label="Time used" />
+            <p>{left === 0 ? "Last day" : `${left} ${left === 1 ? "day" : "days"} left, ends ${formatDate(sprint.planned_end)}`}</p>
+          </>
+        ) : (
+          <p>{sprint.status === "closed" ? `On ${formatDate(sprint.closed_at)}` : "Starts when you start it"}</p>
+        )}
+      </Stat>
+      <Stat
+        label="Done"
+        value={
+          <>
+            {formatPoints(stats.done)} <span className={muted}>of {formatPoints(stats.committed)} points</span>
+          </>
+        }
+      >
+        <Progress value={stats.committed > 0 ? (stats.done / stats.committed) * 100 : 0} aria-label="Points done" />
+        <p>{stats.committed > 0 ? `${Math.round((stats.done / stats.committed) * 100)}% of the points` : "Nothing estimated yet"}</p>
+      </Stat>
+      <Stat
+        label="Capacity"
+        value={
+          stats.capacity === null ? (
+            "Not set"
+          ) : (
+            <>
+              {formatPoints(stats.capacity)} <span className={muted}>points</span>
+            </>
+          )
+        }
+      >
+        {stats.capacity === null ? (
+          <p>The effort estimate uses the team&apos;s velocity.</p>
+        ) : over ? (
+          <p className="inline-flex items-center gap-1 font-medium text-warning">
+            <TriangleAlertIcon aria-hidden className="size-3.5" /> {formatPoints(stats.committed - stats.capacity)} points over
+          </p>
+        ) : (
+          <p>{formatPoints(stats.capacity - stats.committed)} points to spare</p>
+        )}
+      </Stat>
+      <Stat
+        label="Stories"
+        value={
+          <>
+            {stories.length} <span className={muted}>{stories.length === 1 ? "story" : "stories"}</span>
+          </>
+        }
+      >
+        <p>
+          {sprint.status === "closed"
+            ? `${stats.counts.done} done, ${stories.length - stats.counts.done} spilled over`
+            : `${stats.counts.to_do} to do, ${stats.counts.in_progress} in progress, ${stats.counts.done} done`}
+        </p>
+      </Stat>
     </div>
   );
+}
+
+type View = "board" | "list";
+const VIEW_KEY = "synapse-sprint-view";
+
+/** Board or list, remembered per viewer; phones start with the list. */
+function initialView(): View {
+  try {
+    const saved = window.localStorage.getItem(VIEW_KEY);
+    if (saved === "board" || saved === "list") return saved;
+  } catch {
+    // storage may be unavailable (a private window): fall back to the default
+  }
+  return typeof window !== "undefined" && window.matchMedia?.("(max-width: 767px)").matches ? "list" : "board";
 }
 
 function EffortSyncNote({ project, sprint }: { project: Project; sprint: Sprint }) {
@@ -152,6 +218,8 @@ function SprintPage({ project, sprintId }: { project: Project; sprintId: string 
   const [confirm, setConfirm] = useState<Confirm>(null);
   const [editing, setEditing] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [view, setView] = useState<View>(initialView);
+  const [selected, setSelected] = useState<string | null>(null);
 
   if (sprints.isPending || stories.isPending) return <Skeleton className="mx-auto h-96 max-w-6xl" />;
   if (sprints.isError || stories.isError) {
@@ -263,7 +331,21 @@ function SprintPage({ project, sprintId }: { project: Project; sprintId: string 
       ) : null}
 
       <EffortSyncNote project={project} sprint={sprint} />
-      <Summary sprint={sprint} stories={inSprint} />
+      <Stats sprint={sprint} stories={inSprint} />
+
+      {sprint.status !== "planned" && inSprint.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <h2>Burndown</h2>
+            </CardTitle>
+            <CardDescription>Points still to do each day, against a straight line to zero by the planned end.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Burndown sprint={sprint} stories={inSprint} />
+          </CardContent>
+        </Card>
+      ) : null}
 
       <section aria-labelledby="sprint-backlog-heading" className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -271,7 +353,32 @@ function SprintPage({ project, sprintId }: { project: Project; sprintId: string 
             Sprint backlog
           </h2>
           {sprint.status !== "closed" ? (
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              {sprint.status === "active" ? (
+                <ToggleGroup
+                  type="single"
+                  variant="outline"
+                  spacing={0}
+                  value={view}
+                  aria-label="Show the stories as"
+                  onValueChange={(next) => {
+                    if (next !== "board" && next !== "list") return;
+                    setView(next);
+                    try {
+                      window.localStorage.setItem(VIEW_KEY, next);
+                    } catch {
+                      // not remembered: fine
+                    }
+                  }}
+                >
+                  <ToggleGroupItem value="board" aria-label="Board">
+                    <ColumnsIcon aria-hidden /> <span className="hidden sm:inline">Board</span>
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="list" aria-label="List">
+                    <ListIcon aria-hidden /> <span className="hidden sm:inline">List</span>
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              ) : null}
               <AddStoriesDialog projectId={project.id} sprint={sprint} backlog={backlog} />
               <Button variant="outline" onClick={() => setCreating(true)}>
                 <PlusIcon aria-hidden /> New story
@@ -290,6 +397,8 @@ function SprintPage({ project, sprintId }: { project: Project; sprintId: string 
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
+        ) : sprint.status === "active" && view === "board" ? (
+          <SprintBoard project={project} sprint={sprint} stories={inSprint} onOpen={(story) => setSelected(story.story_id)} />
         ) : (
           <StoryTable
             projectId={project.id}
@@ -308,6 +417,12 @@ function SprintPage({ project, sprintId }: { project: Project; sprintId: string 
           ))
         : null}
 
+      <StoryDetailsSheet
+        project={project}
+        story={selected ? (stories.data.find((story) => story.story_id === selected) ?? null) : null}
+        sprints={sprints.data}
+        onClose={() => setSelected(null)}
+      />
       <SprintFormDialog projectId={project.id} sprint={sprint} open={editing} onOpenChange={setEditing} />
       <StoryFormDialog projectId={project.id} sprintId={sprint.sprint_id} open={creating} onOpenChange={setCreating} />
 
