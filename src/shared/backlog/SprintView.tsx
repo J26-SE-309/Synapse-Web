@@ -10,7 +10,7 @@ import { describeError, GatewayError } from "@/shared/api/gateway";
 import { PageHeader } from "@/shared/components/PageHeader";
 import type { Project } from "@/shared/projects/api";
 import { ProjectGate } from "@/shared/projects/ProjectGate";
-import { SPRINT_PANELS } from "@/shared/sprint-panels";
+import { SPRINT_PANELS } from "@/shared/module-slots";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/alert";
 import {
   AlertDialog,

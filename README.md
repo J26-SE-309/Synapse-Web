@@ -97,7 +97,7 @@ The shell, theme and UI kit are shared, so every module looks and behaves the sa
 | The chosen project | Wrap project pages in `<ProjectGate>{(project) => …}</ProjectGate>` (`@/shared/projects/ProjectGate`); it asks for a project when none is chosen. `useProject()` gives the id elsewhere. |
 | Your pages in the sidebar | List them in `src/app/(modules)/<your-module>/_nav.ts` (yours), and register that list once in `src/shared/navigation.ts` (shared). |
 | Calling your service | `gatewayFetch("api/v1/<your-module>/…")` with TanStack Query; `describeError(error)` turns any failure into a sentence for people. |
-| Your part of a sprint's page | Build a panel in your folder that takes `{ project, sprint, stories }` (`SprintPanelProps`), and register it once in `src/shared/sprint-panels.ts` (shared). The effort module's `SprintEstimates` is the example. |
+| Your part of a sprint's page | Build a panel in your folder that takes `{ project, sprint, stories }` (`SprintPanelProps`), and register it once in `src/shared/module-slots.ts` (shared). The effort module's `SprintEstimates` is the example. |
 | The project's stories and sprints | `useStories(projectId)`, `useSprints(projectId)` from `@/shared/backlog/api`; types in `@/shared/backlog/types`. |
 
 **Theme.** Indigo accent on cool grey (slate), in light and dark; people choose Light, Dark or System in the top bar. Use the colour tokens, never fixed colours, so both themes work: `bg-background`, `bg-card`, `text-foreground`, `text-muted-foreground`, `border`, `bg-primary` / `text-primary`. Green, amber and red (`text-success`, `text-warning`, `text-danger` and their `-soft` backgrounds) are kept for status and risk.
