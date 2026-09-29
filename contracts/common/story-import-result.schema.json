@@ -345,6 +345,11 @@
           "title": "Status",
           "type": "string"
         },
+        "rank": {
+          "description": "Its place in the backlog and in its sprint: lower comes first",
+          "title": "Rank",
+          "type": "number"
+        },
         "sprint_id": {
           "anyOf": [
             {
@@ -424,6 +429,7 @@
         "depends_on",
         "needed_by",
         "status",
+        "rank",
         "sprint_id",
         "source",
         "synthetic",

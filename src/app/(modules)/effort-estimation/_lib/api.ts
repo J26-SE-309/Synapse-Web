@@ -153,3 +153,34 @@ export function useFeedback(projectId: string) {
     },
   });
 }
+
+/**
+ * The latest estimate of each story in a sprint, for the platform's story cards (one request per sprint, shared by
+ * every card). Newest first from the service, so the first one seen for a story is its latest.
+ */
+export function useLatestSprintEstimates(projectId: string, sprintId: string | null) {
+  return useQuery({
+    queryKey: [...effortKeys.all, projectId, "latest", sprintId] as const,
+    enabled: sprintId !== null,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const params = new URLSearchParams({ sprint_id: sprintId!, limit: "200", offset: "0" });
+      const page = await gatewayFetch<PredictionPage>(`${project(projectId)}/predictions?${params}`);
+      const latest = new Map<string, PredictionPage["predictions"][number]>();
+      for (const prediction of page.predictions) if (!latest.has(prediction.story_id)) latest.set(prediction.story_id, prediction);
+      return latest;
+    },
+  });
+}
+
+/** A story's latest estimate, in any sprint. */
+export function useLatestStoryEstimate(projectId: string, storyId: string) {
+  return useQuery({
+    queryKey: [...effortKeys.all, projectId, "latest-story", storyId] as const,
+    queryFn: async () => {
+      const params = new URLSearchParams({ story_id: storyId, limit: "1", offset: "0" });
+      const page = await gatewayFetch<PredictionPage>(`${project(projectId)}/predictions?${params}`);
+      return page.predictions[0] ?? null;
+    },
+  });
+}

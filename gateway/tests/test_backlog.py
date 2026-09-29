@@ -24,6 +24,19 @@ def effort_records(components) -> list[tuple[str, dict]]:
 
 def test_the_migration_creates_the_backlog_tables(database):
     assert {"stories", "sprints", "sprint_items"} <= set(inspect(database).get_table_names())
+    assert "rank" in {column["name"] for column in inspect(database).get_columns("stories")}
+
+
+def test_the_backlog_keeps_the_order_it_is_dragged_into(tutor):
+    for title in ("A", "B", "C"):
+        tutor.post(f"{PROJECT}/stories", json=story(title))
+    tutor.post(f"{PROJECT}/stories/import", json={"stories": [story("D"), story("E")]})
+    ranks = {s["story_id"]: s["rank"] for s in tutor.get(f"{PROJECT}/stories").json()}
+    assert ranks == {"TUTOR-1": 1, "TUTOR-2": 2, "TUTOR-3": 3, "TUTOR-4": 4, "TUTOR-5": 5}
+    # C dropped between A and B takes a rank between theirs
+    tutor.patch(f"{PROJECT}/stories/TUTOR-3", json={"rank": 1.5})
+    assert [s["title"] for s in tutor.get(f"{PROJECT}/stories").json()] == ["A", "C", "B", "D", "E"]
+    assert tutor.patch(f"{PROJECT}/stories/TUTOR-3", json={"rank": None}).status_code == 422
 
 
 def test_stories_get_the_next_free_id_and_keep_every_detail(tutor):
