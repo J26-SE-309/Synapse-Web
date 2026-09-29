@@ -1,6 +1,16 @@
 "use client";
 
-import { AwardIcon, PinIcon, SparklesIcon, TimerIcon, TriangleAlertIcon } from "lucide-react";
+import {
+  ArrowDownIcon,
+  ArrowUpDownIcon,
+  ArrowUpIcon,
+  AwardIcon,
+  CheckIcon,
+  PinIcon,
+  SparklesIcon,
+  TimerIcon,
+  TriangleAlertIcon,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -13,7 +23,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/alert";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/shared/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/shared/ui/radio-group";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
 
@@ -22,7 +31,6 @@ import { METRIC_LABELS, milliseconds, number, percent, when } from "../_lib/form
 import type { ModelsResponse, ModelSummary } from "../_lib/types";
 import { CompareModels } from "./CompareModels";
 
-const AUTOMATIC = "__automatic";
 /** Pairs slower than this for a 50-story backlog are marked, so a product owner knows the cost of choosing one. */
 const SLOW_SECONDS = 0.5;
 
@@ -62,19 +70,151 @@ function Notes({ model, winner }: { model: ModelSummary; winner: string }) {
   );
 }
 
-function ModelChooser({ project, models }: { project: Project; models: ModelsResponse }) {
+const ENCODERS: Record<string, string> = {
+  tfidf: "TF-IDF",
+  fasttext: "FastText",
+  sbert: "SBERT",
+  distilbert: "DistilBERT",
+  several: "Several",
+};
+
+const LEARNERS: Record<string, string> = {
+  lightgbm: "LightGBM",
+  random_forest: "Random forest",
+  svm: "SVR / SVM",
+  xgboost: "XGBoost",
+  catboost: "CatBoost",
+  mlp: "Multi-task MLP",
+  stack: "Stack",
+  distilbert: "Fine-tuned",
+};
+
+/**
+ * How one pair compares with the others on a metric, as a bar from 15% (the worst of the pairs) to 100% (the best).
+ * Speed spans milliseconds to seconds, so it is compared on a log scale.
+ */
+export function relativeScore(value: number | undefined, values: number[], higherIsBetter: boolean, log = false): number | null {
+  if (value == null || values.length === 0) return null;
+  const scale = (entry: number) => (log ? Math.log10(Math.max(entry, 1e-6)) : entry);
+  const scaled = values.map(scale);
+  const lowest = Math.min(...scaled);
+  const highest = Math.max(...scaled);
+  if (highest === lowest) return 1;
+  const share = (scale(value) - lowest) / (highest - lowest);
+  return 0.15 + 0.85 * (higherIsBetter ? share : 1 - share);
+}
+
+function Meter({ label, value, score }: { label: string; value: string; score: number | null }) {
+  return (
+    <div className="space-y-1">
+      <div className="flex items-baseline justify-between gap-2 text-xs">
+        <span className="text-muted-foreground">{label}</span>
+        <span className="font-medium tabular-nums">{value}</span>
+      </div>
+      <div aria-hidden className="h-1.5 overflow-hidden rounded-full bg-muted">
+        {score !== null ? <div className="h-full rounded-full bg-primary" style={{ width: `${Math.round(score * 100)}%` }} /> : null}
+      </div>
+    </div>
+  );
+}
+
+function ModelCard({
+  model,
+  rank,
+  all,
+  winner,
+  inUse,
+  busy,
+  onUse,
+}: {
+  model: ModelSummary;
+  rank: number | null;
+  all: ModelSummary[];
+  winner: string;
+  inUse: boolean;
+  busy: boolean;
+  onUse: () => void;
+}) {
+  const status = statusText(model);
+  const scored = all.filter((entry) => entry.metrics.sa != null);
+  const values = (key: string) => scored.map((entry) => entry.metrics[key]).filter((entry) => entry != null);
+  const available = model.status === "available";
+  return (
+    <Card
+      size="sm"
+      className={cn("relative gap-3 transition-shadow", inUse ? "ring-2 ring-primary" : "hover:shadow-md", !available && "opacity-75")}
+    >
+      <CardHeader>
+        <CardTitle className="flex items-start justify-between gap-2">
+          <h3 className="leading-snug">{model.label}</h3>
+          {rank !== null ? (
+            <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-xs font-medium tabular-nums" title="Rank on the leaderboard">
+              #{rank}
+            </span>
+          ) : null}
+        </CardTitle>
+        <CardDescription className="space-y-2">
+          <span className="block">{status ?? model.role}</span>
+          <span className="flex flex-wrap gap-1.5">
+            <Badge variant="outline" className="font-normal">
+              {ENCODERS[model.configuration.encoder] ?? model.configuration.encoder}
+            </Badge>
+            <Badge variant="outline" className="font-normal">
+              {LEARNERS[model.configuration.learner] ?? model.configuration.learner}
+            </Badge>
+            <Notes model={model} winner={winner} />
+          </span>
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-2.5">
+        <Meter
+          label="Effort accuracy"
+          value={model.metrics.sa == null ? "—" : `${number(model.metrics.sa, 1)}%`}
+          score={relativeScore(model.metrics.sa, values("sa"), true)}
+        />
+        <Meter label="Risk F1" value={number(model.metrics.f1)} score={relativeScore(model.metrics.f1, values("f1"), true)} />
+        <Meter
+          label="Calibration error"
+          value={number(model.metrics.ece, 3)}
+          score={relativeScore(model.metrics.ece, values("ece"), false)}
+        />
+        <Meter
+          label="Speed (50 stories)"
+          value={milliseconds(model.metrics.latency_p95)}
+          score={relativeScore(model.metrics.latency_p95, values("latency_p95"), false, true)}
+        />
+      </CardContent>
+      <CardFooter className="mt-auto">
+        {inUse ? (
+          <p className="flex h-8 w-full items-center justify-center gap-1.5 rounded-lg bg-primary/10 text-sm font-medium text-primary">
+            <CheckIcon aria-hidden className="size-4" /> In use for this project
+          </p>
+        ) : (
+          <Button variant="outline" className="w-full" disabled={!available || busy} onClick={onUse}>
+            {available ? "Use this model" : status}
+          </Button>
+        )}
+      </CardFooter>
+    </Card>
+  );
+}
+
+function ModelCards({ project, models }: { project: Project; models: ModelsResponse }) {
   const pin = usePin(project.id);
   const choose = useChooseModel(project.id);
-  const current = pin.data?.configuration_id ?? AUTOMATIC;
-  const [selected, setSelected] = useState<string | null>(null);
-  const value = selected ?? current;
+  const current = pin.data?.configuration_id ?? null;
   const winner = models.configurations.find((model) => model.configuration_id === models.pooled_winner);
-  const available = models.configurations.filter((model) => model.status === "available");
+  const ranked = [...models.configurations].sort((a, b) => (b.composite ?? -1) - (a.composite ?? -1));
+  const ranks = new Map(ranked.filter((model) => model.composite != null).map((model, index) => [model.configuration_id, index + 1]));
+  const order = [...models.configurations].sort(
+    (a, b) =>
+      Number(b.status === "available") - Number(a.status === "available") ||
+      (ranks.get(a.configuration_id) ?? 99) - (ranks.get(b.configuration_id) ?? 99),
+  );
 
-  async function save() {
+  async function use(configurationId: string | null) {
     try {
-      const pinned = await choose.mutateAsync(value === AUTOMATIC ? null : value);
-      setSelected(null);
+      const pinned = await choose.mutateAsync(configurationId);
       toast.success(
         pinned.configuration_id
           ? `${project.name} now uses ${models.configurations.find((m) => m.configuration_id === pinned.configuration_id)?.label}`
@@ -86,82 +226,124 @@ function ModelChooser({ project, models }: { project: Project; models: ModelsRes
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          <h2>Model for {project.name}</h2>
-        </CardTitle>
-        <CardDescription>
-          Automatic uses the pair ranked best for this project (FR11). Choose one yourself to use it for every estimate
-          of this project until you change it (FR12).
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {pin.isPending ? (
-          <Skeleton className="h-40 w-full" />
-        ) : (
-          <RadioGroup value={value} onValueChange={setSelected} aria-label={`Model for ${project.name}`} className="gap-2">
-            {[
-              { id: AUTOMATIC, model: undefined as ModelSummary | undefined },
-              ...available.map((model) => ({ id: model.configuration_id, model })),
-            ].map(({ id, model }) => (
-              <label
-                key={id}
-                htmlFor={`model-${id}`}
-                className={cn(
-                  "flex cursor-pointer items-start gap-3 rounded-lg border p-3 hover:bg-muted/40",
-                  value === id && "border-primary/50 bg-accent/60",
-                )}
-              >
-                <RadioGroupItem id={`model-${id}`} value={id} className="mt-0.5" />
-                <span className="min-w-0 flex-1 space-y-0.5">
-                  <span className="flex flex-wrap items-center gap-2 font-medium">
-                    {model ? model.label : (
-                      <>
-                        <SparklesIcon aria-hidden className="size-4 text-primary" /> Automatic (recommended)
-                      </>
-                    )}
-                    {id === current ? <Badge variant="outline">In use</Badge> : null}
-                    {model ? <Notes model={model} winner={models.pooled_winner} /> : null}
-                  </span>
-                  <span className="block text-sm text-muted-foreground">
-                    {model
-                      ? `${model.role}. Effort accuracy ${number(model.metrics.sa, 1)}%, risk F1 ${number(model.metrics.f1)}, ${milliseconds(model.metrics.latency_p95)} for 50 stories.`
-                      : `Currently ${winner?.label ?? models.pooled_winner} overall; a project with its own ranking gets its own best pair.`}
-                  </span>
-                </span>
-              </label>
-            ))}
-          </RadioGroup>
-        )}
-      </CardContent>
-      <CardFooter className="flex-wrap justify-between gap-3">
+    <section aria-labelledby="choose-heading" className="space-y-4">
+      <div className="space-y-1">
+        <h2 id="choose-heading" className="text-lg font-semibold">
+          Model for {project.name}
+        </h2>
         <p className="text-sm text-muted-foreground">
-          {pin.data?.configuration_id ? (
+          Automatic uses the pair ranked best for this project (FR11). Choose one yourself to use it for every estimate of
+          this project until you change it (FR12). The bars compare each pair with the others.
+        </p>
+        <p className="text-sm" aria-live="polite">
+          {pin.isPending ? (
+            "Loading…"
+          ) : current ? (
             <span className="inline-flex items-center gap-1">
-              <PinIcon aria-hidden className="size-3.5" /> Chosen {when(pin.data.pinned_at)}
+              <PinIcon aria-hidden className="size-3.5" /> In use: {models.configurations.find((m) => m.configuration_id === current)?.label ?? current}, chosen {when(pin.data?.pinned_at)}
             </span>
           ) : (
-            "Automatic selection"
+            `In use: automatic selection (${winner?.label ?? models.pooled_winner} overall).`
           )}
         </p>
-        <div className="flex gap-2">
-          {selected !== null && selected !== current ? (
-            <Button variant="ghost" onClick={() => setSelected(null)}>
-              Cancel
-            </Button>
-          ) : null}
-          <Button onClick={save} disabled={selected === null || selected === current || choose.isPending}>
-            Save choice
-          </Button>
+      </div>
+      {pin.isPending ? (
+        <Skeleton className="h-72 w-full" />
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <Card size="sm" className={cn("relative gap-3 bg-gradient-to-br from-primary/10 to-transparent", current === null && "ring-2 ring-primary")}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <SparklesIcon aria-hidden className="size-4 text-primary" />
+                <h3>Automatic</h3>
+                <Badge variant="secondary">Recommended</Badge>
+              </CardTitle>
+              <CardDescription>
+                Uses the pair that suits this project: its own best pair once it has enough closed sprints, otherwise the
+                best overall. Now: <strong className="text-foreground">{winner?.label ?? models.pooled_winner}</strong>.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Pairs that miss a requirement (for example the 2-second limit) are never picked automatically.
+            </CardContent>
+            <CardFooter className="mt-auto">
+              {current === null ? (
+                <p className="flex h-8 w-full items-center justify-center gap-1.5 rounded-lg bg-primary/10 text-sm font-medium text-primary">
+                  <CheckIcon aria-hidden className="size-4" /> In use for this project
+                </p>
+              ) : (
+                <Button className="w-full" disabled={choose.isPending} onClick={() => use(null)}>
+                  Use automatic selection
+                </Button>
+              )}
+            </CardFooter>
+          </Card>
+          {order.map((model) => (
+            <ModelCard
+              key={model.configuration_id}
+              model={model}
+              rank={ranks.get(model.configuration_id) ?? null}
+              all={models.configurations}
+              winner={models.pooled_winner}
+              inUse={current === model.configuration_id}
+              busy={choose.isPending}
+              onUse={() => use(model.configuration_id)}
+            />
+          ))}
         </div>
-      </CardFooter>
-    </Card>
+      )}
+    </section>
+  );
+}
+
+type SortKey = "composite" | "sa" | "mae" | "f1" | "ece" | "latency_p95";
+/** Which way is better for each column: the first click sorts best first. */
+const BETTER_HIGH: Record<SortKey, boolean> = { composite: true, sa: true, mae: false, f1: true, ece: false, latency_p95: false };
+
+/** A leaderboard column header that sorts by that column: best first on the first click, then the other way. */
+function SortHeader({
+  column,
+  label,
+  sort,
+  onSort,
+}: {
+  column: SortKey;
+  label: string;
+  sort: { key: SortKey; bestFirst: boolean };
+  onSort: (next: { key: SortKey; bestFirst: boolean }) => void;
+}) {
+  const active = sort.key === column;
+  const ascending = BETTER_HIGH[column] ? !sort.bestFirst : sort.bestFirst;
+  return (
+    <TableHead className="text-right" aria-sort={active ? (ascending ? "ascending" : "descending") : undefined}>
+      <button
+        type="button"
+        className="inline-flex items-center gap-1 rounded hover:text-foreground"
+        onClick={() => onSort({ key: column, bestFirst: active ? !sort.bestFirst : true })}
+      >
+        {label}
+        {active ? (
+          sort.bestFirst ? <ArrowDownIcon aria-hidden className="size-3.5" /> : <ArrowUpIcon aria-hidden className="size-3.5" />
+        ) : (
+          <ArrowUpDownIcon aria-hidden className="size-3.5 opacity-40" />
+        )}
+        <span className="sr-only">{active ? (sort.bestFirst ? ", best first" : ", worst first") : ", sort"}</span>
+      </button>
+    </TableHead>
   );
 }
 
 function Leaderboard({ models, pinned }: { models: ModelsResponse; pinned: string | null | undefined }) {
+  const [sort, setSort] = useState<{ key: SortKey; bestFirst: boolean }>({ key: "composite", bestFirst: true });
   const ranked = [...models.configurations].sort((a, b) => (b.composite ?? -1) - (a.composite ?? -1));
+  const ranks = new Map(ranked.filter((model) => model.composite != null).map((model, index) => [model.configuration_id, index + 1]));
+  const value = (model: ModelSummary, key: SortKey) => (key === "composite" ? model.composite : model.metrics[key]) ?? null;
+  const sorted = [...models.configurations].sort((a, b) => {
+    const [x, y] = [value(a, sort.key), value(b, sort.key)];
+    if (x === null || y === null) return x === null ? (y === null ? 0 : 1) : -1;
+    const ascending = BETTER_HIGH[sort.key] ? !sort.bestFirst : sort.bestFirst;
+    return ascending ? x - y : y - x;
+  });
   const weights = Object.entries(models.weights)
     .map(([key, weight]) => `${percent(weight)} ${WEIGHT_LABELS[key] ?? key}`)
     .join(" + ");
@@ -175,29 +357,28 @@ function Leaderboard({ models, pinned }: { models: ModelsResponse; pinned: strin
         </h2>
         <p className="text-sm text-muted-foreground">
           Every encoder + learner pair of the arena ({models.arena}), tested on the same held-out stories. The score is{" "}
-          {weights}.
+          {weights}. Sort by any column.
         </p>
       </div>
       <div className="overflow-hidden rounded-xl border bg-card">
         <Table>
+          <caption className="sr-only">Leaderboard, sorted by {sort.key === "composite" ? "score" : METRIC_LABELS[sort.key].label}</caption>
           <TableHeader>
             <TableRow>
               <TableHead className="w-12">Rank</TableHead>
               <TableHead>Pair</TableHead>
-              <TableHead className="text-right">Score</TableHead>
+              <SortHeader column="composite" label="Score" sort={sort} onSort={setSort} />
               {columns.map((key) => (
-                <TableHead key={key} className="text-right">
-                  {METRIC_LABELS[key].label}
-                </TableHead>
+                <SortHeader key={key} column={key} label={METRIC_LABELS[key].label} sort={sort} onSort={setSort} />
               ))}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {ranked.map((model, index) => {
+            {sorted.map((model) => {
               const status = statusText(model);
               return (
                 <TableRow key={model.configuration_id} className={cn(status && "text-muted-foreground")}>
-                  <TableCell className="tabular-nums">{model.composite == null ? "—" : index + 1}</TableCell>
+                  <TableCell className="tabular-nums">{ranks.get(model.configuration_id) ?? "—"}</TableCell>
                   <TableCell className="min-w-60 whitespace-normal">
                     <div className="flex flex-wrap items-center gap-2 font-medium">
                       {model.label}
@@ -206,7 +387,6 @@ function Leaderboard({ models, pinned }: { models: ModelsResponse; pinned: strin
                           <PinIcon aria-hidden /> Your choice
                         </Badge>
                       ) : null}
-                      <Notes model={model} winner={models.pooled_winner} />
                     </div>
                     <p className="text-xs text-muted-foreground">{status ?? model.role}</p>
                   </TableCell>
@@ -244,7 +424,7 @@ function Models({ project }: { project: Project }) {
     <div className="mx-auto max-w-6xl space-y-8">
       <PageHeader
         title="Models"
-        description="The Comparative Model Arena's encoder + learner pairs. Keep automatic selection, or choose the pair this project should use, and compare pairs side by side on your own stories."
+        description="The Comparative Model Arena's encoder + learner pairs: keep automatic selection or choose one for this project, see how they rank, and compare them on your own stories."
       />
       {models.isPending ? (
         <Skeleton className="h-64 w-full" />
@@ -256,7 +436,7 @@ function Models({ project }: { project: Project }) {
         </Alert>
       ) : (
         <>
-          <ModelChooser project={project} models={models.data} />
+          <ModelCards project={project} models={models.data} />
           <Leaderboard models={models.data} pinned={pin.data?.configuration_id} />
           <CompareModels project={project} models={models.data} />
         </>

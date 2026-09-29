@@ -183,6 +183,19 @@
       ],
       "default": null,
       "title": "Sprint Id"
+    },
+    "rank": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Its new place: lower comes first (between two neighbours)",
+      "title": "Rank"
     }
   },
   "title": "StoryUpdate",
