@@ -49,49 +49,63 @@ function getIssueMessage(
 
   if (type === "vague_terms") {
     if (terms && terms.length > 0) {
-      return `Potentially vague terms detected: ${terms
+      const label = terms.length === 1 ? "term" : "terms";
+
+      return `Potentially vague ${label} detected: ${terms
         .map((term) => `"${term}"`)
         .join(", ")}.`;
     }
 
-    return message;
+    return "The requirement contains wording that may be interpreted differently by different readers.";
   }
 
   if (type === "quality_defect") {
-    return "The requirement was classified as potentially defective. Consider reviewing it for clearer and more measurable wording.";
+    return "Review the requirement for clearer and more measurable wording.";
   }
 
   return message;
 }
 
-function getExplanation(result: RequirementAnalysis): string {
+function getQualityExplanation(result: RequirementAnalysis): string {
   const vagueIssue = result.quality.issues.find(
     (issue) => issue.type === "vague_terms",
   );
 
   if (vagueIssue) {
-    const terms = vagueIssue.terms ?? [];
+    return "The requirement contains wording that may be difficult to measure objectively. This can lead to different interpretations of what the system should provide.";
+  }
 
-    if (terms.length > 0) {
-      return `The requirement uses vague wording such as ${terms
-        .map((term) => `"${term}"`)
-        .join(
-          ", ",
-        )}. These terms are difficult to verify objectively, so they should be replaced with specific and measurable criteria.`;
-    }
+  const missingInformationIssue = result.quality.issues.find(
+    (issue) => issue.type === "missing_information",
+  );
 
-    return "The requirement contains vague wording that should be replaced with specific and measurable criteria.";
+  if (missingInformationIssue) {
+    const element = missingInformationIssue.message
+      .replace("Missing structural element: ", "")
+      .replace(/\.$/, "");
+
+    return `The requirement is incomplete because it does not clearly define the ${element}.`;
   }
 
   if (result.quality.label === "Good") {
-    return "The requirement is structurally complete and was assessed as acceptable.";
+    return "The requirement clearly describes the expected behaviour and contains enough information to be understood, implemented, and verified.";
   }
 
   if (result.quality.label === "Poor") {
-    return "The requirement may contain quality issues and should be reviewed for clearer and more measurable wording.";
+    return "The requirement may be difficult to implement or verify because its expected behaviour is not clearly defined.";
   }
 
-  return "The requirement needs additional information to make its structure clearer and more complete.";
+  return "The requirement needs additional information before its expected behaviour can be understood clearly.";
+}
+
+function getAmbiguityExplanation(result: RequirementAnalysis): string {
+  const pronoun = result.ambiguity.spans[0]?.text;
+
+  if (pronoun) {
+    return `The word "${pronoun}" could refer to more than one part of the requirement. A reader may therefore understand the requirement differently from what you intended. Replace "${pronoun}" with the specific component or entity you mean.`;
+  }
+
+  return "Part of this requirement could be interpreted in more than one way. Use more specific wording so that the intended meaning is clear to every reader.";
 }
 
 export function RequirementQualityAnalyzer() {
@@ -189,7 +203,8 @@ export function RequirementQualityAnalyzer() {
       )}
 
       {result && (
-        <section className="space-y-4 rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
+        <section className="space-y-5 rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
+          {/* Quality assessment */}
           <div>
             <p className="text-sm font-medium text-zinc-500">
               Quality assessment
@@ -209,51 +224,96 @@ export function RequirementQualityAnalyzer() {
                 </span>
               </span>
             </div>
-          </div>
 
-          {result.quality.issues.length > 0 ? (
-            <div className="border-t border-zinc-200 pt-4">
-              <h2 className="text-sm font-semibold text-zinc-900">
-                Issues
-              </h2>
-
-              <ul className="mt-3 space-y-3">
-                {result.quality.issues.map((issue, index) => (
-                  <li
-                    key={`${issue.type}-${index}`}
-                    className="rounded-md bg-zinc-50 px-3 py-3"
-                  >
-                    <p className="text-sm font-medium text-zinc-900">
-                      {getIssueTitle(issue.type)}
-                    </p>
-
-                    <p className="mt-1 text-sm leading-5 text-zinc-600">
-                      {getIssueMessage(
-                        issue.type,
-                        issue.message,
-                        issue.terms,
-                      )}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : (
-            <div className="border-t border-zinc-200 pt-4">
-              <p className="text-sm text-emerald-700">
-                No quality issues were detected.
+            <div className="mt-3 rounded-md bg-zinc-50 px-3 py-3">
+              <p className="text-sm leading-5 text-zinc-700">
+                {getQualityExplanation(result)}
               </p>
             </div>
-          )}
 
-          <div className="border-t border-zinc-200 pt-4">
-            <h2 className="text-sm font-semibold text-zinc-900">
-              Explanation
-            </h2>
+            {result.quality.issues.length > 0 && (
+              <div className="mt-4">
+                <h2 className="text-sm font-semibold text-zinc-900">
+                  Quality concerns
+                </h2>
 
-            <p className="mt-2 text-sm leading-6 text-zinc-600">
-              {getExplanation(result)}
+                <ul className="mt-3 space-y-3">
+                  {result.quality.issues.map((issue, index) => (
+                    <li
+                      key={`${issue.type}-${index}`}
+                      className="rounded-md bg-zinc-50 px-3 py-3"
+                    >
+                      <p className="text-sm font-medium text-zinc-900">
+                        {getIssueTitle(issue.type)}
+                      </p>
+
+                      <p className="mt-1 text-sm leading-5 text-zinc-600">
+                        {getIssueMessage(
+                          issue.type,
+                          issue.message,
+                          issue.terms,
+                        )}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          {/* Ambiguity assessment */}
+          <div className="border-t border-zinc-200 pt-5">
+            <p className="text-sm font-medium text-zinc-500">
+              Ambiguity assessment
             </p>
+
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <span
+                className={`rounded-full border px-3 py-1 text-sm font-semibold ${
+                  result.ambiguity.is_ambiguous
+                    ? "border-amber-200 bg-amber-50 text-amber-800"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-800"
+                }`}
+              >
+                {result.ambiguity.is_ambiguous
+                  ? "Potentially ambiguous"
+                  : "No ambiguity detected"}
+              </span>
+
+              <span className="text-sm text-zinc-600">
+                Score:
+                <span className="ml-1 font-semibold text-zinc-900">
+                  {formatScore(result.ambiguity.score)}
+                </span>
+              </span>
+            </div>
+
+            {result.ambiguity.spans.length > 0 && (
+              <div className="mt-3">
+                <p className="text-sm text-zinc-600">
+                  Wording that may be unclear:
+                </p>
+
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {result.ambiguity.spans.map((span, index) => (
+                    <span
+                      key={`${span.start}-${span.end}-${index}`}
+                      className="rounded-md bg-amber-50 px-2 py-1 text-sm font-medium text-amber-800"
+                    >
+                      &ldquo;{span.text}&rdquo;
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="mt-3 rounded-md bg-zinc-50 px-3 py-3">
+              <p className="text-sm leading-5 text-zinc-700">
+                {result.ambiguity.is_ambiguous
+                  ? getAmbiguityExplanation(result)
+                  : "The wording is clear enough that no competing interpretation was identified."}
+              </p>
+            </div>
           </div>
         </section>
       )}
