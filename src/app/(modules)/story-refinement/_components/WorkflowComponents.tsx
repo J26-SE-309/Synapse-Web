@@ -6,16 +6,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
 
-
-function StatusBadge({ status }: { status: "Draft" | "Approved" | "Rejected" }) {
-  const styles = {
-    Draft: "border-muted-foreground/30 bg-muted text-muted-foreground",
-    Approved: "border-success/30 bg-success/10 text-success",
-    Rejected: "border-destructive/30 bg-destructive/10 text-destructive",
-  } as const;
-
-  return <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${styles[status]}`}>{status}</span>;
-}
+import { StatusBadge } from "./StoryComponents";
 
 const WORKFLOW_STEPS = [
   { label: "Validated requirement", href: "/story-refinement/requirements" },
