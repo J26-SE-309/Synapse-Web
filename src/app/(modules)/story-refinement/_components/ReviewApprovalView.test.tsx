@@ -1,10 +1,14 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { vi } from "vitest";
 
 import { ReviewApprovalView } from "./ReviewApprovalView";
 
-const { mockImportStories } = vi.hoisted(() => ({ mockImportStories: vi.fn() }));
+const { mockImportStories, mockUpdateStory, mockSprints } = vi.hoisted(() => ({
+  mockImportStories: vi.fn(),
+  mockUpdateStory: vi.fn(),
+  mockSprints: vi.fn(),
+}));
 const { mockPush } = vi.hoisted(() => ({ mockPush: vi.fn() }));
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mockPush }) }));
@@ -14,11 +18,15 @@ vi.mock("@/shared/projects/ProjectProvider", () => ({
 
 vi.mock("@/shared/backlog/api", () => ({
   useImportStories: () => ({ mutateAsync: mockImportStories, isPending: false }),
+  useSprints: () => ({ data: mockSprints() }),
+  useUpdateStory: () => ({ mutateAsync: mockUpdateStory, isPending: false }),
 }));
 
 beforeEach(() => {
   window.localStorage.clear();
   mockImportStories.mockReset();
+  mockUpdateStory.mockReset();
+  mockSprints.mockReturnValue([]);
 });
 
 describe("ReviewApprovalView", () => {
@@ -60,6 +68,23 @@ describe("ReviewApprovalView", () => {
     expect(saved[0].approvedPackage.requirementId).toBe("REQ-104");
     expect(saved[0].approvedPackage.reviewer).toBe("Test Reviewer");
     expect(saved[0].reviewMetadata.persistence).toBe("prototype");
+  });
+
+  it("sends an accepted story to the active sprint automatically", async () => {
+    mockSprints.mockReturnValue([{ sprint_id: "SYN-S4", status: "active", name: "Sprint 4" }]);
+    mockImportStories.mockResolvedValue({ stories: [{ story_id: "SYN-102" }], sprint: null });
+    mockUpdateStory.mockResolvedValue({ story_id: "SYN-102" });
+    render(<ReviewApprovalView initialRequirementId="REQ-104" initialCandidateId="REQ-104-S1" />);
+
+    fireEvent.change(screen.getByLabelText(/Reviewer name/), { target: { value: "Test Reviewer" } });
+    fireEvent.click(screen.getByRole("button", { name: "Approve User Story & Acceptance Criteria" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm Approval" }));
+
+    await waitFor(() => expect(mockImportStories).toHaveBeenCalled());
+    await waitFor(() => expect(mockUpdateStory).toHaveBeenCalledWith({
+      storyId: "SYN-102",
+      update: { sprint_id: "SYN-S4" },
+    }));
   });
 
   it("sends only the approved story and criteria to the sprint-planning integration", async () => {

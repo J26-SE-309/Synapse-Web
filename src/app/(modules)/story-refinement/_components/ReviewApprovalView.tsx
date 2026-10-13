@@ -13,14 +13,14 @@ import {
   SparklesIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { startTransition, useEffect, useState } from "react";
+import { startTransition, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { PageHeader } from "@/shared/components/PageHeader";
 import { PageContainer } from "@/shared/components/PageContainer";
 import { describeError } from "@/shared/api/gateway";
 import { useProject } from "@/shared/projects/ProjectProvider";
-import { useImportStories } from "@/shared/backlog/api";
+import { useImportStories, useSprints, useUpdateStory } from "@/shared/backlog/api";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/shared/ui/card";
@@ -80,8 +80,11 @@ export function ReviewApprovalView({
   const [decisionNotes, setDecisionNotes] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const autoIntegrationRef = useRef<string | null>(null);
   const { project, projectId } = useProject();
   const importStories = useImportStories(projectId ?? "");
+  const updateStory = useUpdateStory(projectId ?? "");
+  const { data: sprints = [] } = useSprints(projectId ?? "");
   const router = useRouter();
 
   useEffect(() => {
@@ -125,6 +128,7 @@ export function ReviewApprovalView({
     ...reviewFindings.filter((finding) => finding.id === "coverage" && finding.status === "Missing").map((finding) => finding.summary),
   ];
   const criteriaAreApprovalReady = criteriaAreComplete && approvalBlockers.length === 0 && reviewer.trim().length > 0;
+  const activeSprint = sprints.find((sprint) => sprint.status === "active");
 
   function updateDraft(nextDraft: StoryDraft) {
     setRecord((current) => ({
@@ -315,8 +319,8 @@ export function ReviewApprovalView({
     }
   }
 
-  async function generateSprint() {
-    if (!approved || !record.approvedPackage || !record.approvedDraft) return;
+  async function generateSprint(recordToIntegrate: GenerationRecord = record, sprintId?: string) {
+    if (!(recordToIntegrate.status === "Approved" || recordToIntegrate.approvedAt) || !recordToIntegrate.approvedPackage || !recordToIntegrate.approvedDraft) return;
     setError(null);
     setNotice(null);
     if (!projectId || !project) {
@@ -328,8 +332,8 @@ export function ReviewApprovalView({
       const result = await importStories.mutateAsync({
         stories: [{
           title: requirement.title,
-          description: record.approvedPackage.userStory,
-          acceptance_criteria: record.approvedPackage.acceptanceCriteria.map(
+          description: recordToIntegrate.approvedPackage.userStory,
+          acceptance_criteria: recordToIntegrate.approvedPackage.acceptanceCriteria.map(
             (criterion) => `Given ${criterion.given}; when ${criterion.when}; then ${criterion.then}`,
           ),
           issue_type: "Story",
@@ -341,20 +345,24 @@ export function ReviewApprovalView({
         setError("The backlog service did not return a created story. Check the backlog before retrying to avoid duplicates.");
         return;
       }
+      const targetSprintId = sprintId ?? result.sprint?.sprint_id;
+      if (targetSprintId && !result.sprint) {
+        await updateStory.mutateAsync({ storyId: integratedStory.story_id, update: { sprint_id: targetSprintId } });
+      }
       const integratedRecord: GenerationRecord = {
-        ...record,
+        ...recordToIntegrate,
         sprintIntegration: {
           projectId,
           storyId: integratedStory.story_id,
           integratedAt: new Date().toISOString(),
-          ...(result.sprint ? { sprintId: result.sprint.sprint_id } : {}),
+          ...(targetSprintId ? { sprintId: targetSprintId } : {}),
         },
       };
       setRecord(integratedRecord);
       try {
         saveGeneration(integratedRecord);
-        setNotice(result.sprint
-          ? `Approved story ${integratedStory.story_id} was added to sprint ${result.sprint.name} (${result.sprint.sprint_id}).`
+        setNotice(targetSprintId
+          ? `Approved story ${integratedStory.story_id} was added to sprint ${targetSprintId}.`
           : `Approved story ${integratedStory.story_id} was added to the backlog. No sprint was created because no sprint-planning details were supplied.`);
       } catch (saveError) {
         setError(`The story was created in the backlog, but this device could not save its reference. Do not submit again. ${describeError(saveError)}`);
@@ -363,6 +371,14 @@ export function ReviewApprovalView({
       setError(`The approved story was not added to sprint planning. ${describeError(integrationError)}`);
     }
   }
+
+  useEffect(() => {
+    if (!approved || !activeSprint || record.sprintIntegration) return;
+    const integrationKey = `${record.id}:${activeSprint.sprint_id}`;
+    if (autoIntegrationRef.current === integrationKey) return;
+    autoIntegrationRef.current = integrationKey;
+    void generateSprint(record, activeSprint.sprint_id);
+  }, [activeSprint, approved, record]);
 
   return (
     <PageContainer>
