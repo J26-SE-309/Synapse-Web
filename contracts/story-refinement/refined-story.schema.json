@@ -124,6 +124,19 @@
     }
   },
   "properties": {
+    "refinement_id": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "exclusiveMinimum": 0
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Refinement Id"
+    },
     "requirement_id": {
       "title": "Requirement Id",
       "type": "string"
