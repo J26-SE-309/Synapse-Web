@@ -2,11 +2,35 @@ import { CircleCheckIcon, CircleDashedIcon, LightbulbIcon, TriangleAlertIcon } f
 
 import { cn } from "@/shared/lib/utils";
 
-import { ACTION_LABELS, FEATURE_GROUP_LABELS, FEATURE_SOURCE_LABELS, label } from "../_lib/format";
-import type { Prediction, Recommendation } from "../_lib/types";
-import { ReasonList } from "./indicators";
+import { ACTION_LABELS, FEATURE_GROUP_LABELS, FEATURE_SOURCE_LABELS, label, percent } from "../_lib/format";
+import type { Prediction, Recommendation, RiskEffect } from "../_lib/types";
+import { ReasonList, RiskBadge } from "./indicators";
 
-export function RecommendationList({ recommendations, empty }: { recommendations: Recommendation[]; empty?: string }) {
+/** "Risk once done: 66% → 48%, Medium" (or that the models expect little change). */
+function Effect({ effect, from }: { effect: RiskEffect; from: number }) {
+  const drop = from - effect.spillover_probability;
+  return (
+    <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs">
+      <span className="text-muted-foreground">Once done, the models expect:</span>
+      <span className="font-medium tabular-nums">
+        {percent(from)} → {percent(effect.spillover_probability)}
+      </span>
+      <RiskBadge level={effect.sprint_risk_level} />
+      {drop < 0.005 ? <span className="text-muted-foreground">(little change on its own)</span> : null}
+    </p>
+  );
+}
+
+export function RecommendationList({
+  recommendations,
+  empty,
+  from,
+}: {
+  recommendations: Recommendation[];
+  empty?: string;
+  /** The story's spillover probability now, to show what each action is expected to change. */
+  from?: number;
+}) {
   if (recommendations.length === 0) {
     return <p className="text-sm text-muted-foreground">{empty ?? "No changes suggested."}</p>;
   }
@@ -19,6 +43,7 @@ export function RecommendationList({ recommendations, empty }: { recommendations
             <p className="font-medium">{label(ACTION_LABELS, recommendation.action)}</p>
             <p className="text-muted-foreground">{recommendation.message}</p>
             <p className="text-xs text-muted-foreground">Because of: {recommendation.triggered_by}</p>
+            {recommendation.expected_effect && from !== undefined ? <Effect effect={recommendation.expected_effect} from={from} /> : null}
           </div>
         </li>
       ))}
@@ -69,7 +94,27 @@ export function PredictionDetails({ prediction }: { prediction: Prediction }) {
       </section>
       <section className="space-y-3">
         <h3 className="text-sm font-semibold">Suggested actions</h3>
-        <RecommendationList recommendations={prediction.recommendations} />
+        <RecommendationList
+          recommendations={prediction.recommendations}
+          from={prediction.spillover_probability}
+          empty={
+            prediction.sprint_risk_level === "low"
+              ? "None needed: the risk is low."
+              : "None: the main factors are not something this story can change (such as its type or priority), or they give nothing to act on."
+          }
+        />
+        {prediction.risk_if_all_done ? (
+          <div className="space-y-1 rounded-lg border bg-muted/40 p-3 text-sm">
+            <p className="font-medium">If you do all of these</p>
+            <Effect effect={prediction.risk_if_all_done} from={prediction.spillover_probability} />
+          </div>
+        ) : null}
+        {prediction.recommendations.some((recommendation) => recommendation.expected_effect) ? (
+          <p className="text-xs text-muted-foreground">
+            The models predicted the story again with each change made; estimate it again once the work is done to see the
+            new risk.
+          </p>
+        ) : null}
       </section>
       <section className="space-y-3">
         <h3 className="text-sm font-semibold">

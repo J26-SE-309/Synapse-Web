@@ -2,12 +2,16 @@
 
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { gatewayFetch } from "@/shared/api/gateway";
+import { GatewayError, gatewayFetch } from "@/shared/api/gateway";
 
 import type {
   CompareRequest,
   CompareResponse,
+  ConfidenceLevel,
+  Decision,
+  RiskLevel,
   EstimateRequest,
+  EstimateResponse,
   FeedbackInput,
   HistoryImport,
   HistorySummary,
@@ -91,6 +95,36 @@ export function useSummary(projectId: string) {
 export interface PredictionFilters {
   sprintId?: string;
   storyId?: string;
+  /** ISO times: made at or after / at or before. */
+  from?: string;
+  to?: string;
+  risk?: RiskLevel;
+  confidence?: ConfidenceLevel;
+  model?: string;
+  /** The latest decision, or "none": not reviewed yet. */
+  decision?: Decision | "none";
+  outcome?: "pending" | "done" | "spilled";
+}
+
+const FILTER_PARAMS: Record<keyof PredictionFilters, string> = {
+  sprintId: "sprint_id",
+  storyId: "story_id",
+  from: "created_from",
+  to: "created_to",
+  risk: "risk_level",
+  confidence: "confidence_level",
+  model: "configuration_id",
+  decision: "decision",
+  outcome: "outcome",
+};
+
+export function filterParams(filters: PredictionFilters): URLSearchParams {
+  const params = new URLSearchParams();
+  for (const [name, param] of Object.entries(FILTER_PARAMS) as [keyof PredictionFilters, string][]) {
+    const value = filters[name];
+    if (value) params.set(param, value);
+  }
+  return params;
 }
 
 const PAGE_SIZE = 25;
@@ -100,19 +134,44 @@ export function usePredictionPages(projectId: string, filters: PredictionFilters
     queryKey: effortKeys.predictions(projectId, filters),
     initialPageParam: 0,
     queryFn: ({ pageParam }) => {
-      const params = new URLSearchParams({ limit: String(PAGE_SIZE), offset: String(pageParam) });
-      if (filters.sprintId) params.set("sprint_id", filters.sprintId);
-      if (filters.storyId) params.set("story_id", filters.storyId);
+      const params = filterParams(filters);
+      params.set("limit", String(PAGE_SIZE));
+      params.set("offset", String(pageParam));
       return gatewayFetch<PredictionPage>(`${project(projectId)}/predictions?${params}`);
     },
     getNextPageParam: (page) => page.next_offset ?? undefined,
   });
 }
 
-export function usePrediction(predictionId: string) {
+/**
+ * One recorded prediction. waitForRecord: the prediction was just made, and the service writes it to the log a
+ * moment after answering, so "not found" is asked again for a few seconds before it counts.
+ */
+export function usePrediction(predictionId: string, { waitForRecord = false } = {}) {
   return useQuery({
     queryKey: effortKeys.prediction(predictionId),
     queryFn: () => gatewayFetch<PredictionDetail>(`${BASE}/predictions/${encodeURIComponent(predictionId)}`),
+    ...(waitForRecord
+      ? {
+          retry: (failures: number, error: Error) =>
+            failures < 12 && error instanceof GatewayError && (error.status === 404 || error.status === 503),
+          retryDelay: 750,
+        }
+      : {}),
+  });
+}
+
+/** Story estimates without the sprint-level simulation (/estimate): one story's full prediction, recorded. */
+export function useEstimate(projectId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (request: EstimateRequest) =>
+      gatewayFetch<EstimateResponse>(`${BASE}/estimate`, { method: "POST", ...json(request) }),
+    onSuccess: () => {
+      window.setTimeout(() => {
+        void queryClient.invalidateQueries({ queryKey: [...effortKeys.all, projectId] });
+      }, 1500);
+    },
   });
 }
 
@@ -138,6 +197,22 @@ export function useCompare() {
   return useMutation({
     mutationFn: (request: CompareRequest) =>
       gatewayFetch<CompareResponse>(`${BASE}/compare`, { method: "POST", ...json(request) }),
+  });
+}
+
+/** Remove predictions from the log (the given ones, or all of the project's), with their decisions and outcomes. */
+export function useDeletePredictions(projectId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (predictionIds: string[] | null) => {
+      const params = new URLSearchParams();
+      for (const id of predictionIds ?? []) params.append("prediction_id", id);
+      const query = predictionIds ? `?${params}` : "";
+      return gatewayFetch<{ project_id: string; deleted: number }>(`${project(projectId)}/predictions${query}`, {
+        method: "DELETE",
+      });
+    },
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: [...effortKeys.all, projectId] }),
   });
 }
 

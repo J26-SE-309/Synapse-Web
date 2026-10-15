@@ -19,7 +19,7 @@ import {
 import { Spinner } from "@/shared/ui/spinner";
 
 import { useUpdateStory } from "./api";
-import { formatPoints, SyntheticBadge } from "./badges";
+import { formatPoints } from "./badges";
 import { totalPoints, type Sprint, type Story } from "./types";
 
 /** Choose backlog stories for a sprint. Added to an active sprint, they count as added mid-sprint. */
@@ -96,7 +96,6 @@ export function AddStoriesDialog({ projectId, sprint, backlog }: { projectId: st
                     <span className="font-mono">{story.story_id}</span>
                     <span>{story.issue_type ?? "No type"}</span>
                     <span>{story.story_points === null ? "No estimate" : `${story.story_points} points`}</span>
-                    {story.synthetic ? <SyntheticBadge /> : null}
                   </span>
                 </label>
               </div>

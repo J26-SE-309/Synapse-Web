@@ -8,7 +8,7 @@ PROJECT = "/api/v1/projects/TUTOR"
 
 @pytest.fixture
 def tutor(client, database):
-    client.post("/api/v1/projects", json={"id": "TUTOR", "name": "Tutoring app"})
+    client.post("/api/v1/projects", json={"id": "TUTOR", "name": "Tutoring app", "key": "TUTOR"})
     return client
 
 
