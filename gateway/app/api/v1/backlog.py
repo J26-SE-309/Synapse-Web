@@ -17,7 +17,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app import tables
+from app import signals, tables
 from app.db import get_session
 from app.http import get_http_client
 from app.sprint_sync import push_sprint
@@ -38,7 +38,7 @@ class StoryCreate(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     story_id: str | None = Field(default=None, min_length=1, max_length=200, pattern=STORY_ID_PATTERN,
-                                 description="Empty: the next free id like PROJECT-7")
+                                 description="Empty: the next free id with the project's key, like MFP-7")
     title: str = Field(min_length=1, max_length=300)
     description: str = Field(default="", max_length=10000)
     acceptance_criteria: list[Criterion] = Field(default_factory=list, max_length=30)
@@ -51,6 +51,7 @@ class StoryCreate(BaseModel):
     needed_by: int = Field(default=0, ge=0, le=1000, description="Issues that need it first")
 
 
+TEXT_FIELDS = ("title", "description", "acceptance_criteria")  # what a component's signals are about
 NOT_NULL = {"title", "description", "acceptance_criteria", "blocked_by", "depends_on", "needed_by", "status", "rank"}
 
 
@@ -81,6 +82,21 @@ class StoryUpdate(BaseModel):
         return self
 
 
+class UpstreamSignals(BaseModel):
+    """What Components 1-3 found about a story, as the effort service reads it (its estimate request's upstream)."""
+
+    ambiguity_score: float | None = Field(default=None, ge=0, le=1)
+    vague_term_count: int | None = Field(default=None, ge=0)
+    missing_info_flag_count: int | None = Field(default=None, ge=0)
+    ac_completeness_score: float | None = Field(default=None, ge=0, le=1)
+    invest_compliance_flags: dict[str, bool] | None = None
+    traceability_coverage_pct: float | None = Field(default=None, ge=0, le=1)
+    unlinked_artifact_count: int | None = Field(default=None, ge=0)
+    has_linked_tests: bool | None = None
+    source: str | None = Field(default=None, max_length=20,
+                               description="Who produced them when not the components, e.g. synthetic")
+
+
 class Story(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -101,6 +117,8 @@ class Story(BaseModel):
     sprint_id: str | None = Field(description="The sprint it is in now; empty in the backlog")
     source: Literal["manual", "import", "refinement"]
     synthetic: bool = Field(description="Made-up data for development and demonstrations, never evidence")
+    upstream: UpstreamSignals | None = Field(default=None, description=(
+        "What Components 1-3 found about the story (worked out by the platform until they are connected)"))
     started_at: datetime | None
     resolved_at: datetime | None
     reopened: bool
@@ -112,7 +130,7 @@ class SprintCreate(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     sprint_id: str | None = Field(default=None, min_length=1, max_length=100, pattern=SPRINT_ID_PATTERN,
-                                  description="Empty: the next free id like PROJECT-S3")
+                                  description="Empty: the next free id with the project's key, like MFP-S3")
     name: str | None = Field(default=None, min_length=1, max_length=80, description="Empty: Sprint 3")
     goal: str = Field(default="", max_length=1000)
     length_days: int = Field(default=14, ge=1, le=60)
@@ -250,21 +268,28 @@ def _last_rank(session: Session, project_id: str) -> float:
     return session.scalar(select(func.max(tables.Story.rank)).filter_by(project_id=project_id)) or 0.0
 
 
+def _key(session: Session, project_id: str) -> str:
+    """The prefix of the project's new story and sprint ids."""
+    project = session.get(tables.Project, project_id)
+    return project.key if project is not None else project_id
+
+
 def _new_story(session: Session, project_id: str, request: StoryCreate, source: str, synthetic: bool,
                taken: set[str], rank: float) -> tables.Story:
-    story_id = request.story_id or _next_id(taken, f"{project_id}-")[0]
+    story_id = request.story_id or _next_id(taken, f"{_key(session, project_id)}-")[0]
     if story_id in taken:
         raise _conflict(f"A story with the id '{story_id}' already exists in this project")
     taken.add(story_id)
     story = tables.Story(project_id=project_id, **request.model_dump(exclude={"story_id"}), story_id=story_id,
                          status="to_do", source=source, synthetic=synthetic, reopened=False, rank=rank)
+    story.upstream = signals.signals_for(story)
     session.add(story)
     return story
 
 
 def _new_sprint(session: Session, project_id: str, request: SprintCreate) -> tables.Sprint:
     existing = list(session.scalars(select(tables.Sprint.sprint_id).filter_by(project_id=project_id)))
-    automatic, number = _next_id(existing, f"{project_id}-S")
+    automatic, number = _next_id(existing, f"{_key(session, project_id)}-S")
     sprint_id = request.sprint_id or automatic
     if sprint_id in existing:
         raise _conflict(f"A sprint with the id '{sprint_id}' already exists in this project")
@@ -375,6 +400,17 @@ def import_stories(project_id: str, request: StoryImport, session: DbSession) ->
         raise _unavailable() from None
 
 
+@router.post("/projects/{project_id}/stories/signals", response_model=UpstreamSignals)
+def preview_signals(project_id: str, request: StoryCreate, session: DbSession) -> UpstreamSignals:
+    """The signals a story like this one would get, without saving it (e.g. to estimate a story first)."""
+    try:
+        _project(session, project_id)
+    except SQLAlchemyError:
+        raise _unavailable() from None
+    story = tables.Story(project_id=project_id, **request.model_dump(exclude={"story_id"}))
+    return UpstreamSignals(**signals.signals_for(story))
+
+
 @router.get("/projects/{project_id}/stories/{story_id}", response_model=Story)
 def get_story(project_id: str, story_id: str, session: DbSession) -> Story:
     try:
@@ -394,8 +430,11 @@ def update_story(project_id: str, story_id: str, update: StoryUpdate, request: R
         values = update.model_dump(exclude_unset=True)
         moving, target_id = "sprint_id" in values, values.pop("sprint_id", None)
         new_status = values.pop("status", None)
+        text_changed = any(name in values and values[name] != getattr(story, name) for name in TEXT_FIELDS)
         for name, value in values.items():  # first, so a story added to an active sprint commits its new points
             setattr(story, name, value)
+        if values:
+            signals.refresh(story, text_changed)
         if moving:
             changed |= _move(session, story, _sprint(session, project_id, target_id) if target_id else None, now)
         if new_status is not None:

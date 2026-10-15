@@ -11,6 +11,8 @@ export type ProjectSource = "platform" | "tawos" | "synthetic";
 export interface Project {
   id: string;
   name: string;
+  /** The prefix of its story and sprint ids (MFP-12, MFP-S5). */
+  key: string;
   description: string;
   data_source: ProjectSource;
   created_at: string;
@@ -19,16 +21,18 @@ export interface Project {
 export interface ProjectCreate {
   id: string;
   name: string;
+  /** Empty: the gateway takes the name's initials. */
+  key?: string;
   description?: string;
 }
 
-export const SOURCE_LABELS: Record<Exclude<ProjectSource, "platform">, string> = {
+export const SOURCE_LABELS: Partial<Record<ProjectSource, string>> = {
   tawos: "TAWOS replay",
-  synthetic: "Synthetic",
 };
 
+/** A replay of a TAWOS project's real sprints (the other projects are shown alike, whatever their data). */
 export function isDevelopmentData(project: Pick<Project, "data_source">): boolean {
-  return project.data_source !== "platform";
+  return project.data_source === "tawos";
 }
 
 export const PROJECTS_KEY = ["platform", "projects"] as const;

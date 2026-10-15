@@ -20,6 +20,7 @@ export const ACTION_LABELS: Record<RecommendationAction, string> = {
   create_tests: "Create the missing tests",
   resolve_dependency: "Resolve the dependencies",
   reduce_sprint_scope: "Reduce the sprint's scope",
+  plan_buffer: "Keep a buffer",
 };
 
 export const DECISION_LABELS: Record<Decision, string> = { accept: "Accepted", adjust: "Adjusted", reject: "Rejected" };
@@ -42,6 +43,7 @@ export const FEATURE_SOURCE_LABELS: Record<string, string> = {
   text: "from the story text",
   proxy: "estimated from the text (upstream component not available)",
   missing: "not available",
+  platform: "from the backlog's story signals",
 };
 
 export const METRIC_LABELS: Record<string, { label: string; hint: string }> = {

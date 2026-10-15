@@ -14,7 +14,7 @@
         }
       ],
       "default": null,
-      "description": "Empty: the next free id like PROJECT-S3",
+      "description": "Empty: the next free id with the project's key, like MFP-S3",
       "title": "Sprint Id"
     },
     "name": {

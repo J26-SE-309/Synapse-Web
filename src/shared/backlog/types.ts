@@ -29,11 +29,26 @@ export interface Story {
   source: "manual" | "import" | "refinement";
   /** Made-up data for development and demonstrations, never evidence. */
   synthetic: boolean;
+  /** What Components 1-3 found about the story; cleared when its text changes. */
+  upstream?: UpstreamSignals | null;
   started_at: string | null;
   resolved_at: string | null;
   reopened: boolean;
   created_at: string;
   updated_at: string;
+}
+
+/** Components 1-3's findings, in the effort service's upstream fields; source names who made them up, if not them. */
+export interface UpstreamSignals {
+  ambiguity_score?: number | null;
+  vague_term_count?: number | null;
+  missing_info_flag_count?: number | null;
+  ac_completeness_score?: number | null;
+  invest_compliance_flags?: Record<string, boolean> | null;
+  traceability_coverage_pct?: number | null;
+  unlinked_artifact_count?: number | null;
+  has_linked_tests?: boolean | null;
+  source?: string | null;
 }
 
 export interface StoryCreate {

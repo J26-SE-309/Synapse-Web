@@ -3,6 +3,10 @@ import { describe, expect, it } from "vitest";
 import contract from "../../../contracts/common/project-create.schema.json";
 import {
   normaliseProjectId,
+  SHORT_KEY_MAX,
+  SHORT_KEY_MIN,
+  SHORT_KEY_PATTERN,
+  suggestShortKey,
   PROJECT_DESCRIPTION_MAX,
   PROJECT_ID_MAX,
   PROJECT_ID_MIN,
@@ -12,10 +16,10 @@ import {
   suggestProjectId,
 } from "@/shared/projects/schema";
 
-const valid = { name: "Tutoring app", id: "TUTOR", description: "" };
+const valid = { name: "Tutoring app", id: "TUTOR", key: "TA", description: "" };
 
-function problems(values: Record<string, string>, existing: string[] = []) {
-  const result = projectCreateSchema(existing).safeParse({ ...valid, ...values });
+function problems(values: Record<string, string>, existing: string[] = [], keys: string[] = []) {
+  const result = projectCreateSchema(existing, keys).safeParse({ ...valid, ...values });
   return result.success ? [] : result.error.issues.map((issue) => issue.message);
 }
 
@@ -47,7 +51,7 @@ describe("the new-project rules", () => {
   });
 
   it("catch a key that is already used before anything is sent", () => {
-    expect(problems({ id: "TUTOR" }, ["TUTOR"])).toEqual(["A project with this key already exists."]);
+    expect(problems({ id: "TUTOR" }, ["TUTOR"])).toEqual(["A project with this id already exists."]);
   });
 
   it("need a name and keep names and descriptions within the limits", () => {
@@ -70,3 +74,25 @@ describe("project keys", () => {
     expect(normaliseProjectId("my app_two")).toBe("MY-APP-TWO");
   });
 });
+
+describe("short keys", () => {
+  it("follow the gateway's rules (contracts/common/project-create.schema.json)", () => {
+    const key = contract.properties.key.anyOf[0];
+    expect(SHORT_KEY_PATTERN.source).toBe(key.pattern);
+    expect(SHORT_KEY_MIN).toBe(key.minLength);
+    expect(SHORT_KEY_MAX).toBe(key.maxLength);
+  });
+
+  it("are suggested from the name's initials like the gateway does", () => {
+    expect(suggestShortKey("My First Project")).toBe("MFP");
+    expect(suggestShortKey("Tutoring")).toBe("TUT");
+    expect(suggestShortKey("My First Project", ["MFP"])).toBe("MFP2");
+  });
+
+  it("may be left empty, and are checked when typed", () => {
+    expect(problems({ key: "" })).toEqual([]);
+    expect(problems({ key: "mfp" })).toEqual(["Use 2 to 5 capital letters or digits, starting with a letter."]);
+    expect(problems({ key: "TA" }, [], ["TA"])).toEqual(["Another project already uses this short key."]);
+  });
+});
+

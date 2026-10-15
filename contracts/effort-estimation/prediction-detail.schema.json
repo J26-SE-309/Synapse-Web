@@ -1,6 +1,78 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$defs": {
+    "ConfidenceBreakdown": {
+      "description": "confidence_score = data_support x (effort_certainty + risk_certainty) / 2 (ml-engine/reports/confidence.md).",
+      "properties": {
+        "effort_certainty": {
+          "description": "E: share of past estimates with a wider interval",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Effort Certainty",
+          "type": "number"
+        },
+        "risk_certainty": {
+          "description": "R: |2p - 1|, how far the probability is from a coin flip",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Risk Certainty",
+          "type": "number"
+        },
+        "data_support": {
+          "description": "S: 1, lowered by each penalty",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Data Support",
+          "type": "number"
+        },
+        "penalties": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ConfidencePenalty"
+          },
+          "title": "Penalties",
+          "type": "array"
+        }
+      },
+      "required": [
+        "effort_certainty",
+        "risk_certainty",
+        "data_support"
+      ],
+      "title": "ConfidenceBreakdown",
+      "type": "object"
+    },
+    "ConfidencePenalty": {
+      "properties": {
+        "reason": {
+          "enum": [
+            "cold_start",
+            "unseen_project",
+            "missing_group"
+          ],
+          "title": "Reason",
+          "type": "string"
+        },
+        "factor": {
+          "description": "What data support is multiplied by",
+          "exclusiveMinimum": 0,
+          "maximum": 1,
+          "title": "Factor",
+          "type": "number"
+        },
+        "detail": {
+          "title": "Detail",
+          "type": "string"
+        }
+      },
+      "required": [
+        "reason",
+        "factor",
+        "detail"
+      ],
+      "title": "ConfidencePenalty",
+      "type": "object"
+    },
     "ModelConfiguration": {
       "properties": {
         "encoder": {
@@ -155,6 +227,30 @@
           "title": "Confidence Level",
           "type": "string"
         },
+        "confidence_breakdown": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ConfidenceBreakdown"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "How the score came about"
+        },
+        "risk_if_all_done": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RiskEffect"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The risk once every suggested action is done (only when there are two or more)"
+        },
         "configuration_id": {
           "default": "",
           "title": "Configuration Id",
@@ -238,7 +334,8 @@
             "add_acceptance_criteria",
             "create_tests",
             "resolve_dependency",
-            "reduce_sprint_scope"
+            "reduce_sprint_scope",
+            "plan_buffer"
           ],
           "title": "Action",
           "type": "string"
@@ -250,6 +347,18 @@
         "triggered_by": {
           "title": "Triggered By",
           "type": "string"
+        },
+        "expected_effect": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RiskEffect"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The risk once this action is done"
         }
       },
       "required": [
@@ -294,7 +403,8 @@
                 "add_acceptance_criteria",
                 "create_tests",
                 "resolve_dependency",
-                "reduce_sprint_scope"
+                "reduce_sprint_scope",
+                "plan_buffer"
               ],
               "type": "string"
             },
@@ -394,6 +504,32 @@
         "created_at"
       ],
       "title": "RecordedOutcome",
+      "type": "object"
+    },
+    "RiskEffect": {
+      "description": "The risk the models expect once an action is done: the story's features changed as the action would, and\npredicted again by the same configuration (ml-engine erp/serving/whatif.py).",
+      "properties": {
+        "spillover_probability": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Spillover Probability",
+          "type": "number"
+        },
+        "sprint_risk_level": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "title": "Sprint Risk Level",
+          "type": "string"
+        }
+      },
+      "required": [
+        "spillover_probability",
+        "sprint_risk_level"
+      ],
+      "title": "RiskEffect",
       "type": "object"
     },
     "RiskReason": {
