@@ -43,7 +43,7 @@ export const FEATURE_SOURCE_LABELS: Record<string, string> = {
   text: "from the story text",
   proxy: "estimated from the text (upstream component not available)",
   missing: "not available",
-  synthetic: "synthetic component data (development only)",
+  platform: "from the backlog's story signals",
 };
 
 export const METRIC_LABELS: Record<string, { label: string; hint: string }> = {

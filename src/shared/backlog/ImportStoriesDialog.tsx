@@ -1,6 +1,6 @@
 "use client";
 
-import { FileJsonIcon, FlaskConicalIcon, TriangleAlertIcon } from "lucide-react";
+import { FileJsonIcon, SparklesIcon, TriangleAlertIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useId, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -139,7 +139,7 @@ export function ImportStoriesDialog({ projectId }: { projectId: string }) {
           </Field>
           <div>
             <Button type="button" variant="ghost" size="sm" onClick={loadExample}>
-              <FlaskConicalIcon aria-hidden /> Use the example backlog
+              <SparklesIcon aria-hidden /> Use the example backlog
             </Button>
           </div>
 
@@ -164,12 +164,6 @@ export function ImportStoriesDialog({ projectId }: { projectId: string }) {
                 {formatPoints(totalPoints(backlog.stories.map((story) => ({ story_points: story.story_points ?? null }))))}{" "}
                 points in the team&apos;s estimates.
               </p>
-              {backlog.synthetic ? (
-                <p className="flex items-center gap-1.5">
-                  <FlaskConicalIcon aria-hidden className="size-4" /> Marked as made up: the stories are labelled
-                  Synthetic and are never used as evidence.
-                </p>
-              ) : null}
               {backlog.sprint ? (
                 <Field orientation="horizontal">
                   <Checkbox id={`${ids}-sprint`} checked={planSprint} onCheckedChange={(checked) => setPlanSprint(checked === true)} />

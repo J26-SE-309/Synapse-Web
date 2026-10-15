@@ -47,7 +47,7 @@ describe("a platform sprint as an estimate request", () => {
 });
 
 describe("one story's prediction", () => {
-  const signals = { ambiguity_score: 0.2, ac_completeness_score: 0.8, source: "synthetic" };
+  const signals = { ambiguity_score: 0.2, ac_completeness_score: 0.8, source: "platform" };
   const sprintStories = [
     story("TUTOR-1", { upstream: signals }),
     story("TUTOR-2"),

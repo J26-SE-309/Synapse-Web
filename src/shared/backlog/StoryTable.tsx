@@ -30,7 +30,7 @@ import { NativeSelect, NativeSelectOption } from "@/shared/ui/native-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
 
 import { useDeleteStory, useUpdateStory } from "./api";
-import { formatDateTime, StoryStatusBadge, SyntheticBadge } from "./badges";
+import { formatDateTime, StoryStatusBadge } from "./badges";
 import { StoryFormDialog } from "./StoryFormDialog";
 import { STATUS_LABELS, type Sprint, type SprintItem, type Story, type StoryStatus, type StoryUpdate } from "./types";
 
@@ -203,7 +203,6 @@ export function StoryTable({
                           <span className="block font-medium">{story.title}</span>
                           <span className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-muted-foreground">
                             {story.story_id}
-                            {story.synthetic ? <SyntheticBadge /> : null}
                             {item?.added_mid_sprint ? (
                               <span className="font-sans">Added mid-sprint</span>
                             ) : null}

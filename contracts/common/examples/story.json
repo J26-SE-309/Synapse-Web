@@ -19,6 +19,17 @@
   "sprint_id": "TUTOR-S4",
   "source": "refinement",
   "synthetic": false,
+  "upstream": {
+    "ambiguity_score": 0.05,
+    "vague_term_count": 0,
+    "missing_info_flag_count": 0,
+    "ac_completeness_score": 0.88,
+    "invest_compliance_flags": {"independent": false, "negotiable": true, "valuable": true, "estimable": true, "small": true, "testable": true},
+    "traceability_coverage_pct": 1.0,
+    "unlinked_artifact_count": 0,
+    "has_linked_tests": true,
+    "source": "platform"
+  },
   "started_at": "2026-09-15T08:30:00Z",
   "resolved_at": null,
   "reopened": false,

@@ -21,7 +21,6 @@ import {
   CalendarPlusIcon,
   ChevronRightIcon,
   FilterXIcon,
-  FlaskConicalIcon,
   PlusIcon,
   SearchIcon,
   TriangleAlertIcon,
@@ -393,18 +392,6 @@ function Planning({ project }: { project: Project }) {
               </Button>
             ) : null}
           </div>
-          {all.some((story) => story.synthetic) ? (
-            <Alert>
-              <FlaskConicalIcon aria-hidden />
-              <AlertTitle>
-                {all.every((story) => story.synthetic) ? "These stories are synthetic" : "Some stories are synthetic"}
-              </AlertTitle>
-              <AlertDescription>
-                Made up for development and demonstrations (marked with a flask). Use them to try the platform, not as
-                evidence about a team.
-              </AlertDescription>
-            </Alert>
-          ) : null}
           <p id={`${ids}-hint`} className="-mt-3 text-xs text-muted-foreground" aria-live="polite">
             {filtered
               ? "Filtered: dragging is off so nothing moves out of sight. Clear the filters to reorder."

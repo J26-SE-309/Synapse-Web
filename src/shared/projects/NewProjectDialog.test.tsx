@@ -20,7 +20,7 @@ function renderDialog(onCreated = vi.fn(), existingIds: string[] = []) {
   return onCreated;
 }
 
-const created = { id: "TUTORING-APP", name: "Tutoring app", description: "", data_source: "platform", created_at: "2026-09-27T09:00:00Z" };
+const created = { id: "TUTORING-APP", name: "Tutoring app", key: "TA", description: "", data_source: "platform", created_at: "2026-09-27T09:00:00Z" };
 
 describe("NewProjectDialog", () => {
   it("suggests a key from the name and creates the project", async () => {
@@ -30,13 +30,14 @@ describe("NewProjectDialog", () => {
     const user = userEvent.setup();
 
     await user.type(screen.getByLabelText("Name"), "Tutoring app");
-    expect(screen.getByLabelText("Project key")).toHaveValue("TUTORING-APP");
+    expect(screen.getByLabelText("Project id")).toHaveValue("TUTORING-APP");
+    expect(screen.getByLabelText("Short key")).toHaveValue("TA");
     await user.click(screen.getByRole("button", { name: "Create project" }));
 
     await waitFor(() => expect(onCreated).toHaveBeenCalledWith(created));
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("http://localhost:8000/api/v1/projects");
-    expect(JSON.parse(init.body as string)).toEqual({ id: "TUTORING-APP", name: "Tutoring app", description: "" });
+    expect(JSON.parse(init.body as string)).toEqual({ id: "TUTORING-APP", name: "Tutoring app", key: "TA", description: "" });
   });
 
   it("shows what is wrong on the field and sends nothing", async () => {
@@ -45,18 +46,18 @@ describe("NewProjectDialog", () => {
     renderDialog(vi.fn(), ["TUTOR"]);
     const user = userEvent.setup();
 
-    await user.type(screen.getByLabelText("Project key"), "tutor");
-    expect(screen.getByLabelText("Project key")).toHaveValue("TUTOR"); // typed in capitals
+    await user.type(screen.getByLabelText("Project id"), "tutor");
+    expect(screen.getByLabelText("Project id")).toHaveValue("TUTOR"); // typed in capitals
     await user.click(screen.getByRole("button", { name: "Create project" }));
 
     expect(await screen.findByText("Enter a name for the project.")).toBeInTheDocument();
-    expect(screen.getByText("A project with this key already exists.")).toBeInTheDocument();
+    expect(screen.getByText("A project with this id already exists.")).toBeInTheDocument();
     expect(screen.getByLabelText("Name")).toHaveAttribute("aria-invalid", "true");
     expect(screen.getByLabelText("Name")).toHaveFocus(); // the first problem takes the focus
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("puts the gateway's 'already exists' on the key", async () => {
+  it("puts the gateway's 'already exists' on the id", async () => {
     const conflict = { detail: "A project with the id 'TUTOR' already exists" };
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify(conflict), { status: 409 })));
     renderDialog();
@@ -65,7 +66,7 @@ describe("NewProjectDialog", () => {
     await user.type(screen.getByLabelText("Name"), "Tutor");
     await user.click(screen.getByRole("button", { name: "Create project" }));
 
-    expect(await screen.findByText("A project with this key already exists.")).toBeInTheDocument();
+    expect(await screen.findByText("A project with this id already exists.")).toBeInTheDocument();
   });
 
   it("says so when the gateway cannot be reached", async () => {

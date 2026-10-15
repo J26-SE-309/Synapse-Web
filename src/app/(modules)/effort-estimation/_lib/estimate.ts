@@ -61,6 +61,12 @@ export function toStoryInput(story: Story, { added = false, daysIn = 0 } = {}): 
   };
 }
 
+/** The next sprint, as the team's latest sprint was: its length and capacity. */
+export function usualSprint(sprints: Sprint[]): { length_days: number; capacity_points: number | null } {
+  const latest = [...sprints].sort((a, b) => (b.started_at ?? b.created_at).localeCompare(a.started_at ?? a.created_at))[0];
+  return { length_days: latest?.length_days ?? 14, capacity_points: latest?.capacity_points ?? null };
+}
+
 /**
  * One story's prediction, made the way a sprint's is: with a sprint, the sprint's other stories go along as its
  * committed work (focus_story_ids keeps them from being predicted or recorded), and a story not in the sprint is
@@ -73,6 +79,7 @@ export function toStoryPrediction({
   sprint,
   sprintStories,
   pinnedConfiguration,
+  nextSprint = null,
   now = Date.now(),
 }: {
   projectId: string;
@@ -80,6 +87,8 @@ export function toStoryPrediction({
   sprint: Sprint | null;
   sprintStories: Story[];
   pinnedConfiguration: string | null;
+  /** Without a sprint: the next one, as long as the team's sprints usually are. */
+  nextSprint?: { length_days: number; capacity_points: number | null } | null;
   now?: number;
 }): EstimateRequest {
   if (!sprint) {
@@ -87,6 +96,7 @@ export function toStoryPrediction({
       project_id: projectId,
       sprint_id: null,
       pinned_configuration: pinnedConfiguration,
+      sprint_context: nextSprint,
       stories: [toStoryInput(story)],
       focus_story_ids: [story.story_id],
     };

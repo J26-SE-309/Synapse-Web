@@ -19,6 +19,8 @@ class Project(Base):
 
     id: Mapped[str] = mapped_column(String(32), primary_key=True)
     name: Mapped[str] = mapped_column(String(80))
+    # The short prefix of its story and sprint ids (MFP-12, MFP-S5).
+    key: Mapped[str] = mapped_column(String(5), unique=True)
     description: Mapped[str] = mapped_column(Text, default="")
     # "platform" for projects people create; "tawos" and "synthetic" mark development data (removable).
     data_source: Mapped[str] = mapped_column(String(20), default="platform")
@@ -76,8 +78,8 @@ class Story(Base):
     source: Mapped[str] = mapped_column(String(12), default="manual")  # manual, import, refinement
     synthetic: Mapped[bool] = mapped_column(Boolean, default=False)  # made-up data, never evidence
     # What Components 1-3 found about the story (requirement quality, acceptance criteria, traceability), in the
-    # effort service's upstream-signal fields, with "source" naming who produced them (e.g. "synthetic"). Cleared
-    # when the story's text changes, since the signals described the old text.
+    # effort service's upstream-signal fields, with "source" naming who produced them: "platform" while the
+    # platform works them out itself (app.signals, again after every change), else the component.
     upstream: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

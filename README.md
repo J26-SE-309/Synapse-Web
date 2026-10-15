@@ -174,12 +174,12 @@ The gateway creates and updates its tables itself at start-up (Alembic migration
 .venv\Scripts\python -m app.devdata load     # or: list, delete
 ```
 
-A project of your own can get synthetic data for demonstrations (`gateway/app/synthetic.py`): what Components 1–3 would report about its stories (`upstream`, labelled `source: synthetic`), and four closed *Synthetic sprint* sprints before its first one, sent to the effort service as its team history. Never evidence; take them out again before real use:
+Every story carries what Components 1–3 report about it (requirement quality, acceptance criteria and INVEST, traceability): until those components are connected through the pipeline, the gateway works the signals out from the story itself (`gateway/app/signals.py`) whenever a story is created or changed. Stories saved before that get theirs with `python -m app.devdata signals`.
+
+A project can be filled with a complete demonstration backlog (`gateway/app/demo.py`): a small team building a task-management app, with four finished sprints, a fifth starting today and a backlog of what comes next, sent to the effort service as the team's history. It replaces the project's own stories and sprints:
 
 ```powershell
-.venv\Scripts\python -m app.devdata synthetic-signals MY-PROJECT
-.venv\Scripts\python -m app.devdata synthetic-history MY-PROJECT
-.venv\Scripts\python -m app.devdata remove-synthetic MY-PROJECT
+.venv\Scripts\python -m app.devdata demo MY-PROJECT --replace
 ```
 
 ### Everything in Docker

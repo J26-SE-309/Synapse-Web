@@ -70,10 +70,17 @@ export interface RiskReason {
   weight: number;
 }
 
+/** The risk the models expect once an action is done (the story's inputs changed as the action would). */
+export interface RiskEffect {
+  spillover_probability: number;
+  sprint_risk_level: RiskLevel;
+}
+
 export interface Recommendation {
   action: RecommendationAction;
   message: string;
   triggered_by: string;
+  expected_effect?: RiskEffect | null;
 }
 
 export interface ModelConfiguration {
@@ -112,6 +119,8 @@ export interface Prediction {
   confidence_level?: ConfidenceLevel;
   /** Added after the first predictions were recorded: older ones have none. */
   confidence_breakdown?: ConfidenceBreakdown | null;
+  /** The risk once every suggested action is done (two or more actions). */
+  risk_if_all_done?: RiskEffect | null;
   configuration_id?: string;
   selection_reason?: string;
   degraded_feature_groups?: string[];

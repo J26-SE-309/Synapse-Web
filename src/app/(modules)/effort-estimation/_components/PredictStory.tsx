@@ -7,10 +7,10 @@ import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch, type FieldErrors } from "react-hook-form";
 import { z } from "zod";
 
-import { describeError } from "@/shared/api/gateway";
+import { describeError, gatewayFetch } from "@/shared/api/gateway";
 import { useSprints, useStories } from "@/shared/backlog/api";
 import { storyFormSchema, toStory } from "@/shared/backlog/schema";
-import { ISSUE_TYPES, PRIORITIES, type Sprint, type Story } from "@/shared/backlog/types";
+import { ISSUE_TYPES, PRIORITIES, type Sprint, type Story, type UpstreamSignals } from "@/shared/backlog/types";
 import { PageHeader } from "@/shared/components/PageHeader";
 import type { Project } from "@/shared/projects/api";
 import { ProjectGate } from "@/shared/projects/ProjectGate";
@@ -26,7 +26,7 @@ import { Spinner } from "@/shared/ui/spinner";
 import { Textarea } from "@/shared/ui/textarea";
 
 import { useEstimate, useModels, usePrediction } from "../_lib/api";
-import { toStoryPrediction } from "../_lib/estimate";
+import { toStoryPrediction, usualSprint } from "../_lib/estimate";
 import { points } from "../_lib/format";
 import type { ModelsResponse, Prediction, PredictionDetail } from "../_lib/types";
 import { PredictionDetailBody } from "./PredictionDetailView";
@@ -85,7 +85,7 @@ function typedStory(projectId: string, values: PredictValues): Story {
   return {
     ...body,
     project_id: projectId,
-    story_id: `${projectId}-TRY-${Date.now().toString(36).toUpperCase()}`,
+    story_id: `NEW-${Date.now().toString(36).toUpperCase()}`,
     description: body.description ?? "",
     acceptance_criteria: body.acceptance_criteria ?? [],
     issue_type: body.issue_type ?? null,
@@ -200,14 +200,22 @@ function PredictForm({ project, models }: { project: Project; models: ModelsResp
       return;
     }
     const sprint = open.find((entry) => entry.sprint_id === values.sprintId) ?? null;
-    const request = toStoryPrediction({
-      projectId: project.id,
-      story,
-      sprint,
-      sprintStories: sprint ? all.filter((entry) => entry.sprint_id === sprint.sprint_id) : [],
-      pinnedConfiguration: values.model || null,
-    });
     try {
+      if (values.kind === "new") {
+        // What Components 1-3 would report about it, as for a saved story (nothing is saved).
+        story.upstream = await gatewayFetch<UpstreamSignals>(
+          `api/v1/projects/${encodeURIComponent(project.id)}/stories/signals`,
+          { method: "POST", body: JSON.stringify(toStory({ ...values, story_id: "" })) },
+        );
+      }
+      const request = toStoryPrediction({
+        projectId: project.id,
+        story,
+        sprint,
+        sprintStories: sprint ? all.filter((entry) => entry.sprint_id === sprint.sprint_id) : [],
+        pinnedConfiguration: values.model || null,
+        nextSprint: usualSprint(sprints.data ?? []),
+      });
       const response = await estimate.mutateAsync(request);
       const prediction = response.predictions[0];
       setMade({ prediction, projectId: project.id, sprintId: request.sprint_id ?? null, title: story.title });
@@ -374,7 +382,7 @@ function PredictForm({ project, models }: { project: Project; models: ModelsResp
               <Field>
                 <FieldLabel htmlFor="predict-sprintId">Sprint</FieldLabel>
                 <NativeSelect id="predict-sprintId" className="w-full" {...form.register("sprintId")}>
-                  <NativeSelectOption value="">No sprint (on its own)</NativeSelectOption>
+                  <NativeSelectOption value="">The next sprint (not planned yet)</NativeSelectOption>
                   {open.map((sprint) => (
                     <NativeSelectOption key={sprint.sprint_id} value={sprint.sprint_id}>
                       {sprint.name} ({sprint.status === "active" ? "running" : "planned"})
@@ -383,7 +391,7 @@ function PredictForm({ project, models }: { project: Project; models: ModelsResp
                 </NativeSelect>
                 <FieldDescription>
                   A story not in the sprint is predicted as if added to it now; only a story really in the sprint gets its outcome
-                  recorded at the close.
+                  recorded at the close. The next sprint is taken to be as long as the latest one.
                 </FieldDescription>
               </Field>
               <Field>

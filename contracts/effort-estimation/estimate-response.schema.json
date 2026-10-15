@@ -239,6 +239,18 @@
           "default": null,
           "description": "How the score came about"
         },
+        "risk_if_all_done": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RiskEffect"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The risk once every suggested action is done (only when there are two or more)"
+        },
         "configuration_id": {
           "default": "",
           "title": "Configuration Id",
@@ -335,6 +347,18 @@
         "triggered_by": {
           "title": "Triggered By",
           "type": "string"
+        },
+        "expected_effect": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RiskEffect"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The risk once this action is done"
         }
       },
       "required": [
@@ -343,6 +367,32 @@
         "triggered_by"
       ],
       "title": "Recommendation",
+      "type": "object"
+    },
+    "RiskEffect": {
+      "description": "The risk the models expect once an action is done: the story's features changed as the action would, and\npredicted again by the same configuration (ml-engine erp/serving/whatif.py).",
+      "properties": {
+        "spillover_probability": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Spillover Probability",
+          "type": "number"
+        },
+        "sprint_risk_level": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "title": "Sprint Risk Level",
+          "type": "string"
+        }
+      },
+      "required": [
+        "spillover_probability",
+        "sprint_risk_level"
+      ],
+      "title": "RiskEffect",
       "type": "object"
     },
     "RiskReason": {
