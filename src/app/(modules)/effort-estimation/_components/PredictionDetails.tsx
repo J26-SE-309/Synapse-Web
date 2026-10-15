@@ -69,7 +69,14 @@ export function PredictionDetails({ prediction }: { prediction: Prediction }) {
       </section>
       <section className="space-y-3">
         <h3 className="text-sm font-semibold">Suggested actions</h3>
-        <RecommendationList recommendations={prediction.recommendations} />
+        <RecommendationList
+          recommendations={prediction.recommendations}
+          empty={
+            prediction.sprint_risk_level === "low"
+              ? "None needed: the risk is low."
+              : "None: the main factors are not something this story can change (such as its type or priority), or they give nothing to act on."
+          }
+        />
       </section>
       <section className="space-y-3">
         <h3 className="text-sm font-semibold">

@@ -3,6 +3,8 @@
  * the service's Pydantic models). Only what the pages use is typed; the schemas are the reference.
  */
 
+import type { UpstreamSignals } from "@/shared/backlog/types";
+
 export type RiskLevel = "low" | "medium" | "high";
 export type ConfidenceLevel = "high" | "medium" | "low";
 export type EffortCategory = "small" | "medium" | "large" | "extra_large";
@@ -14,7 +16,8 @@ export type RecommendationAction =
   | "add_acceptance_criteria"
   | "create_tests"
   | "resolve_dependency"
-  | "reduce_sprint_scope";
+  | "reduce_sprint_scope"
+  | "plan_buffer";
 
 // ------------------------------------------------------------------------------------------- requests
 
@@ -34,6 +37,8 @@ export interface StoryInput {
   in_progress?: boolean;
   added_mid_sprint?: boolean;
   days_into_sprint?: number;
+  /** Components 1-3's signals; without them the service estimates those groups from the text (FR17). */
+  upstream?: UpstreamSignals;
 }
 
 export interface SprintContextInput {
@@ -49,6 +54,8 @@ export interface EstimateRequest {
   stories: StoryInput[];
   sprint_context?: SprintContextInput | null;
   pinned_configuration?: string | null;
+  /** Predict (and record) only these stories; the others count as the rest of the sprint's committed work. */
+  focus_story_ids?: string[] | null;
 }
 
 export interface CompareRequest extends EstimateRequest {
@@ -75,6 +82,14 @@ export interface ModelConfiguration {
   formulation: "single_task" | "multi_task" | "chained";
 }
 
+/** confidence_score = data_support x (effort_certainty + risk_certainty) / 2, and what lowered the support. */
+export interface ConfidenceBreakdown {
+  effort_certainty: number;
+  risk_certainty: number;
+  data_support: number;
+  penalties: { reason: "cold_start" | "unseen_project" | "missing_group"; factor: number; detail: string }[];
+}
+
 export interface Prediction {
   story_id: string;
   project_id: string;
@@ -95,6 +110,8 @@ export interface Prediction {
   interval_coverage?: number;
   at_risk?: boolean;
   confidence_level?: ConfidenceLevel;
+  /** Added after the first predictions were recorded: older ones have none. */
+  confidence_breakdown?: ConfidenceBreakdown | null;
   configuration_id?: string;
   selection_reason?: string;
   degraded_feature_groups?: string[];

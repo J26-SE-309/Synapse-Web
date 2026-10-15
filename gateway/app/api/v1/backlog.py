@@ -51,6 +51,7 @@ class StoryCreate(BaseModel):
     needed_by: int = Field(default=0, ge=0, le=1000, description="Issues that need it first")
 
 
+TEXT_FIELDS = ("title", "description", "acceptance_criteria")  # what the components' signals are about
 NOT_NULL = {"title", "description", "acceptance_criteria", "blocked_by", "depends_on", "needed_by", "status", "rank"}
 
 
@@ -81,6 +82,21 @@ class StoryUpdate(BaseModel):
         return self
 
 
+class UpstreamSignals(BaseModel):
+    """What Components 1-3 found about a story, as the effort service reads it (its estimate request's upstream)."""
+
+    ambiguity_score: float | None = Field(default=None, ge=0, le=1)
+    vague_term_count: int | None = Field(default=None, ge=0)
+    missing_info_flag_count: int | None = Field(default=None, ge=0)
+    ac_completeness_score: float | None = Field(default=None, ge=0, le=1)
+    invest_compliance_flags: dict[str, bool] | None = None
+    traceability_coverage_pct: float | None = Field(default=None, ge=0, le=1)
+    unlinked_artifact_count: int | None = Field(default=None, ge=0)
+    has_linked_tests: bool | None = None
+    source: str | None = Field(default=None, max_length=20,
+                               description="Who produced them when not the components, e.g. synthetic")
+
+
 class Story(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -101,6 +117,8 @@ class Story(BaseModel):
     sprint_id: str | None = Field(description="The sprint it is in now; empty in the backlog")
     source: Literal["manual", "import", "refinement"]
     synthetic: bool = Field(description="Made-up data for development and demonstrations, never evidence")
+    upstream: UpstreamSignals | None = Field(default=None, description=(
+        "What Components 1-3 found about the story; cleared when its title, description or criteria change"))
     started_at: datetime | None
     resolved_at: datetime | None
     reopened: bool
@@ -394,6 +412,8 @@ def update_story(project_id: str, story_id: str, update: StoryUpdate, request: R
         values = update.model_dump(exclude_unset=True)
         moving, target_id = "sprint_id" in values, values.pop("sprint_id", None)
         new_status = values.pop("status", None)
+        if any(name in values and values[name] != getattr(story, name) for name in TEXT_FIELDS):
+            story.upstream = None  # the components' signals described the old text
         for name, value in values.items():  # first, so a story added to an active sprint commits its new points
             setattr(story, name, value)
         if moving:

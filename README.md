@@ -174,6 +174,14 @@ The gateway creates and updates its tables itself at start-up (Alembic migration
 .venv\Scripts\python -m app.devdata load     # or: list, delete
 ```
 
+A project of your own can get synthetic data for demonstrations (`gateway/app/synthetic.py`): what Components 1–3 would report about its stories (`upstream`, labelled `source: synthetic`), and four closed *Synthetic sprint* sprints before its first one, sent to the effort service as its team history. Never evidence; take them out again before real use:
+
+```powershell
+.venv\Scripts\python -m app.devdata synthetic-signals MY-PROJECT
+.venv\Scripts\python -m app.devdata synthetic-history MY-PROJECT
+.venv\Scripts\python -m app.devdata remove-synthetic MY-PROJECT
+```
+
 ### Everything in Docker
 
 - This repository only (web app, gateway and its database): `docker compose up --build`

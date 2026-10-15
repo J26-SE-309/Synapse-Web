@@ -2,12 +2,13 @@
 
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { gatewayFetch } from "@/shared/api/gateway";
+import { GatewayError, gatewayFetch } from "@/shared/api/gateway";
 
 import type {
   CompareRequest,
   CompareResponse,
   EstimateRequest,
+  EstimateResponse,
   FeedbackInput,
   HistoryImport,
   HistorySummary,
@@ -109,10 +110,35 @@ export function usePredictionPages(projectId: string, filters: PredictionFilters
   });
 }
 
-export function usePrediction(predictionId: string) {
+/**
+ * One recorded prediction. waitForRecord: the prediction was just made, and the service writes it to the log a
+ * moment after answering, so "not found" is asked again for a few seconds before it counts.
+ */
+export function usePrediction(predictionId: string, { waitForRecord = false } = {}) {
   return useQuery({
     queryKey: effortKeys.prediction(predictionId),
     queryFn: () => gatewayFetch<PredictionDetail>(`${BASE}/predictions/${encodeURIComponent(predictionId)}`),
+    ...(waitForRecord
+      ? {
+          retry: (failures: number, error: Error) =>
+            failures < 12 && error instanceof GatewayError && (error.status === 404 || error.status === 503),
+          retryDelay: 750,
+        }
+      : {}),
+  });
+}
+
+/** Story estimates without the sprint-level simulation (/estimate): one story's full prediction, recorded. */
+export function useEstimate(projectId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (request: EstimateRequest) =>
+      gatewayFetch<EstimateResponse>(`${BASE}/estimate`, { method: "POST", ...json(request) }),
+    onSuccess: () => {
+      window.setTimeout(() => {
+        void queryClient.invalidateQueries({ queryKey: [...effortKeys.all, projectId] });
+      }, 1500);
+    },
   });
 }
 
