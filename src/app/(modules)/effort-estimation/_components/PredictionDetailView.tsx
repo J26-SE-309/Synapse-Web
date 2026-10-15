@@ -2,18 +2,21 @@
 
 import { ArrowLeftIcon, TriangleAlertIcon } from "lucide-react";
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import { describeError, GatewayError } from "@/shared/api/gateway";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/shared/ui/collapsible";
 import { Skeleton } from "@/shared/ui/skeleton";
+import { Spinner } from "@/shared/ui/spinner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
 
 import { useModels, usePrediction } from "../_lib/api";
-import { DECISION_LABELS, percent, points, when } from "../_lib/format";
+import { DECISION_LABELS, hours, number, percent, points, when } from "../_lib/format";
+import type { ConfidenceBreakdown, PredictionDetail } from "../_lib/types";
 import { FeedbackControls } from "./FeedbackControls";
 import { ConfidenceIndicator, EffortValue, RiskBadge, SelectionBadge } from "./indicators";
 import { PredictionDetails } from "./PredictionDetails";
@@ -25,56 +28,145 @@ function featureValue(value: unknown): string {
   return String(value);
 }
 
-/** One prediction as it was sent, what the models saw (FR21), and what was decided and happened (FR19). */
-export function PredictionDetailView({ predictionId }: { predictionId: string }) {
-  const detail = usePrediction(predictionId);
-  const models = useModels();
+/** A feature's value as a number, or null when the models did not have it. */
+function numeric(features: Record<string, unknown>, name: string): number | null {
+  const value = features[name];
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
 
-  if (detail.isPending) return <Skeleton className="mx-auto h-96 max-w-6xl" />;
-  if (detail.isError) {
-    const missing = detail.error instanceof GatewayError && detail.error.status === 404;
+function Facts({ rows }: { rows: [string, ReactNode][] }) {
+  return (
+    <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
+      {rows.map(([term, value]) => (
+        <div key={term} className="contents">
+          <dt className="text-muted-foreground">{term}</dt>
+          <dd className="font-medium tabular-nums">{value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+/** The sprint and the team as the models saw them when they made this prediction (from the recorded features). */
+export function PredictionContext({ detail }: { detail: PredictionDetail }) {
+  const features = detail.features;
+  if (Object.keys(features).length === 0) return <Skeleton className="h-32" />;
+  const others = numeric(features, "sprint_committed_points");
+  const own = numeric(features, "story_points");
+  const velocity = numeric(features, "team_velocity_rolling");
+  const closed = numeric(features, "history_sprints");
+  const load = velocity && velocity > 0 && others !== null ? (others + (own ?? 0)) / velocity : null;
+  const unknown = <span className="font-normal text-muted-foreground">not known</span>;
+  const shown = (name: string, format: (value: number) => string) => {
+    const value = numeric(features, name);
+    return value === null ? unknown : format(value);
+  };
+  return (
+    <div className="grid gap-6 sm:grid-cols-2">
+      <section className="space-y-2">
+        <h3 className="text-sm font-semibold">The sprint</h3>
+        <Facts
+          rows={[
+            ["Sprint", detail.sprint_id ?? <span className="font-normal text-muted-foreground">none recorded</span>],
+            ["Length", shown("sprint_length_days", (value) => `${number(value, 0)} days`)],
+            ["Other committed work", others !== null ? `${points(others)} points` : unknown],
+            ["Sprint load", load !== null ? `${percent(load)} of the team's velocity` : unknown],
+            ["Added after the start", features.added_mid_sprint ? "yes" : "no"],
+            ["Team's own estimate", own !== null ? `${points(own)} points` : unknown],
+          ]}
+        />
+      </section>
+      <section className="space-y-2">
+        <h3 className="text-sm font-semibold">The team</h3>
+        <Facts
+          rows={[
+            ["Closed sprints on record", closed !== null ? number(closed, 0) : unknown],
+            ["Velocity (last 3 sprints)", velocity !== null ? `${points(velocity)} points` : unknown],
+            ["Stories spilled over", shown("historical_spillover_rate", percent)],
+            ["Stories reopened", shown("reopen_rate", percent)],
+            ["Mean cycle time", shown("mean_cycle_time_hours", hours)],
+          ]}
+        />
+      </section>
+    </div>
+  );
+}
+
+const PENALTY_LABELS: Record<ConfidenceBreakdown["penalties"][number]["reason"], string> = {
+  cold_start: "Little team history",
+  unseen_project: "A project the models never saw",
+  missing_group: "Missing inputs",
+};
+
+/** How the confidence score came about: S x (E + R) / 2, and what lowered the data support S. */
+export function ConfidenceExplained({ score, breakdown }: { score: number; breakdown?: ConfidenceBreakdown | null }) {
+  if (!breakdown) {
     return (
-      <div className="mx-auto max-w-3xl space-y-4">
-        <Alert variant="destructive">
-          <TriangleAlertIcon aria-hidden />
-          <AlertTitle>{missing ? "There is no such prediction" : "The prediction could not be loaded"}</AlertTitle>
-          <AlertDescription>{missing ? `No prediction has the id ${predictionId}.` : describeError(detail.error)}</AlertDescription>
-        </Alert>
-        <Button asChild variant="outline">
-          <Link href="/effort-estimation/predictions">
-            <ArrowLeftIcon aria-hidden /> Prediction log
-          </Link>
-        </Button>
-      </div>
+      <p className="text-sm text-muted-foreground">
+        This prediction was recorded before the service kept the parts of its confidence score.
+      </p>
     );
   }
-
-  const data = detail.data;
-  const prediction = data.prediction;
-  const label =
-    models.data?.configurations.find((model) => model.configuration_id === prediction.configuration_id)?.label ??
-    prediction.configuration_id;
-  const latest = data.feedback.at(-1);
-
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <Button asChild variant="ghost" size="sm" className="-ml-2">
-        <Link href="/effort-estimation/predictions">
-          <ArrowLeftIcon aria-hidden /> Prediction log
-        </Link>
-      </Button>
-      <PageHeader
-        title={<span className="font-mono">{prediction.story_id}</span>}
-        description={`Estimated ${when(data.created_at)} for ${data.project_id}${data.sprint_id ? `, sprint ${data.sprint_id}` : ""}.`}
-      >
-        <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-          <span>
-            By <strong className="text-foreground">{label}</strong>
-          </span>
-          <SelectionBadge mode={prediction.selection_mode} />
-        </p>
-      </PageHeader>
+    <div className="space-y-4 text-sm">
+      <p>
+        <span className="font-medium">{percent(score)}</span>
+        <span className="text-muted-foreground">
+          {" "}
+          = data support {percent(breakdown.data_support)} × (effort certainty {percent(breakdown.effort_certainty)} + risk
+          certainty {percent(breakdown.risk_certainty)}) ÷ 2. High from 60%, Medium from 35%.
+        </span>
+      </p>
+      <ul className="space-y-1 text-muted-foreground">
+        <li>
+          <span className="font-medium text-foreground">Effort certainty</span>: how much narrower this story&apos;s points range
+          is than past estimates&apos;.
+        </li>
+        <li>
+          <span className="font-medium text-foreground">Risk certainty</span>: how far the spillover chance is from a coin
+          flip (50%).
+        </li>
+      </ul>
+      <section className="space-y-2">
+        <h3 className="font-semibold">What lowered the data support</h3>
+        {breakdown.penalties.length === 0 ? (
+          <p className="text-muted-foreground">Nothing: the models had everything they use.</p>
+        ) : (
+          <ul className="space-y-1.5">
+            {breakdown.penalties.map((penalty) => (
+              <li key={penalty.reason} className="flex gap-2">
+                <span className="w-12 shrink-0 font-mono tabular-nums">×{number(penalty.factor)}</span>
+                <span>
+                  <span className="font-medium">{PENALTY_LABELS[penalty.reason]}</span>
+                  <span className="text-muted-foreground">: {penalty.detail}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </div>
+  );
+}
 
+/**
+ * Everything about one prediction: the answer, why, what to do, the context it used, how sure it is, what was
+ * decided and what happened (FR19), and the values the models saw (FR21). recorded: false while the service is
+ * still writing it to the log (decisions can be made once it is there).
+ */
+export function PredictionDetailBody({
+  data,
+  label,
+  recorded = true,
+}: {
+  data: PredictionDetail;
+  label: string;
+  recorded?: boolean;
+}) {
+  const prediction = data.prediction;
+  const latest = data.feedback.at(-1);
+  return (
+    <div className="space-y-6">
       <Card>
         <CardContent className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-1">
@@ -97,13 +189,19 @@ export function PredictionDetailView({ predictionId }: { predictionId: string })
           </div>
           <div className="space-y-1">
             <p className="text-xs text-muted-foreground">Your decision</p>
-            <FeedbackControls
-              projectId={data.project_id}
-              predictionId={data.prediction_id}
-              storyTitle={prediction.story_id}
-              predicted={prediction.predicted_story_points}
-              initial={latest ? { decision: latest.decision, points: latest.adjusted_story_points } : null}
-            />
+            {recorded ? (
+              <FeedbackControls
+                projectId={data.project_id}
+                predictionId={data.prediction_id}
+                storyTitle={prediction.story_id}
+                predicted={prediction.predicted_story_points}
+                initial={latest ? { decision: latest.decision, points: latest.adjusted_story_points } : null}
+              />
+            ) : (
+              <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Spinner aria-hidden /> Saving to the prediction log…
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -113,11 +211,38 @@ export function PredictionDetailView({ predictionId }: { predictionId: string })
           <CardTitle>
             <h2>Why</h2>
           </CardTitle>
+          <CardDescription>
+            By <span className="font-medium text-foreground">{label}</span>
+            {prediction.selection_reason ? ` (${prediction.selection_reason})` : ""}.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <PredictionDetails prediction={prediction} />
         </CardContent>
       </Card>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <h2>What it was predicted with</h2>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PredictionContext detail={data} />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <h2>How sure the models are</h2>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ConfidenceExplained score={prediction.confidence_score} breakdown={prediction.confidence_breakdown} />
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
@@ -153,7 +278,11 @@ export function PredictionDetailView({ predictionId }: { predictionId: string })
           </CardHeader>
           <CardContent>
             {data.outcomes.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Recorded when the sprint closes.</p>
+              <p className="text-sm text-muted-foreground">
+                {data.sprint_id
+                  ? "Recorded when the sprint closes."
+                  : "The story was not in a sprint when this was predicted, so no outcome is recorded for it."}
+              </p>
             ) : (
               <ol className="space-y-3">
                 {[...data.outcomes].reverse().map((outcome) => (
@@ -178,7 +307,7 @@ export function PredictionDetailView({ predictionId }: { predictionId: string })
             <CardTitle className="flex items-center justify-between gap-3">
               <h2>What the models saw</h2>
               <CollapsibleTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" disabled={Object.keys(data.features).length === 0}>
                   Show or hide the {Object.keys(data.features).length} values
                 </Button>
               </CollapsibleTrigger>
@@ -214,6 +343,60 @@ export function PredictionDetailView({ predictionId }: { predictionId: string })
           </CollapsibleContent>
         </Card>
       </Collapsible>
+    </div>
+  );
+}
+
+/** One prediction as it was sent, what the models saw (FR21), and what was decided and happened (FR19). */
+export function PredictionDetailView({ predictionId }: { predictionId: string }) {
+  const detail = usePrediction(predictionId);
+  const models = useModels();
+
+  if (detail.isPending) return <Skeleton className="mx-auto h-96 max-w-6xl" />;
+  if (detail.isError) {
+    const missing = detail.error instanceof GatewayError && detail.error.status === 404;
+    return (
+      <div className="mx-auto max-w-3xl space-y-4">
+        <Alert variant="destructive">
+          <TriangleAlertIcon aria-hidden />
+          <AlertTitle>{missing ? "There is no such prediction" : "The prediction could not be loaded"}</AlertTitle>
+          <AlertDescription>{missing ? `No prediction has the id ${predictionId}.` : describeError(detail.error)}</AlertDescription>
+        </Alert>
+        <Button asChild variant="outline">
+          <Link href="/effort-estimation/predictions">
+            <ArrowLeftIcon aria-hidden /> Prediction log
+          </Link>
+        </Button>
+      </div>
+    );
+  }
+
+  const data = detail.data;
+  const prediction = data.prediction;
+  const label =
+    models.data?.configurations.find((model) => model.configuration_id === prediction.configuration_id)?.label ??
+    prediction.configuration_id ??
+    "";
+
+  return (
+    <div className="mx-auto max-w-6xl space-y-6">
+      <Button asChild variant="ghost" size="sm" className="-ml-2">
+        <Link href="/effort-estimation/predictions">
+          <ArrowLeftIcon aria-hidden /> Prediction log
+        </Link>
+      </Button>
+      <PageHeader
+        title={<span className="font-mono">{prediction.story_id}</span>}
+        description={`Estimated ${when(data.created_at)} for ${data.project_id}${data.sprint_id ? `, sprint ${data.sprint_id}` : ""}.`}
+      >
+        <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+          <span>
+            By <strong className="text-foreground">{label}</strong>
+          </span>
+          <SelectionBadge mode={prediction.selection_mode} />
+        </p>
+      </PageHeader>
+      <PredictionDetailBody data={data} label={label} />
     </div>
   );
 }

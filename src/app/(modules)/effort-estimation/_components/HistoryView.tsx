@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleCheckIcon, FlaskConicalIcon, HourglassIcon, TriangleAlertIcon } from "lucide-react";
+import { CircleCheckIcon, HourglassIcon, TriangleAlertIcon } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import { describeError } from "@/shared/api/gateway";
@@ -30,8 +30,8 @@ import { HistoryImport } from "./HistoryImport";
 const SOURCE_NAMES: Record<string, string> = {
   platform: "Synapse",
   imported: "CSV import",
-  tawos: "TAWOS replay (development data)",
-  synthetic: "Synthetic (development data)",
+  tawos: "TAWOS replay",
+  synthetic: "Sprint records",
 };
 
 const chartConfig = {
@@ -89,7 +89,6 @@ function History({ project }: { project: Project }) {
   const history = useHistory(project.id);
   const data = history.data;
   const team = data?.team_context;
-  const development = (data?.sources ?? []).filter((source) => source === "tawos" || source === "synthetic");
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -118,16 +117,6 @@ function History({ project }: { project: Project }) {
         </Alert>
       ) : !data ? null : (
         <>
-          {development.length > 0 ? (
-            <Alert>
-              <FlaskConicalIcon aria-hidden />
-              <AlertTitle>Development data</AlertTitle>
-              <AlertDescription>
-                This history is {development.map((source) => (source === "tawos" ? "replayed TAWOS" : "synthetic")).join(" and ")}{" "}
-                data kept for development and demonstrations. It is labelled so it is never used as evidence.
-              </AlertDescription>
-            </Alert>
-          ) : null}
 
           <Alert>
             {data.cold_start ? <HourglassIcon aria-hidden /> : <CircleCheckIcon aria-hidden />}
