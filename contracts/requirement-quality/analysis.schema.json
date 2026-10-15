@@ -1,6 +1,162 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$defs": {
+    "AmbiguityCandidate": {
+      "properties": {
+        "candidate": {
+          "title": "Candidate",
+          "type": "string"
+        },
+        "similarity": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Similarity",
+          "type": "number"
+        },
+        "proximity": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Proximity",
+          "type": "number"
+        },
+        "combined_score": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Combined Score",
+          "type": "number"
+        },
+        "rank": {
+          "minimum": 1,
+          "title": "Rank",
+          "type": "integer"
+        },
+        "candidate_start": {
+          "minimum": 0,
+          "title": "Candidate Start",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "candidate",
+        "similarity",
+        "proximity",
+        "combined_score",
+        "rank",
+        "candidate_start"
+      ],
+      "title": "AmbiguityCandidate",
+      "type": "object"
+    },
+    "AmbiguityReference": {
+      "properties": {
+        "reference": {
+          "title": "Reference",
+          "type": "string"
+        },
+        "reference_kind": {
+          "enum": [
+            "pronoun",
+            "demonstrative",
+            "relative"
+          ],
+          "title": "Reference Kind",
+          "type": "string"
+        },
+        "position": {
+          "minimum": 0,
+          "title": "Position",
+          "type": "integer"
+        },
+        "span": {
+          "$ref": "#/$defs/TextSpan"
+        },
+        "linguistic": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Linguistic",
+          "type": "object"
+        },
+        "candidate_count": {
+          "minimum": 0,
+          "title": "Candidate Count",
+          "type": "integer"
+        },
+        "is_ambiguous": {
+          "title": "Is Ambiguous",
+          "type": "boolean"
+        },
+        "signals": {
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "title": "Signals",
+          "type": "object"
+        },
+        "candidate_interpretations": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/AmbiguityCandidate"
+          },
+          "title": "Candidate Interpretations",
+          "type": "array"
+        },
+        "similarity_gap": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Similarity Gap",
+          "type": "number"
+        },
+        "best_candidate": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Best Candidate"
+        },
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "competition_score": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Competition Score",
+          "type": "number"
+        }
+      },
+      "required": [
+        "reference",
+        "reference_kind",
+        "position",
+        "span",
+        "linguistic",
+        "candidate_count",
+        "is_ambiguous",
+        "signals",
+        "similarity_gap",
+        "confidence",
+        "competition_score"
+      ],
+      "title": "AmbiguityReference",
+      "type": "object"
+    },
     "AmbiguityResult": {
       "properties": {
         "is_ambiguous": {
@@ -21,6 +177,22 @@
           },
           "title": "Spans",
           "type": "array"
+        },
+        "references": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/AmbiguityReference"
+          },
+          "title": "References",
+          "type": "array"
+        },
+        "lexical_ambiguities": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/LexicalAmbiguity"
+          },
+          "title": "Lexical Ambiguities",
+          "type": "array"
         }
       },
       "required": [
@@ -28,6 +200,91 @@
         "score"
       ],
       "title": "AmbiguityResult",
+      "type": "object"
+    },
+    "LexicalAmbiguity": {
+      "properties": {
+        "term": {
+          "title": "Term",
+          "type": "string"
+        },
+        "span": {
+          "$ref": "#/$defs/TextSpan"
+        },
+        "candidate_senses": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/LexicalSenseCandidate"
+          },
+          "title": "Candidate Senses",
+          "type": "array"
+        },
+        "candidate_count": {
+          "minimum": 0,
+          "title": "Candidate Count",
+          "type": "integer"
+        },
+        "top2_margin": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Top2 Margin"
+        },
+        "normalized_entropy": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Normalized Entropy"
+        }
+      },
+      "required": [
+        "term",
+        "span",
+        "candidate_count"
+      ],
+      "title": "LexicalAmbiguity",
+      "type": "object"
+    },
+    "LexicalSenseCandidate": {
+      "properties": {
+        "sense": {
+          "title": "Sense",
+          "type": "string"
+        },
+        "definition": {
+          "title": "Definition",
+          "type": "string"
+        },
+        "similarity": {
+          "title": "Similarity",
+          "type": "number"
+        },
+        "combined_score": {
+          "title": "Combined Score",
+          "type": "number"
+        }
+      },
+      "required": [
+        "sense",
+        "definition",
+        "similarity",
+        "combined_score"
+      ],
+      "title": "LexicalSenseCandidate",
       "type": "object"
     },
     "QualityIssue": {
@@ -51,6 +308,14 @@
             }
           ],
           "default": null
+        },
+        "terms": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Terms",
+          "type": "array"
         }
       },
       "required": [
@@ -212,5 +477,6 @@
     "analysed_at"
   ],
   "title": "RequirementAnalysis",
-  "type": "object"
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
 }
