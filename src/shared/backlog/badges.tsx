@@ -3,7 +3,6 @@ import {
   CircleCheckIcon,
   CircleDashedIcon,
   CircleDotIcon,
-  FlaskConicalIcon,
   FlagIcon,
   PlayIcon,
   type LucideIcon,
@@ -46,10 +45,6 @@ const SPRINT: Record<SprintStatus, { icon: LucideIcon; className: string }> = {
 
 export function SprintStatusBadge({ status }: { status: SprintStatus }) {
   return <Pill {...SPRINT[status]} label={SPRINT_STATUS_LABELS[status]} />;
-}
-
-export function SyntheticBadge() {
-  return <Pill icon={FlaskConicalIcon} label="Synthetic" className="bg-warning-soft text-warning" />;
 }
 
 /** "Sep 27, 2026", or a dash. */

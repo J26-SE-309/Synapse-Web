@@ -6,12 +6,13 @@ from app import db, devdata
 
 from .conftest import memory_engine
 
-TUTOR = {"id": "TUTOR", "name": "Tutoring app", "description": "Booking and paying for tutoring sessions"}
+TUTOR = {"id": "TUTOR", "name": "Tutoring app", "key": "TUTOR",
+         "description": "Booking and paying for tutoring sessions"}
 
 
 def test_the_migration_creates_the_projects_table(database):
     columns = {column["name"] for column in inspect(database).get_columns("projects")}
-    assert columns == {"id", "name", "description", "data_source", "created_at"}
+    assert columns == {"id", "name", "key", "description", "data_source", "created_at"}
 
 
 def test_a_created_project_is_listed(client, database):
@@ -90,6 +91,7 @@ def test_development_projects_are_labelled_and_removable(client, database):
     listed = {p["id"]: p for p in client.get("/api/v1/projects").json()}
     assert listed["SYN-STEADY"]["data_source"] == "synthetic"
     assert listed["TAWOS-MESOS"]["data_source"] == "tawos"
-    assert "not for evaluation" in listed["SYN-STEADY"]["description"]
+    assert listed["SYN-STEADY"]["description"] == "A predictable team with eight closed sprints."
+    assert len({p["key"] for p in listed.values()}) == len(listed)  # every project its own key
     assert devdata.remove() == len(devdata.DEV_PROJECTS)
     assert [p["id"] for p in client.get("/api/v1/projects").json()] == ["TUTOR"]

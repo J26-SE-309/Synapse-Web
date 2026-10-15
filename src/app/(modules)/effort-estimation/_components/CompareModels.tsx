@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusIcon, Trash2Icon } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -85,7 +86,11 @@ export function CompareModels({ project, models }: { project: Project; models: M
         </CardTitle>
         <CardDescription>
           Run a few of your stories through {MIN_COMPARED} to {MAX_COMPARED} pairs to see how their answers differ. Comparisons
-          are not recorded.
+          are not recorded. For one story&apos;s full prediction, with its sprint, reasons and actions, use{" "}
+          <Link href="/effort-estimation/predict" className="font-medium text-foreground underline underline-offset-4">
+            Predict a story
+          </Link>
+          .
         </CardDescription>
       </CardHeader>
       <CardContent>

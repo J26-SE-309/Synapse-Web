@@ -1,5 +1,136 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "UpstreamSignals": {
+      "description": "What Components 1-3 found about a story, as the effort service reads it (its estimate request's upstream).",
+      "properties": {
+        "ambiguity_score": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ambiguity Score"
+        },
+        "vague_term_count": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Vague Term Count"
+        },
+        "missing_info_flag_count": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Missing Info Flag Count"
+        },
+        "ac_completeness_score": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ac Completeness Score"
+        },
+        "invest_compliance_flags": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "boolean"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Invest Compliance Flags"
+        },
+        "traceability_coverage_pct": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Traceability Coverage Pct"
+        },
+        "unlinked_artifact_count": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unlinked Artifact Count"
+        },
+        "has_linked_tests": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Has Linked Tests"
+        },
+        "source": {
+          "anyOf": [
+            {
+              "maxLength": 20,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Who produced them when not the components, e.g. synthetic",
+          "title": "Source"
+        }
+      },
+      "title": "UpstreamSignals",
+      "type": "object"
+    }
+  },
   "properties": {
     "project_id": {
       "title": "Project Id",
@@ -133,6 +264,18 @@
       "description": "Made-up data for development and demonstrations, never evidence",
       "title": "Synthetic",
       "type": "boolean"
+    },
+    "upstream": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/UpstreamSignals"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "What Components 1-3 found about the story (worked out by the platform until they are connected)"
     },
     "started_at": {
       "anyOf": [

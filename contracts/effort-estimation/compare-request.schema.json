@@ -203,7 +203,8 @@
             "invest_compliance_flags": null,
             "traceability_coverage_pct": null,
             "unlinked_artifact_count": null,
-            "has_linked_tests": null
+            "has_linked_tests": null,
+            "source": null
           }
         }
       },
@@ -415,6 +416,20 @@
           ],
           "default": null,
           "title": "Has Linked Tests"
+        },
+        "source": {
+          "anyOf": [
+            {
+              "maxLength": 20,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Who produced the signals when not the components themselves, e.g. 'synthetic' for made-up development data; reported back as the groups' source",
+          "title": "Source"
         }
       },
       "title": "UpstreamSignals",
@@ -481,6 +496,22 @@
       "default": null,
       "description": "Answer with this configuration (FR12)",
       "title": "Pinned Configuration"
+    },
+    "focus_story_ids": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Predict (and record) only these stories; the others are the rest of the sprint, counted as its committed work. All stories when left out",
+      "title": "Focus Story Ids"
     },
     "configurations": {
       "anyOf": [

@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app import tables
+from app import keys, tables
 from app.db import get_session
 
 router = APIRouter(tags=["projects"])
@@ -25,6 +25,9 @@ class ProjectCreate(BaseModel):
     id: str = Field(min_length=2, max_length=32, pattern=PROJECT_ID_PATTERN,
                     description="Short key the components store data under, e.g. TUTOR; it cannot change later")
     name: str = Field(min_length=1, max_length=80)
+    key: str | None = Field(default=None, min_length=2, max_length=keys.KEY_MAX, pattern=keys.KEY_PATTERN,
+                            description="Prefix of its story and sprint ids, e.g. MFP for MFP-12; empty: the name's "
+                                        "initials. It cannot change later")
     description: str = Field(default="", max_length=500)
 
 
@@ -40,9 +43,10 @@ class Project(BaseModel):
 
     id: str
     name: str
+    key: str = Field(description="Prefix of its story and sprint ids (MFP-12, MFP-S5)")
     description: str
     data_source: Literal["platform", "tawos", "synthetic"] = Field(
-        description="platform: created in Synapse; tawos or synthetic: development data, not for evaluation")
+        description="platform: created in Synapse; tawos: a TAWOS project's sprints replayed")
     created_at: datetime
 
 
@@ -60,6 +64,15 @@ def _found(session: Session, project_id: str) -> tables.Project:
     return project
 
 
+@router.get("/projects/key-suggestion")
+def suggest_key(name: str, session: DbSession) -> dict[str, str]:
+    """A free key for a project with this name (the name's initials)."""
+    try:
+        return {"key": keys.suggest(name, set(session.scalars(select(tables.Project.key))))}
+    except SQLAlchemyError:
+        raise _unavailable() from None
+
+
 @router.get("/projects", response_model=list[Project])
 def list_projects(session: DbSession) -> list[Project]:
     """Every project, by name."""
@@ -75,7 +88,12 @@ def create_project(request: ProjectCreate, session: DbSession) -> Project:
     try:
         if session.get(tables.Project, request.id) is not None:
             raise HTTPException(status.HTTP_409_CONFLICT, f"A project with the id '{request.id}' already exists")
-        project = tables.Project(**request.model_dump(), data_source="platform")
+        taken = set(session.scalars(select(tables.Project.key)))
+        if request.key in taken:
+            raise HTTPException(status.HTTP_409_CONFLICT, f"Another project already uses the key '{request.key}'")
+        values = request.model_dump()
+        values["key"] = request.key or keys.suggest(request.name, taken)
+        project = tables.Project(**values, data_source="platform")
         session.add(project)
         session.commit()
         return Project.model_validate(project)
