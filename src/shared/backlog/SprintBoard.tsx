@@ -16,7 +16,7 @@ import {
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { useQueryClient } from "@tanstack/react-query";
-import { EllipsisIcon, FlaskConicalIcon, GripVerticalIcon, PlusCircleIcon } from "lucide-react";
+import { EllipsisIcon, GripVerticalIcon, PlusCircleIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -77,12 +77,6 @@ function CardContent({ project, story, added }: { project: Project; story: Story
       <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
         <IssueTypeIcon type={story.issue_type} />
         <span className="truncate font-mono">{story.story_id}</span>
-        {story.synthetic ? (
-          <span title="Synthetic: made up for development and demonstrations" className="text-warning">
-            <FlaskConicalIcon aria-hidden className="size-3.5" />
-            <span className="sr-only">(synthetic)</span>
-          </span>
-        ) : null}
         <span className="ml-auto flex items-center gap-1.5">
           <PriorityIcon priority={story.priority} />
           <PointsPill points={story.story_points} />

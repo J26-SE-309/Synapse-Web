@@ -2,7 +2,7 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { EllipsisIcon, FlaskConicalIcon, GripVerticalIcon } from "lucide-react";
+import { EllipsisIcon, GripVerticalIcon } from "lucide-react";
 
 import { cn } from "@/shared/lib/utils";
 import { STORY_BADGES } from "@/shared/module-slots";
@@ -61,12 +61,6 @@ export function StoryRowContent({
           <span className="font-mono text-xs font-normal text-muted-foreground lg:hidden">{story.story_id} </span>
           {story.title}
         </button>
-        {story.synthetic ? (
-          <span title="Synthetic: made up for development and demonstrations" className="shrink-0 text-warning">
-            <FlaskConicalIcon aria-hidden className="size-3.5" />
-            <span className="sr-only">(synthetic)</span>
-          </span>
-        ) : null}
       </span>
       <span className="hidden w-28 shrink-0 justify-end md:flex">{story.epic ? <EpicChip epic={story.epic} /> : null}</span>
       <span className="hidden w-24 shrink-0 justify-end xl:flex">

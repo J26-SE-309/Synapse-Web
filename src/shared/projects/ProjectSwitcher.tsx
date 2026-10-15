@@ -20,7 +20,7 @@ import {
 } from "@/shared/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 
-/** Development data is labelled wherever a project is shown (ML guide 7.2: never mistaken for real results). */
+/** A TAWOS replay is labelled wherever a project is shown. */
 export function SourceBadge({ project, className }: { project: Pick<Project, "data_source">; className?: string }) {
   if (!isDevelopmentData(project)) return null;
   return (
@@ -36,9 +36,10 @@ export function ProjectSwitcher({ className }: { className?: string }) {
   const [creating, setCreating] = useState(false);
   const list = useMemo(() => projects.data ?? [], [projects.data]);
   const ids = useMemo(() => list.map((entry) => entry.id), [list]);
+  const keys = useMemo(() => list.map((entry) => entry.key), [list]);
   const groups = [
     { heading: "Projects", entries: list.filter((entry) => !isDevelopmentData(entry)) },
-    { heading: "Development data", entries: list.filter(isDevelopmentData) },
+    { heading: "TAWOS replays", entries: list.filter(isDevelopmentData) },
   ].filter((group) => group.entries.length > 0);
 
   const label = project?.name ?? projectId ?? "Choose a project";
@@ -118,6 +119,7 @@ export function ProjectSwitcher({ className }: { className?: string }) {
         open={creating}
         onOpenChange={setCreating}
         existingIds={ids}
+        existingKeys={keys}
         onCreated={(created) => selectProject(created.id)}
       />
     </>

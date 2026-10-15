@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRightIcon, FlaskConicalIcon, GaugeIcon, TriangleAlertIcon } from "lucide-react";
+import { ArrowRightIcon, GaugeIcon, TriangleAlertIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 
@@ -41,7 +41,6 @@ export function SprintEstimates({ project, sprint, stories }: SprintPanelProps) 
   const ids = useId();
   const covered = storiesToEstimate(sprint, stories);
   const left = stories.length - covered.length;
-  const synthetic = covered.some((story) => story.synthetic);
 
   const available = (models.data?.configurations ?? []).filter((entry) => entry.status === "available");
   const projectSetting = pin.data?.configuration_id
@@ -156,16 +155,6 @@ export function SprintEstimates({ project, sprint, stories }: SprintPanelProps) 
               {result.response.selection_reason ? <span>({result.response.selection_reason})</span> : null}
             </p>
           </div>
-          {synthetic ? (
-            <Alert>
-              <FlaskConicalIcon aria-hidden />
-              <AlertTitle>Results for synthetic stories</AlertTitle>
-              <AlertDescription>
-                Some of these stories are made up. Use the results to try the platform, not as evidence about a team;
-                the decisions you record are still stored.
-              </AlertDescription>
-            </Alert>
-          ) : null}
           {result.response.predictions.some((prediction) => (prediction.degraded_feature_groups ?? []).length > 0) ? (
             <Alert>
               <TriangleAlertIcon aria-hidden />
