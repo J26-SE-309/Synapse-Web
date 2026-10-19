@@ -1,7 +1,5 @@
 "use client";
 
-
-
 import { useRef, useState, type FormEvent } from "react";
 
 import {
@@ -20,8 +18,6 @@ import {
 
 } from "../_lib/api";
 
-
-
 const LABEL_STYLES: Record<QualityLabel, string> = {
 
   Good: "border-emerald-200 bg-emerald-50 text-emerald-800",
@@ -32,11 +28,7 @@ const LABEL_STYLES: Record<QualityLabel, string> = {
 
 };
 
-
-
 type LexicalItem = RequirementAnalysis["ambiguity"]["lexical_ambiguities"][number];
-
-
 
 type ReferenceReplacement = {
 
@@ -50,11 +42,112 @@ type ReferenceReplacement = {
 
 };
 
-
-
 type Resolution = { kind: "reference" | "lexical"; original: string; meaning: string };
 
+type AutomaticMutation = {
 
+  mutation_type: string;
+
+  intended_effect: "preserve" | "change";
+
+  description: string;
+
+  modified_text: string;
+
+  stability: {
+
+    label: "stable" | "potentially_unstable";
+
+    score: number;
+
+  };
+
+  similarity: number;
+
+  model_label?: "stable" | "potentially_unstable";
+
+  rule_assisted_label?: "stable" | "potentially_unstable" | null;
+
+  model_rule_disagreement?: boolean;
+
+};
+
+type AutomaticStabilityReport = {
+
+  requirement_id: string;
+
+  original_text: string;
+
+  model_version: string;
+
+  threshold: number;
+
+  mutations: AutomaticMutation[];
+
+  total_mutations: number;
+
+  stable_count: number;
+
+  potentially_unstable_count: number;
+
+};
+
+function describeWordingChange(original: string, modified: string): string {
+  const before = original.trim().split(/\s+/);
+  const after = modified.trim().split(/\s+/);
+  let start = 0;
+  while (start < before.length && start < after.length && before[start] === after[start]) {
+    start += 1;
+  }
+  let beforeEnd = before.length;
+  let afterEnd = after.length;
+  while (beforeEnd > start && afterEnd > start && before[beforeEnd - 1] === after[afterEnd - 1]) {
+    beforeEnd -= 1;
+    afterEnd -= 1;
+  }
+  const oldWords = before.slice(start, beforeEnd).join(" ");
+  const newWords = after.slice(start, afterEnd).join(" ");
+  if (!oldWords && !newWords) return "No wording change detected";
+  if (!oldWords) return `Added “${newWords}”`;
+  if (!newWords) return `Removed “${oldWords}”`;
+  return `“${oldWords}” → “${newWords}”`;
+}
+
+function mutationName(type: string): string {
+
+  const names: Record<string, string> = {
+
+    modal_paraphrase: "Different wording, same intention",
+
+    numeric_change: "Changed number or time period",
+
+    obligation_to_permission: "Changed what is required",
+
+    negation: "Reversed the requirement",
+
+  };
+
+  return names[type] ?? "Alternative wording";
+
+}
+
+function mutationDescription(type: string, fallback: string): string {
+
+  const descriptions: Record<string, string> = {
+
+    modal_paraphrase: "The wording has changed, but the requirement is intended to mean the same thing.",
+
+    numeric_change: "A number or time period was changed, which may change what the system must do.",
+
+    obligation_to_permission: "Something that was required is now described as optional.",
+
+    negation: "The sentence now says that an action should not happen.",
+
+  };
+
+  return descriptions[type] ?? fallback;
+
+}
 
 function formatScore(score: number): string {
 
@@ -62,69 +155,51 @@ function formatScore(score: number): string {
 
 }
 
-
-
-function issueText(type: string, message: string, terms?: string[]): string {
-
-  if (type === "missing_information") {
-
-    const item = message.replace("Missing structural element: ", "").replace(/\.$/, "").trim();
-
+function issueText(type: string, message: string): string {
+  // Display the evidence-based message supplied by the backend, including
+  // its suggested improvement. Do not replace it with a generic summary.
+  if (type === "missing_information" && message.startsWith("Missing structural element: ")) {
+    const item = message.slice("Missing structural element: ".length).replace(/\.$/, "").trim();
     if (item.toLowerCase() === "requirement modal") {
-
-      return "The sentence does not clearly say what someone or the system is required to do. State the expected action, for example by using 'shall' or 'must' where appropriate.";
-
+      return "The requirement does not clearly state an obligation. Consider using 'shall' or 'must' where appropriate.";
     }
-
-    return `The requirement does not clearly specify ${item || "some important information"}.`;
-
+    if (item.toLowerCase() === "object or complement") {
+      return "The sentence may be missing information needed to understand the action. Check whether the action requires an object or additional detail.";
+    }
   }
-
-  if (type === "vague_terms") {
-
-    return terms?.length
-
-      ? `The words ${terms.map((term) => `“${term}”`).join(", ")} may need a more precise explanation.`
-
-      : "Some words could be understood in different ways.";
-
-  }
-
-  if (type === "quality_defect") {
-
-    return "The quality checker identified a concern but did not provide a specific reason. Review the requirement and confirm whether any detail is missing.";
-
-  }
-
   return message;
-
 }
-
-
 
 function issueTitle(type: string): string {
-
-  if (type === "missing_information") return "Missing or unclear information";
-
-  if (type === "vague_terms") return "Words that need clarification";
-
-  return "Could be improved";
-
+  const titles: Record<string, string> = {
+    missing_information: "Possible missing structural detail",
+    missing_actor: "Who performs the action?",
+    missing_action: "Expected action is unclear",
+    vague_terms: "Wording that may be vague",
+    unmeasurable_condition: "Measurable target needed",
+    missing_acceptance_details: "Unfinished requirement detail",
+    quality_defect: "Possible quality concern",
+  };
+  return titles[type] ?? "Quality review finding";
 }
-
-
 
 function qualityHeading(label: QualityLabel): string {
 
-  if (label === "Good") return "✓ This requirement looks good";
+  if (label === "Good") {
 
-  if (label === "Poor") return "⚠ This requirement needs clearer wording";
+    return "✓ This requirement looks clear";
 
-  return "⚠ This requirement needs more information";
+  }
+
+  if (label === "Needs Clarification") {
+
+    return "⚠ This requirement needs clarification";
+
+  }
+
+  return "⚠ This requirement may need improvement";
 
 }
-
-
 
 function referenceRange(source: string, reference: AmbiguityReference): { start: number; end: number } | null {
 
@@ -174,8 +249,6 @@ function referenceRange(source: string, reference: AmbiguityReference): { start:
 
 }
 
-
-
 function lexicalRange(source: string, item: LexicalItem): { start: number; end: number } | null {
 
   const { start, end } = item.span;
@@ -203,8 +276,6 @@ function lexicalRange(source: string, item: LexicalItem): { start: number; end: 
   return null;
 
 }
-
-
 
 /** Apply reference choices exactly as before, while tracking shifted lexical offsets. */
 
@@ -254,8 +325,6 @@ function buildReferenceRewrite(
 
   });
 
-
-
   // Do not apply overlapping reference replacements or replace a chosen lexical word.
 
   replacements.sort((a, b) => a.start - b.start || a.end - b.end);
@@ -281,8 +350,6 @@ function buildReferenceRewrite(
     accepted.push(replacement);
 
   }
-
-
 
   let output = source;
 
@@ -326,11 +393,10 @@ function buildReferenceRewrite(
 
 }
 
-
-
 export function RequirementQualityAnalyzer() {
 
   const requestId = useRef(0);
+
   const [text, setText] = useState("");
 
   const [analyzedText, setAnalyzedText] = useState("");
@@ -341,6 +407,12 @@ export function RequirementQualityAnalyzer() {
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
+  const [autoReport, setAutoReport] = useState<AutomaticStabilityReport | null>(null);
+
+  const [autoError, setAutoError] = useState<string | null>(null);
+
+  const [isAutoAnalyzing, setIsAutoAnalyzing] = useState(false);
+
   const [isRegenerating, setIsRegenerating] = useState(false);
 
   const [regenerationError, setRegenerationError] = useState<string | null>(null);
@@ -350,9 +422,12 @@ export function RequirementQualityAnalyzer() {
   const [lexicalChoices, setLexicalChoices] = useState<Record<string, string>>({});
 
   type ContextualSuggestion = { suggested_sense: string | null; is_ambiguous: boolean; reason: string };
+
   const [lexicalSuggestions, setLexicalSuggestions] = useState<Record<string, ContextualSuggestion>>({});
 
   const [suggestionLoading, setSuggestionLoading] = useState(false);
+
+  const [suggestionCompleted, setSuggestionCompleted] = useState(false);
 
   const [suggestionError, setSuggestionError] = useState<string | null>(null);
 
@@ -365,8 +440,6 @@ export function RequirementQualityAnalyzer() {
   const [resolved, setResolved] = useState<Resolution[]>([]);
 
   const [pendingResolved, setPendingResolved] = useState<Resolution[]>([]);
-
-
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
 
@@ -385,15 +458,88 @@ export function RequirementQualityAnalyzer() {
     }
 
     const currentRequest = ++requestId.current;
+
     setIsAnalyzing(true);
+
+    setAutoReport(null);
+
+    setAutoError(null);
+
+    setIsAutoAnalyzing(false);
 
     setError(null);
 
     try {
 
-      const analysis = await analyzeRequirement({ requirement_id: `REQ-${Date.now()}`, text: requirement });
+      const analysis = await analyzeRequirement({
+
+        requirement_id: `REQ-${Date.now()}`,
+
+        text: requirement,
+
+      });
 
       setResult(analysis);
+
+      setAutoReport(null);
+
+      setAutoError(null);
+
+      setIsAutoAnalyzing(true);
+
+      void fetch("http\://127.0.0.1:8001/api/v1/stability/auto-analyze", {
+
+        method: "POST",
+
+        headers: { "Content-Type": "application/json" },
+
+        body: JSON.stringify({
+
+          requirement_id: analysis.requirement_id,
+
+          text: requirement,
+
+          max_mutations: 6,
+
+        }),
+
+      })
+
+        .then(async (response) => {
+
+          if (!response.ok) {
+
+            const detail = await response.text();
+
+            throw new Error(`Automatic stability analysis failed (${response.status}): ${detail.slice(0, 250)}`);
+
+          }
+
+          return response.json() as Promise<AutomaticStabilityReport>;
+
+        })
+
+        .then((report) => {
+
+          if (currentRequest === requestId.current) setAutoReport(report);
+
+        })
+
+        .catch(() => {
+
+          if (currentRequest === requestId.current) {
+
+            setAutoError("We could not check the alternative versions right now.");
+
+          }
+
+        })
+
+        .finally(() => {
+
+          if (currentRequest === requestId.current) setIsAutoAnalyzing(false);
+
+        });
 
       setAnalyzedText(requirement);
 
@@ -407,9 +553,11 @@ export function RequirementQualityAnalyzer() {
 
       setSuggestionError(null);
 
+      setSuggestionCompleted(false);
+
       setSuggestionLoading(true);
 
-      void fetch("http://127.0.0.1:8001/api/v1/lexical/suggest", {
+      void fetch("http\://127.0.0.1:8001/api/v1/lexical/suggest", {
 
         method: "POST",
 
@@ -433,11 +581,17 @@ export function RequirementQualityAnalyzer() {
 
           for (const suggestion of data.suggestions) next[`${suggestion.start}-${suggestion.end}`] = { suggested_sense: suggestion.suggested_sense, is_ambiguous: suggestion.is_ambiguous, reason: suggestion.reason };
 
-          setLexicalSuggestions(next);
+          if (currentRequest === requestId.current) {
+
+            setLexicalSuggestions(next);
+
+            setSuggestionCompleted(true);
+
+          }
 
         })
 
-        .catch((cause: unknown) => { if (currentRequest === requestId.current) setSuggestionError(cause instanceof Error ? cause.message : "Could not load AI suggestions."); })
+        .catch((cause: unknown) => { if (currentRequest === requestId.current) setSuggestionError(cause instanceof Error ? cause.message : "Could not load Suggestions."); })
 
         .finally(() => { if (currentRequest === requestId.current) setSuggestionLoading(false); });
 
@@ -463,16 +617,20 @@ export function RequirementQualityAnalyzer() {
 
   }
 
-
-
   const references = result?.ambiguity.references ?? [];
 
   const allLexicalItems: LexicalItem[] = result?.ambiguity.lexical_ambiguities ?? [];
-  // Until the contextual response arrives (or if it fails), retain the original candidates.
-  // Once it arrives, display only occurrences genuinely ambiguous in context.
+
+  // Show only words explicitly identified as ambiguous after a successful check.
+
   const lexicalItems = allLexicalItems.filter((item) => {
-    const suggestion = lexicalSuggestions[`${item.span.start}-${item.span.end}`];
-    return suggestionLoading ? false : suggestion === undefined || suggestion.is_ambiguous;
+
+    if (suggestionLoading || suggestionError || !suggestionCompleted) return false;
+
+    const key = `${item.span.start}-${item.span.end}`;
+
+    return lexicalSuggestions[key]?.is_ambiguous === true;
+
   });
 
   const flaggedCount = references.filter((reference) => reference.is_ambiguous).length;
@@ -488,8 +646,6 @@ export function RequirementQualityAnalyzer() {
   }).length;
 
   const selectedCount = selectedReferences + selectedLexical;
-
-
 
   async function generateRewrite() {
 
@@ -565,8 +721,6 @@ export function RequirementQualityAnalyzer() {
 
   }
 
-
-
   return (
 
     <div className="space-y-6">
@@ -617,11 +771,7 @@ export function RequirementQualityAnalyzer() {
 
       </section>
 
-
-
       {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>}
-
-
 
       {result && (
 
@@ -631,7 +781,7 @@ export function RequirementQualityAnalyzer() {
 
             <div className="border-b border-zinc-200 pb-3">
 
-              <h2 className="text-xl font-semibold text-zinc-900">1. Quality analysis</h2>
+              <h2 className="text-xl font-semibold text-zinc-900">1. Requirement quality</h2>
 
               <p className="mt-1 text-sm text-zinc-500">Does the requirement clearly state what is expected?</p>
 
@@ -645,7 +795,7 @@ export function RequirementQualityAnalyzer() {
 
                 <span className={`rounded-full border px-3 py-1 text-sm font-semibold ${LABEL_STYLES[result.quality.label]}`}>{result.quality.label}</span>
 
-                <span className="text-sm text-zinc-700">Score: <strong>{formatScore(result.quality.score)}</strong></span>
+                <span className="text-sm text-zinc-700">Quality score: <strong>{formatScore(result.quality.score)}</strong></span>
 
               </div>
 
@@ -653,11 +803,7 @@ export function RequirementQualityAnalyzer() {
 
             <p className="rounded-md bg-zinc-50 p-3 text-sm leading-6 text-zinc-700">
 
-              {result.quality.issues.some((issue) => issue.type === "missing_information" && issue.message.toLowerCase().includes("requirement modal"))
-
-                ? "The requirement does not clearly state what must happen. It may describe something that already happened instead of stating an expected action."
-
-                : result.explanation}
+              {result.explanation}
 
             </p>
 
@@ -675,7 +821,7 @@ export function RequirementQualityAnalyzer() {
 
                       <p className="text-sm font-semibold text-zinc-900">{issueTitle(issue.type)}</p>
 
-                      <p className="mt-1 text-sm leading-6 text-zinc-700">{issueText(issue.type, issue.message, issue.terms)}</p>
+                      <p className="mt-1 text-sm leading-6 text-zinc-700">{issueText(issue.type, issue.message)}</p>
 
                     </li>
 
@@ -689,23 +835,167 @@ export function RequirementQualityAnalyzer() {
 
           </section>
 
+            <section className="space-y-4 rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
 
+              <div className="border-b border-zinc-200 pb-3">
+
+                <h2 className="text-xl font-semibold text-zinc-900">2. Check whether the meaning changes</h2>
+
+                <p className="mt-1 text-sm text-zinc-500">
+
+                  We try a few different versions of your requirement to see whether small changes in wording could affect its meaning.
+
+                </p>
+
+              </div>
+
+              {isAutoAnalyzing && (
+
+                <p role="status" className="rounded-md bg-zinc-50 p-4 text-sm text-zinc-700">
+
+                  Checking different versions of your requirement...
+
+                </p>
+
+              )}
+
+              {autoError && (
+
+                <p role="alert" className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+
+                  We could not check alternative versions right now. Please try again.
+
+                </p>
+
+              )}
+
+              {autoReport && (
+
+                <div className="space-y-4">
+
+                  <div className="grid gap-3 sm:grid-cols-3">
+
+                    <div className="rounded-md border border-zinc-200 p-3">
+
+                      <p className="text-xs text-zinc-500">Versions checked</p>
+
+                      <p className="mt-1 text-2xl font-semibold text-zinc-900">{autoReport.total_mutations}</p>
+
+                    </div>
+
+                    <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3">
+
+                      <p className="text-xs text-emerald-800">Meaning appears unchanged</p>
+
+                      <p className="mt-1 text-2xl font-semibold text-emerald-900">{autoReport.stable_count}</p>
+
+                    </div>
+
+                    <div className="rounded-md border border-amber-200 bg-amber-50 p-3">
+
+                      <p className="text-xs text-amber-800">Meaning may have changed</p>
+
+                      <p className="mt-1 text-2xl font-semibold text-amber-900">{autoReport.potentially_unstable_count}</p>
+
+                    </div>
+
+                  </div>
+
+                  <div className="rounded-md bg-zinc-50 p-3">
+
+                    <p className="text-xs font-semibold text-zinc-500">Original requirement</p>
+
+                    <p className="mt-1 whitespace-pre-wrap text-sm text-zinc-800">{autoReport.original_text}</p>
+
+                  </div>
+
+                  {autoReport.mutations.length === 0 && (
+
+                    <p className="rounded-md border border-zinc-200 p-4 text-sm text-zinc-700">
+
+                      There is no suitable alternative version of this requirement.
+
+                    </p>
+
+                  )}
+
+                  <div className="space-y-3">
+
+                    {autoReport.mutations.map((mutation, index) => {
+
+                      const predictedStable = mutation.stability.label === "stable";
+
+                      const matchesIntent = predictedStable === (mutation.intended_effect === "preserve");
+
+                      return (
+
+                        <article key={`${mutation.mutation_type}-${index}`} className="rounded-lg border border-zinc-200 p-4 space-y-3">
+
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+
+                            <h3 className="text-sm font-semibold text-zinc-900">{index + 1}. {mutationName(mutation.mutation_type)}</h3>
+
+                            <span className={predictedStable
+
+                              ? "rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800"
+
+                              : "rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800"}>
+
+                              {predictedStable ? "Meaning appears unchanged" : "Meaning may have changed"}
+
+                            </span>
+
+                          </div>
+
+                          <p className="text-xs text-zinc-500">{mutationDescription(mutation.mutation_type, mutation.description)}</p>
+
+                          <p className="rounded-md bg-zinc-50 p-3 text-sm text-zinc-800 whitespace-pre-wrap">{mutation.modified_text}</p>
+
+                          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-zinc-700">
+
+                            <span className="inline-block">How closely the wording matches: <strong>{(mutation.similarity * 100).toFixed(2)}%</strong></span>
+
+                            <span className="inline-block">Wording changed: <strong>{describeWordingChange(autoReport.original_text, mutation.modified_text)}</strong></span>
+
+                          </div>
+
+                          {!matchesIntent && (
+
+                            <p className="text-sm text-amber-800">
+
+                              The result differs from the kind of change made. Please compare both sentences carefully.
+
+                            </p>
+
+                          )}
+
+                        </article>
+
+                      );
+
+                    })}
+
+                  </div>
+
+                </div>
+
+              )}
+
+            </section>
 
           <section className="space-y-5 rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
 
             <div className="border-b border-zinc-200 pb-3">
 
-              <h2 className="text-xl font-semibold text-zinc-900">2. Ambiguity analysis</h2>
+              <h2 className="text-xl font-semibold text-zinc-900">3. Clarify unclear wording</h2>
 
               <p className="mt-1 text-sm text-zinc-500">Choose the intended reference or word meaning to clarify the requirement.</p>
 
             </div>
 
-
-
             <div className="space-y-3">
 
-              <h3 className="text-base font-semibold text-zinc-900">Referential ambiguity</h3>
+              <h3 className="text-base font-semibold text-zinc-900">Unclear references</h3>
 
               <div className={`rounded-md border p-3 ${flaggedCount ? "border-amber-200 bg-amber-50" : "border-emerald-200 bg-emerald-50"}`}>
 
@@ -715,7 +1005,7 @@ export function RequirementQualityAnalyzer() {
 
                 </p>
 
-                <p className="mt-1 text-sm text-zinc-700">More than one possible referent does not necessarily mean a reference is unclear.</p>
+                <p className="mt-1 text-sm text-zinc-700">Having several possible meanings does not always mean the sentence is unclear.</p>
 
               </div>
 
@@ -749,7 +1039,7 @@ export function RequirementQualityAnalyzer() {
 
                       <p className="mt-1 text-sm font-semibold text-zinc-900">{reference.best_candidate || "No clear suggestion available"}</p>
 
-                      <p className="mt-1 text-xs text-zinc-500">This is a suggestion. You can choose a different meaning below.</p>
+                      <p className="mt-1 text-xs text-zinc-500">This is only a suggestion. You can choose another meaning below.</p>
 
                     </div>
 
@@ -829,23 +1119,21 @@ export function RequirementQualityAnalyzer() {
 
             </div>
 
-
-
               <div className="space-y-3 border-t border-zinc-200 pt-5">
 
-                <h3 className="text-base font-semibold text-zinc-900">Lexical ambiguity</h3>
+                <h3 className="text-base font-semibold text-zinc-900">Words with more than one meaning</h3>
 
                 <p className="text-sm leading-6 text-zinc-600">
 
-                  Only contextually ambiguous words need clarification. Choose a meaning from the dropdown or type your own. AI suggestions are never automatically selected.
+                  Only words that may have more than one meaning in this sentence are shown. Choose the intended meaning or enter your own. Suggestions are not selected automatically.
 
                 </p>
 
-                {suggestionLoading && <p className="text-sm text-zinc-500">Checking which words are genuinely ambiguous in context...</p>}
+                {suggestionLoading && <p className="text-sm text-zinc-500">Checking which words may be unclear...</p>}
 
-                {suggestionError && <p role="status" className="text-sm text-amber-700">Contextual ambiguity check unavailable: {suggestionError}. Showing WordNet candidates so you can review them manually.</p>}
+                {suggestionError && <p role="alert" className="text-sm text-amber-700">We could not check word meanings right now. Please try analyzing the requirement again.</p>}
 
-                {!suggestionLoading && lexicalItems.length === 0 && <p className="text-sm text-zinc-600">No contextual lexical ambiguity detected.</p>}
+                {!suggestionLoading && !suggestionError && suggestionCompleted && lexicalItems.length === 0 && <p className="text-sm text-zinc-600">No unclear word meanings were found.</p>}
 
                 {lexicalItems.map((item) => {
 
@@ -867,7 +1155,7 @@ export function RequirementQualityAnalyzer() {
 
                         <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3">
 
-                          <p className="text-xs font-semibold text-emerald-800">AI-suggested meaning (not selected)</p>
+                          <p className="text-xs font-semibold text-emerald-800">Suggested meaning (not selected)</p>
 
                           <p className="mt-1 text-sm text-zinc-800">{suggested.definition}</p>
 
@@ -911,7 +1199,7 @@ export function RequirementQualityAnalyzer() {
 
                           <option key={sense.sense} value={sense.sense}>
 
-                            {sense.definition}{sense.sense === suggestedId ? " (AI suggested)" : ""}
+                            {sense.definition}{sense.sense === suggestedId ? " (suggested)" : ""}
 
                           </option>
 
@@ -985,15 +1273,13 @@ export function RequirementQualityAnalyzer() {
 
               </div>
 
-
-
             <div className="border-t border-zinc-200 pt-5">
 
               <h3 className="text-base font-semibold text-zinc-900">Regenerate using your selected meanings</h3>
 
               <p className="mt-1 text-sm leading-6 text-zinc-600">
 
-                Reference choices replace reference words. Selected lexical meanings are sent together to Gemini to produce one natural requirement. Words marked “No clarification needed” are skipped.
+                Reference choices replace reference words. Selected word meanings are used to create one natural requirement. Words marked “No clarification needed” are skipped.
 
               </p>
 
@@ -1012,8 +1298,6 @@ export function RequirementQualityAnalyzer() {
                 {isRegenerating ? "Regenerating..." : `Regenerate requirement (${selectedCount} selected)`}
 
               </button>
-
-
 
               {regenerationError && <p role="alert" className="mt-3 text-sm text-red-700">{regenerationError}</p>}
 
@@ -1039,7 +1323,7 @@ export function RequirementQualityAnalyzer() {
 
                   {rewriteNotes.map((note, index) => <p key={index} className="text-sm text-amber-800">{note}</p>)}
 
-                  <p className="text-xs leading-5 text-zinc-600">Review the grammar and accuracy. This draft is not a guaranteed ambiguity-free requirement.</p>
+                  <p className="text-xs leading-5 text-zinc-600">Review the grammar and accuracy. This draft may still need clarification.</p>
 
                   {resolved.length > 0 && (
 
@@ -1055,7 +1339,7 @@ export function RequirementQualityAnalyzer() {
 
                             <span className="font-medium">{item.original}</span> → {item.meaning}
 
-                            <span className="ml-2 text-xs text-zinc-500">({item.kind})</span>
+                            <span className="ml-2 text-xs text-zinc-500">({item.kind === "reference" ? "reference" : "word meaning"})</span>
 
                           </li>
 
@@ -1102,8 +1386,6 @@ export function RequirementQualityAnalyzer() {
             </div>
 
           </section>
-
-
 
           {resolved.length > 0 && rewritten === null && (
 
