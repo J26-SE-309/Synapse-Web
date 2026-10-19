@@ -17,6 +17,7 @@ import {
   type QualityLabel,
 
 } from "../_lib/api";
+import { VoiceInputButton } from "./VoiceInputButton";
 
 const LABEL_STYLES: Record<QualityLabel, string> = {
 
@@ -753,6 +754,17 @@ export function RequirementQualityAnalyzer() {
 
             className="w-full resize-y rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 disabled:bg-zinc-100"
 
+          />
+
+          <VoiceInputButton
+            disabled={isAnalyzing}
+            onTranscription={(spokenText) => {
+              setText((previous) =>
+                previous.trim()
+                  ? `${previous.trimEnd()} ${spokenText}`
+                  : spokenText
+              );
+            }}
           />
 
           <div className="flex flex-wrap items-center justify-between gap-3">
