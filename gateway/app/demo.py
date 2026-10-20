@@ -389,7 +389,9 @@ def _commit_to(session: Session, story: tables.Story, item: Item, sprint: tables
     story.sprint_id = sprint.sprint_id
     finished = not item.spills and not running
     if story.started_at is None and (finished or item.spills or item.status == "in_progress"):
-        story.started_at = start + timedelta(days=1 + (position % 6), hours=position % 5)
+        # In the running sprint, work started when the sprint did: a later time would still be in the future, and
+        # marking the story done before then would make it "resolved before work started".
+        story.started_at = start if running else start + timedelta(days=1 + (position % 6), hours=position % 5)
     if finished:
         days = 1.5 + (item.final_points or item.points) / 2
         resumed = max(story.started_at, start + timedelta(days=1))  # a carried story is finished in this sprint
