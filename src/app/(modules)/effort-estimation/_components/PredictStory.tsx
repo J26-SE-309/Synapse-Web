@@ -1,7 +1,19 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ScrollTextIcon, SparklesIcon, TriangleAlertIcon } from "lucide-react";
+import {
+  CircleCheckIcon,
+  GaugeIcon,
+  LightbulbIcon,
+  ListTodoIcon,
+  PencilLineIcon,
+  RulerIcon,
+  ScrollTextIcon,
+  ShieldCheckIcon,
+  SparklesIcon,
+  TriangleAlertIcon,
+  type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch, type FieldErrors } from "react-hook-form";
@@ -9,15 +21,27 @@ import { z } from "zod";
 
 import { describeError, gatewayFetch } from "@/shared/api/gateway";
 import { useSprints, useStories } from "@/shared/backlog/api";
+import { IssueTypeIcon, PointsPill } from "@/shared/backlog/icons";
 import { storyFormSchema, toStory } from "@/shared/backlog/schema";
 import { ISSUE_TYPES, PRIORITIES, type Sprint, type Story, type UpstreamSignals } from "@/shared/backlog/types";
 import { PageHeader } from "@/shared/components/PageHeader";
+import { InsightsIllustration } from "@/shared/illustrations";
 import type { Project } from "@/shared/projects/api";
 import { ProjectGate } from "@/shared/projects/ProjectGate";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/shared/ui/field";
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+  FieldTitle,
+} from "@/shared/ui/field";
 import { Input } from "@/shared/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/shared/ui/native-select";
 import { RadioGroup, RadioGroupItem } from "@/shared/ui/radio-group";
@@ -27,7 +51,6 @@ import { Textarea } from "@/shared/ui/textarea";
 
 import { useEstimate, useModels, usePrediction } from "../_lib/api";
 import { toStoryPrediction, usualSprint } from "../_lib/estimate";
-import { points } from "../_lib/format";
 import type { ModelsResponse, Prediction, PredictionDetail } from "../_lib/types";
 import { PredictionDetailBody } from "./PredictionDetailView";
 
@@ -136,7 +159,7 @@ function PredictionResult({ made, label }: { made: Made; label: string }) {
     <section aria-labelledby="predict-result" className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="space-y-1">
-          <h2 id="predict-result" ref={headingRef} tabIndex={-1} className="text-lg font-semibold outline-none">
+          <h2 id="predict-result" ref={headingRef} tabIndex={-1} className="text-xl font-semibold tracking-tight outline-none">
             The prediction for <span className="font-mono">{made.prediction.story_id}</span>
           </h2>
           <p className="text-sm text-muted-foreground">{made.title}</p>
@@ -160,6 +183,37 @@ function PredictionResult({ made, label }: { made: Made; label: string }) {
       ) : null}
       <PredictionDetailBody data={data} label={label} recorded={!!detail.data} />
     </section>
+  );
+}
+
+/** Beside the form: what a prediction holds, so the page explains itself before the first one. */
+function WhatYouGet() {
+  const items: [LucideIcon, string, string][] = [
+    [RulerIcon, "Effort", "Story points with the range they likely fall in"],
+    [GaugeIcon, "Sprint risk", "The chance the story spills over, and why"],
+    [ShieldCheckIcon, "Confidence", "How sure the models are, and what lowered it"],
+    [LightbulbIcon, "What to do", "Changes that lower the risk, with their expected effect"],
+  ];
+  return (
+    <aside aria-labelledby="predict-what" className="space-y-4 rounded-2xl border bg-card p-5 shadow-(--shadow-soft)">
+      <InsightsIllustration className="mx-auto w-44" />
+      <h2 id="predict-what" className="font-semibold tracking-tight">
+        What you get
+      </h2>
+      <ul className="space-y-3">
+        {items.map(([Icon, title, text]) => (
+          <li key={title} className="flex gap-3 text-sm">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/12 text-primary">
+              <Icon aria-hidden className="size-4" />
+            </span>
+            <span>
+              <span className="block font-medium">{title}</span>
+              <span className="text-muted-foreground">{text}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </aside>
   );
 }
 
@@ -238,189 +292,223 @@ function PredictForm({ project, models }: { project: Project; models: ModelsResp
   const whole = { type: "number", inputMode: "numeric" as const, min: 0, step: 1, placeholder: "0" };
   const chosen = candidates.find((story) => story.story_id === storyId);
 
-  if (stories.isPending || sprints.isPending) return <Skeleton className="h-96" />;
+  if (stories.isPending || sprints.isPending) return <Skeleton className="h-96 rounded-2xl" />;
 
   return (
     <div className="space-y-8">
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <h2>The story</h2>
-          </CardTitle>
-          <CardDescription>
-            The prediction is made as for a sprint estimate and kept in the prediction log. With a sprint, its other stories
-            count as the sprint&apos;s committed work, and the team&apos;s history is used.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form noValidate onSubmit={form.handleSubmit(predict, invalid)} className="space-y-6">
-            <FieldSet>
-              <FieldLegend variant="label">Which story</FieldLegend>
-              <RadioGroup
-                value={kind}
-                onValueChange={(value) => form.setValue("kind", value as PredictValues["kind"])}
-                className="flex flex-wrap gap-x-6 gap-y-2"
-              >
-                <Field orientation="horizontal">
-                  <RadioGroupItem id="predict-kind-backlog" value="backlog" />
-                  <FieldLabel htmlFor="predict-kind-backlog" className="font-normal">
-                    A story from the backlog
-                  </FieldLabel>
-                </Field>
-                <Field orientation="horizontal">
-                  <RadioGroupItem id="predict-kind-new" value="new" />
-                  <FieldLabel htmlFor="predict-kind-new" className="font-normal">
-                    A new story (not saved)
-                  </FieldLabel>
-                </Field>
-              </RadioGroup>
-            </FieldSet>
-
-            {kind === "backlog" ? (
-              <Field data-invalid={!!errors.storyId}>
-                <FieldLabel htmlFor="predict-storyId">Story</FieldLabel>
-                <NativeSelect
-                  {...wire("storyId")}
-                  className="w-full"
-                  value={storyId}
-                  onChange={(event) => chooseStory(event.target.value)}
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <h2>The story</h2>
+            </CardTitle>
+            <CardDescription>
+              The prediction is made as for a sprint estimate and kept in the prediction log. With a sprint, its other stories
+              count as the sprint&apos;s committed work, and the team&apos;s history is used.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form noValidate onSubmit={form.handleSubmit(predict, invalid)} className="space-y-6">
+              <FieldSet>
+                <FieldLegend variant="label">Which story</FieldLegend>
+                <RadioGroup
+                  value={kind}
+                  onValueChange={(value) => form.setValue("kind", value as PredictValues["kind"])}
+                  className="grid gap-3 sm:grid-cols-2"
                 >
-                  <NativeSelectOption value="">Choose a story</NativeSelectOption>
-                  {candidates.map((story) => (
-                    <NativeSelectOption key={story.story_id} value={story.story_id}>
-                      {story.story_id} · {story.title.length > 90 ? `${story.title.slice(0, 89)}…` : story.title}
-                    </NativeSelectOption>
+                  {(
+                    [
+                      ["backlog", ListTodoIcon, "A story from the backlog", "One of the project's open stories, with everything known about it."],
+                      ["new", PencilLineIcon, "A new story (not saved)", "Type a story to see how it would go before adding it."],
+                    ] as const
+                  ).map(([value, Icon, title, description]) => (
+                    <FieldLabel key={value} htmlFor={`predict-kind-${value}`} className="rounded-xl! *:data-[slot=field]:p-4">
+                      <Field orientation="horizontal" className="items-start">
+                        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary">
+                          <Icon aria-hidden className="size-[1.125rem]" />
+                        </span>
+                        <FieldContent>
+                          <FieldTitle id={`predict-kind-${value}-title`}>{title}</FieldTitle>
+                          <FieldDescription id={`predict-kind-${value}-text`}>{description}</FieldDescription>
+                        </FieldContent>
+                        <RadioGroupItem
+                          id={`predict-kind-${value}`}
+                          value={value}
+                          aria-labelledby={`predict-kind-${value}-title`}
+                          aria-describedby={`predict-kind-${value}-text`}
+                          className="mt-0.5"
+                        />
+                      </Field>
+                    </FieldLabel>
                   ))}
-                </NativeSelect>
-                {chosen ? (
+                </RadioGroup>
+              </FieldSet>
+
+              {kind === "backlog" ? (
+                <Field data-invalid={!!errors.storyId}>
+                  <FieldLabel htmlFor="predict-storyId">Story</FieldLabel>
+                  <NativeSelect
+                    {...wire("storyId")}
+                    className="w-full"
+                    value={storyId}
+                    onChange={(event) => chooseStory(event.target.value)}
+                  >
+                    <NativeSelectOption value="">Choose a story</NativeSelectOption>
+                    {candidates.map((story) => (
+                      <NativeSelectOption key={story.story_id} value={story.story_id}>
+                        {story.story_id} · {story.title.length > 90 ? `${story.title.slice(0, 89)}…` : story.title}
+                      </NativeSelectOption>
+                    ))}
+                  </NativeSelect>
+                  {chosen ? (
+                    <div className="flex items-start gap-3 rounded-xl border bg-muted/30 p-3.5">
+                      <IssueTypeIcon type={chosen.issue_type} size="lg" />
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <p className="text-sm font-medium">{chosen.title}</p>
+                        <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                          <span className="font-mono">{chosen.story_id}</span>
+                          <span>{chosen.issue_type ?? "No type"}</span>
+                          <span>
+                            {chosen.acceptance_criteria.length} acceptance {chosen.acceptance_criteria.length === 1 ? "criterion" : "criteria"}
+                          </span>
+                          {chosen.upstream ? (
+                            <span className="inline-flex items-center gap-1">
+                              <CircleCheckIcon aria-hidden className="size-3.5 text-success" />
+                              Component signals{chosen.upstream.source === "platform" ? " from the backlog" : ""}
+                            </span>
+                          ) : null}
+                        </p>
+                      </div>
+                      <PointsPill points={chosen.story_points} size="lg" />
+                    </div>
+                  ) : candidates.length === 0 ? (
+                    <FieldDescription>The backlog has no open stories: try a new story instead.</FieldDescription>
+                  ) : null}
+                  {fieldError("storyId")}
+                </Field>
+              ) : (
+                <FieldGroup className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <Field data-invalid={!!errors.title} className="sm:col-span-2 lg:col-span-4">
+                    <FieldLabel htmlFor="predict-title">Title</FieldLabel>
+                    <Input {...wire("title")} autoComplete="off" placeholder="As a user I want … so that …" {...form.register("title")} />
+                    {fieldError("title")}
+                  </Field>
+                  <Field data-invalid={!!errors.description} className="sm:col-span-2">
+                    <FieldLabel htmlFor="predict-description">
+                      Description <span className="font-normal text-muted-foreground">(optional)</span>
+                    </FieldLabel>
+                    <Textarea {...wire("description")} rows={4} {...form.register("description")} />
+                    {fieldError("description")}
+                  </Field>
+                  <Field data-invalid={!!errors.acceptance_criteria} className="sm:col-span-2">
+                    <FieldLabel htmlFor="predict-acceptance_criteria">
+                      Acceptance criteria <span className="font-normal text-muted-foreground">(one per line)</span>
+                    </FieldLabel>
+                    <Textarea {...wire("acceptance_criteria")} rows={4} placeholder="Given … when … then …" {...form.register("acceptance_criteria")} />
+                    {fieldError("acceptance_criteria")}
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="predict-issue_type">Type</FieldLabel>
+                    <NativeSelect id="predict-issue_type" className="w-full" {...form.register("issue_type")}>
+                      <NativeSelectOption value="">Not set</NativeSelectOption>
+                      {ISSUE_TYPES.map((type) => (
+                        <NativeSelectOption key={type} value={type}>
+                          {type}
+                        </NativeSelectOption>
+                      ))}
+                    </NativeSelect>
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="predict-priority">Priority</FieldLabel>
+                    <NativeSelect id="predict-priority" className="w-full" {...form.register("priority")}>
+                      <NativeSelectOption value="">Not set</NativeSelectOption>
+                      {PRIORITIES.map((priority) => (
+                        <NativeSelectOption key={priority} value={priority}>
+                          {priority}
+                        </NativeSelectOption>
+                      ))}
+                    </NativeSelect>
+                  </Field>
+                  <Field data-invalid={!!errors.story_points}>
+                    <FieldLabel htmlFor="predict-story_points">
+                      Story points <span className="font-normal text-muted-foreground">(team&apos;s estimate)</span>
+                    </FieldLabel>
+                    <Input {...wire("story_points")} type="number" inputMode="decimal" min={0} step="any" {...form.register("story_points")} />
+                    {fieldError("story_points")}
+                  </Field>
+                  <Field data-invalid={!!errors.epic}>
+                    <FieldLabel htmlFor="predict-epic">
+                      Epic <span className="font-normal text-muted-foreground">(optional)</span>
+                    </FieldLabel>
+                    <Input {...wire("epic")} autoComplete="off" {...form.register("epic")} />
+                    {fieldError("epic")}
+                  </Field>
+                  <Field data-invalid={!!errors.blocked_by}>
+                    <FieldLabel htmlFor="predict-blocked_by">Blocked by (open issues)</FieldLabel>
+                    <Input {...wire("blocked_by")} {...whole} {...form.register("blocked_by")} />
+                    {fieldError("blocked_by")}
+                  </Field>
+                  <Field data-invalid={!!errors.depends_on}>
+                    <FieldLabel htmlFor="predict-depends_on">Depends on (issues)</FieldLabel>
+                    <Input {...wire("depends_on")} {...whole} {...form.register("depends_on")} />
+                    {fieldError("depends_on")}
+                  </Field>
+                  <Field data-invalid={!!errors.needed_by}>
+                    <FieldLabel htmlFor="predict-needed_by">Needed by (issues)</FieldLabel>
+                    <Input {...wire("needed_by")} {...whole} {...form.register("needed_by")} />
+                    {fieldError("needed_by")}
+                  </Field>
+                </FieldGroup>
+              )}
+
+              <FieldGroup className="grid gap-4 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="predict-sprintId">Sprint</FieldLabel>
+                  <NativeSelect id="predict-sprintId" className="w-full" {...form.register("sprintId")}>
+                    <NativeSelectOption value="">The next sprint (not planned yet)</NativeSelectOption>
+                    {open.map((sprint) => (
+                      <NativeSelectOption key={sprint.sprint_id} value={sprint.sprint_id}>
+                        {sprint.name} ({sprint.status === "active" ? "running" : "planned"})
+                      </NativeSelectOption>
+                    ))}
+                  </NativeSelect>
                   <FieldDescription>
-                    {chosen.issue_type ?? "No type"} · {chosen.story_points !== null ? `${points(chosen.story_points)} points` : "not estimated"} ·{" "}
-                    {chosen.acceptance_criteria.length} acceptance criteria
-                    {chosen.upstream ? ` · component signals${chosen.upstream.source ? ` (${chosen.upstream.source})` : ""}` : ""}
+                    A story not in the sprint is predicted as if added to it now; only a story really in the sprint gets its outcome
+                    recorded at the close. The next sprint is taken to be as long as the latest one.
                   </FieldDescription>
-                ) : candidates.length === 0 ? (
-                  <FieldDescription>The backlog has no open stories: try a new story instead.</FieldDescription>
-                ) : null}
-                {fieldError("storyId")}
-              </Field>
-            ) : (
-              <FieldGroup className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <Field data-invalid={!!errors.title} className="sm:col-span-2 lg:col-span-4">
-                  <FieldLabel htmlFor="predict-title">Title</FieldLabel>
-                  <Input {...wire("title")} autoComplete="off" placeholder="As a user I want … so that …" {...form.register("title")} />
-                  {fieldError("title")}
-                </Field>
-                <Field data-invalid={!!errors.description} className="sm:col-span-2">
-                  <FieldLabel htmlFor="predict-description">
-                    Description <span className="font-normal text-muted-foreground">(optional)</span>
-                  </FieldLabel>
-                  <Textarea {...wire("description")} rows={4} {...form.register("description")} />
-                  {fieldError("description")}
-                </Field>
-                <Field data-invalid={!!errors.acceptance_criteria} className="sm:col-span-2">
-                  <FieldLabel htmlFor="predict-acceptance_criteria">
-                    Acceptance criteria <span className="font-normal text-muted-foreground">(one per line)</span>
-                  </FieldLabel>
-                  <Textarea {...wire("acceptance_criteria")} rows={4} placeholder="Given … when … then …" {...form.register("acceptance_criteria")} />
-                  {fieldError("acceptance_criteria")}
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="predict-issue_type">Type</FieldLabel>
-                  <NativeSelect id="predict-issue_type" className="w-full" {...form.register("issue_type")}>
-                    <NativeSelectOption value="">Not set</NativeSelectOption>
-                    {ISSUE_TYPES.map((type) => (
-                      <NativeSelectOption key={type} value={type}>
-                        {type}
+                  <FieldLabel htmlFor="predict-model">Model</FieldLabel>
+                  <NativeSelect id="predict-model" className="w-full" {...form.register("model")}>
+                    <NativeSelectOption value="">The project&apos;s setting (automatic unless one is chosen)</NativeSelectOption>
+                    {available.map((model) => (
+                      <NativeSelectOption key={model.configuration_id} value={model.configuration_id}>
+                        {model.label}
                       </NativeSelectOption>
                     ))}
                   </NativeSelect>
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="predict-priority">Priority</FieldLabel>
-                  <NativeSelect id="predict-priority" className="w-full" {...form.register("priority")}>
-                    <NativeSelectOption value="">Not set</NativeSelectOption>
-                    {PRIORITIES.map((priority) => (
-                      <NativeSelectOption key={priority} value={priority}>
-                        {priority}
-                      </NativeSelectOption>
-                    ))}
-                  </NativeSelect>
-                </Field>
-                <Field data-invalid={!!errors.story_points}>
-                  <FieldLabel htmlFor="predict-story_points">
-                    Story points <span className="font-normal text-muted-foreground">(team&apos;s estimate)</span>
-                  </FieldLabel>
-                  <Input {...wire("story_points")} type="number" inputMode="decimal" min={0} step="any" {...form.register("story_points")} />
-                  {fieldError("story_points")}
-                </Field>
-                <Field data-invalid={!!errors.epic}>
-                  <FieldLabel htmlFor="predict-epic">
-                    Epic <span className="font-normal text-muted-foreground">(optional)</span>
-                  </FieldLabel>
-                  <Input {...wire("epic")} autoComplete="off" {...form.register("epic")} />
-                  {fieldError("epic")}
-                </Field>
-                <Field data-invalid={!!errors.blocked_by}>
-                  <FieldLabel htmlFor="predict-blocked_by">Blocked by (open issues)</FieldLabel>
-                  <Input {...wire("blocked_by")} {...whole} {...form.register("blocked_by")} />
-                  {fieldError("blocked_by")}
-                </Field>
-                <Field data-invalid={!!errors.depends_on}>
-                  <FieldLabel htmlFor="predict-depends_on">Depends on (issues)</FieldLabel>
-                  <Input {...wire("depends_on")} {...whole} {...form.register("depends_on")} />
-                  {fieldError("depends_on")}
-                </Field>
-                <Field data-invalid={!!errors.needed_by}>
-                  <FieldLabel htmlFor="predict-needed_by">Needed by (issues)</FieldLabel>
-                  <Input {...wire("needed_by")} {...whole} {...form.register("needed_by")} />
-                  {fieldError("needed_by")}
                 </Field>
               </FieldGroup>
-            )}
 
-            <FieldGroup className="grid gap-4 sm:grid-cols-2">
-              <Field>
-                <FieldLabel htmlFor="predict-sprintId">Sprint</FieldLabel>
-                <NativeSelect id="predict-sprintId" className="w-full" {...form.register("sprintId")}>
-                  <NativeSelectOption value="">The next sprint (not planned yet)</NativeSelectOption>
-                  {open.map((sprint) => (
-                    <NativeSelectOption key={sprint.sprint_id} value={sprint.sprint_id}>
-                      {sprint.name} ({sprint.status === "active" ? "running" : "planned"})
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
-                <FieldDescription>
-                  A story not in the sprint is predicted as if added to it now; only a story really in the sprint gets its outcome
-                  recorded at the close. The next sprint is taken to be as long as the latest one.
-                </FieldDescription>
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="predict-model">Model</FieldLabel>
-                <NativeSelect id="predict-model" className="w-full" {...form.register("model")}>
-                  <NativeSelectOption value="">The project&apos;s setting (automatic unless one is chosen)</NativeSelectOption>
-                  {available.map((model) => (
-                    <NativeSelectOption key={model.configuration_id} value={model.configuration_id}>
-                      {model.label}
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
-              </Field>
-            </FieldGroup>
+              {errors.root?.message ? (
+                <Alert variant="destructive">
+                  <AlertTitle>The prediction was not made</AlertTitle>
+                  <AlertDescription>{errors.root.message}</AlertDescription>
+                </Alert>
+              ) : null}
 
-            {errors.root?.message ? (
-              <Alert variant="destructive">
-                <AlertTitle>The prediction was not made</AlertTitle>
-                <AlertDescription>{errors.root.message}</AlertDescription>
-              </Alert>
-            ) : null}
-
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? <Spinner aria-hidden /> : null}
-              Predict
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+              <div className="flex flex-wrap items-center gap-3 border-t pt-5">
+                <Button type="submit" size="lg" disabled={isSubmitting}>
+                  {isSubmitting ? <Spinner aria-hidden /> : <SparklesIcon aria-hidden />}
+                  {isSubmitting ? "Predicting…" : "Predict"}
+                </Button>
+                <p className="text-xs text-muted-foreground">Kept in the prediction log, where it can be reviewed later.</p>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+        <WhatYouGet />
+      </div>
 
       {made ? (
         <PredictionResult

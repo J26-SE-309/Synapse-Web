@@ -1,6 +1,6 @@
 "use client";
 
-import { PlusIcon } from "lucide-react";
+import { ListPlusIcon, PlusIcon } from "lucide-react";
 import { useId, useState } from "react";
 import { toast } from "sonner";
 
@@ -13,6 +13,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
+  DialogIcon,
   DialogTitle,
   DialogTrigger,
 } from "@/shared/ui/dialog";
@@ -71,6 +72,7 @@ export function AddStoriesDialog({ projectId, sprint, backlog }: { projectId: st
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
+          <DialogIcon icon={ListPlusIcon} />
           <DialogTitle>Add stories to {sprint.name}</DialogTitle>
           <DialogDescription>
             {sprint.status === "active"

@@ -3,6 +3,7 @@
 import { TriangleAlertIcon } from "lucide-react";
 
 import { describeError } from "@/shared/api/gateway";
+import { cn } from "@/shared/lib/utils";
 import type { Project } from "@/shared/projects/api";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
@@ -14,6 +15,7 @@ import type { RiskLevel } from "../_lib/types";
 import { RiskBadge } from "./indicators";
 
 const LEVELS: RiskLevel[] = ["high", "medium", "low"];
+const BAR: Record<RiskLevel, string> = { high: "bg-danger/70", medium: "bg-warning/70", low: "bg-success/70" };
 
 /** The project's predictions at a glance, what was decided, and how they turned out so far. */
 export function SummaryCards({ project }: { project: Project }) {
@@ -22,9 +24,9 @@ export function SummaryCards({ project }: { project: Project }) {
   if (summary.isPending) {
     return (
       <div className="grid gap-4 md:grid-cols-3">
-        <Skeleton className="h-36" />
-        <Skeleton className="h-36" />
-        <Skeleton className="h-36" />
+        <Skeleton className="h-48 rounded-2xl" />
+        <Skeleton className="h-48 rounded-2xl" />
+        <Skeleton className="h-48 rounded-2xl" />
       </div>
     );
   }
@@ -53,17 +55,17 @@ export function SummaryCards({ project }: { project: Project }) {
             {data.predictions === 0 ? "None yet" : `${data.stories} stories, the latest ${when(data.last_at)}`}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-2">
-          <p className="text-3xl font-semibold tabular-nums">{data.predictions}</p>
-          <ul className="space-y-1" aria-label="Predictions by risk level">
+        <CardContent className="space-y-3">
+          <p className="text-4xl font-semibold tracking-tight tabular-nums">{data.predictions}</p>
+          <ul className="space-y-2" aria-label="Predictions by risk level">
             {LEVELS.map((level) => {
               const count = data.by_risk_level[level] ?? 0;
               const share = data.predictions ? count / data.predictions : 0;
               return (
                 <li key={level} className="flex items-center gap-2 text-sm">
-                  <RiskBadge level={level} className="w-28 justify-start" />
-                  <span aria-hidden className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-                    <span className="block h-full rounded-full bg-foreground/40" style={{ width: `${share * 100}%` }} />
+                  <RiskBadge level={level} variant="subtle" className="w-28 justify-start" />
+                  <span aria-hidden className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                    <span className={cn("block h-full rounded-full", BAR[level])} style={{ width: `${share * 100}%` }} />
                   </span>
                   <span className="w-8 text-right tabular-nums">{count}</span>
                 </li>
@@ -85,11 +87,11 @@ export function SummaryCards({ project }: { project: Project }) {
         <CardContent>
           <dl className="grid grid-cols-3 gap-2 text-center">
             {(["accept", "adjust", "reject"] as const).map((decision) => (
-              <div key={decision} className="rounded-lg bg-muted/60 p-2">
-                <dd className="text-2xl font-semibold tabular-nums">{data.feedback[decision] ?? 0}</dd>
+              <div key={decision} className="flex flex-col-reverse gap-0.5 rounded-xl bg-muted/60 px-2 py-3">
                 <dt className="text-xs text-muted-foreground">
                   {{ accept: "Accepted", adjust: "Adjusted", reject: "Rejected" }[decision]}
                 </dt>
+                <dd className="text-2xl font-semibold tracking-tight tabular-nums">{data.feedback[decision] ?? 0}</dd>
               </div>
             ))}
           </dl>
@@ -114,16 +116,16 @@ export function SummaryCards({ project }: { project: Project }) {
               When the platform closes a sprint, each story&apos;s outcome is recorded against its prediction.
             </p>
           ) : (
-            <dl className="space-y-2 text-sm">
-              <div className="flex justify-between gap-3">
+            <dl className="divide-y divide-border/60 text-sm">
+              <div className="flex justify-between gap-3 py-2 first:pt-0 last:pb-0">
                 <dt className="text-muted-foreground">Finished in their sprint</dt>
                 <dd className="font-medium tabular-nums">{percent(data.completed_share)}</dd>
               </div>
-              <div className="flex justify-between gap-3">
+              <div className="flex justify-between gap-3 py-2 first:pt-0 last:pb-0">
                 <dt className="text-muted-foreground">The models expected</dt>
                 <dd className="font-medium tabular-nums">{percent(predictedDone)}</dd>
               </div>
-              <div className="flex justify-between gap-3">
+              <div className="flex justify-between gap-3 py-2 first:pt-0 last:pb-0">
                 <dt className="text-muted-foreground">Average effort error</dt>
                 <dd className="font-medium tabular-nums">
                   {data.effort_mae == null ? "—" : `${points(data.effort_mae)} points`}

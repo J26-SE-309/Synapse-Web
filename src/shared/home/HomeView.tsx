@@ -11,10 +11,8 @@ import {
   ListTodoIcon,
   SparklesIcon,
   TrendingUpIcon,
-  type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
-import type { ReactNode } from "react";
 
 import { useSprints, useStories } from "@/shared/backlog/api";
 import { formatDate, formatPoints } from "@/shared/backlog/badges";
@@ -23,6 +21,7 @@ import { sprintStats } from "@/shared/backlog/sprint-stats";
 import { storiesIn, totalPoints, type Sprint, type Story } from "@/shared/backlog/types";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { PlatformStatus } from "@/shared/components/PlatformStatus";
+import { StatTile } from "@/shared/components/StatTile";
 import { usePlatformHealth } from "@/shared/hooks/usePlatformHealth";
 import { ProjectIllustration, WelcomeIllustration } from "@/shared/illustrations";
 import { cn } from "@/shared/lib/utils";
@@ -82,48 +81,12 @@ function Hero() {
   );
 }
 
-function Stat({
-  icon: Icon,
-  label,
-  value,
-  detail,
-  tone = "primary",
-  children,
-}: {
-  icon: LucideIcon;
-  label: string;
-  value: ReactNode;
-  detail?: ReactNode;
-  tone?: "primary" | "sky" | "violet" | "pink";
-  children?: ReactNode;
-}) {
-  const tile = {
-    primary: "bg-primary/12 text-primary",
-    sky: "bg-chart-2/15 text-chart-2",
-    violet: "bg-chart-3/15 text-chart-3",
-    pink: "bg-chart-5/15 text-chart-5",
-  }[tone];
-  return (
-    <div className="flex flex-col gap-3 rounded-2xl border bg-card p-5 shadow-(--shadow-soft)">
-      <div className="flex items-center gap-3">
-        <span className={cn("flex size-10 items-center justify-center rounded-xl", tile)}>
-          <Icon aria-hidden className="size-5" />
-        </span>
-        <p className="text-sm font-medium text-muted-foreground">{label}</p>
-      </div>
-      <p className="text-2xl font-semibold tracking-tight tabular-nums">{value}</p>
-      {detail ? <p className="text-sm text-muted-foreground">{detail}</p> : null}
-      {children}
-    </div>
-  );
-}
-
 function ActiveSprintStat({ sprint, stories }: { sprint: Sprint; stories: Story[] }) {
   const stats = sprintStats(sprint, stories);
   const left = daysLeft(sprint);
   const share = stats.committed ? Math.round((stats.done / stats.committed) * 100) : 0;
   return (
-    <Stat
+    <StatTile
       icon={HourglassIcon}
       label={sprint.name}
       value={left === 0 ? "Last day" : `${left} ${left === 1 ? "day" : "days"} left`}
@@ -141,7 +104,7 @@ function ActiveSprintStat({ sprint, stories }: { sprint: Sprint; stories: Story[
       <Link href={`/sprints/${encodeURIComponent(sprint.sprint_id)}`} className="mt-auto inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
         Open the board <ArrowRightIcon aria-hidden className="size-3.5" />
       </Link>
-    </Stat>
+    </StatTile>
   );
 }
 
@@ -175,13 +138,13 @@ function ProjectSnapshot({ project }: { project: Project }) {
       {active ? (
         <ActiveSprintStat sprint={active} stories={storiesIn(active, all)} />
       ) : (
-        <Stat icon={FlagIcon} label="Sprint" value="None running" detail="Start a planned sprint from its page.">
+        <StatTile icon={FlagIcon} label="Sprint" value="None running" detail="Start a planned sprint from its page.">
           <Link href="/sprints" className="mt-auto inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
             See the sprints <ArrowRightIcon aria-hidden className="size-3.5" />
           </Link>
-        </Stat>
+        </StatTile>
       )}
-      <Stat
+      <StatTile
         icon={LayersIcon}
         tone="sky"
         label="Backlog"
@@ -191,15 +154,15 @@ function ProjectSnapshot({ project }: { project: Project }) {
         <Link href="/backlog" className="mt-auto inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
           Plan the next sprint <ArrowRightIcon aria-hidden className="size-3.5" />
         </Link>
-      </Stat>
-      <Stat
+      </StatTile>
+      <StatTile
         icon={TrendingUpIcon}
         tone="violet"
         label="Velocity"
         value={velocity === null ? "–" : `${formatPoints(Math.round(velocity * 10) / 10)} points`}
         detail={velocity === null ? "Close a sprint to see it." : `Completed per sprint, last ${recent.length} ${recent.length === 1 ? "sprint" : "sprints"}`}
       />
-      <Stat
+      <StatTile
         icon={CheckCircle2Icon}
         tone="pink"
         label="Delivered"

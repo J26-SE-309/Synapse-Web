@@ -1,6 +1,17 @@
 "use client";
 
-import { CircleCheckIcon, HistoryIcon, HourglassIcon, TriangleAlertIcon } from "lucide-react";
+import {
+  ActivityIcon,
+  CircleCheckIcon,
+  HistoryIcon,
+  HourglassIcon,
+  RotateCcwIcon,
+  SplitIcon,
+  TimerIcon,
+  TrendingUpIcon,
+  TriangleAlertIcon,
+  type LucideIcon,
+} from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import { describeError } from "@/shared/api/gateway";
@@ -40,11 +51,16 @@ const chartConfig = {
   completed: { label: "Completed", color: "var(--chart-1)" },
 } satisfies ChartConfig;
 
-function Stat({ label, value, hint }: { label: string; value: string; hint: string }) {
+function Stat({ icon: Icon, label, value, hint }: { icon: LucideIcon; label: string; value: string; hint: string }) {
   return (
-    <div className="space-y-0.5 rounded-lg border p-3">
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="text-xl font-semibold tabular-nums">{value}</dd>
+    <div className="flex flex-col gap-2 rounded-2xl border bg-card p-4 shadow-(--shadow-soft)">
+      <dt className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+        <span className="flex size-8 items-center justify-center rounded-lg bg-primary/12 text-primary">
+          <Icon aria-hidden className="size-4" />
+        </span>
+        {label}
+      </dt>
+      <dd className="text-2xl font-semibold tracking-tight tabular-nums">{value}</dd>
       <dd className="text-xs text-muted-foreground">{hint}</dd>
     </div>
   );
@@ -92,7 +108,7 @@ function History({ project }: { project: Project }) {
   const team = data?.team_context;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-8">
       <PageHeader
         icon={HistoryIcon}
         eyebrow="Effort & Sprint Risk"
@@ -111,7 +127,7 @@ function History({ project }: { project: Project }) {
       </PageHeader>
 
       {history.isPending ? (
-        <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-48 w-full rounded-2xl" />
       ) : history.isError ? (
         <Alert variant="destructive">
           <TriangleAlertIcon aria-hidden />
@@ -121,8 +137,8 @@ function History({ project }: { project: Project }) {
       ) : !data ? null : (
         <>
 
-          <Alert>
-            {data.cold_start ? <HourglassIcon aria-hidden /> : <CircleCheckIcon aria-hidden />}
+          <Alert className={data.cold_start ? "rounded-2xl border-warning/40 bg-warning-soft/40" : "rounded-2xl border-success/30 bg-success-soft/40"}>
+            {data.cold_start ? <HourglassIcon aria-hidden className="text-warning!" /> : <CircleCheckIcon aria-hidden className="text-success!" />}
             <AlertTitle>
               {data.cold_start
                 ? `Cold start: ${data.sprints_needed} more closed ${data.sprints_needed === 1 ? "sprint" : "sprints"} needed`
@@ -136,22 +152,22 @@ function History({ project }: { project: Project }) {
           </Alert>
 
           <section aria-labelledby="team-heading" className="space-y-3">
-            <h2 id="team-heading" className="text-lg font-semibold">
+            <h2 id="team-heading" className="text-xl font-semibold tracking-tight">
               What the models see now
             </h2>
-            <dl className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
-              <Stat label="Velocity" value={team?.velocity_mean == null ? "—" : `${points(team.velocity_mean)} pts`} hint="Mean of the last 3 sprints" />
-              <Stat label="Velocity variance" value={number(team?.velocity_variance, 1)} hint="Over the last 5 sprints" />
-              <Stat label="Spillover rate" value={percent(team?.spillover_rate)} hint="Stories not done in their sprint" />
-              <Stat label="Reopen rate" value={percent(team?.reopen_rate)} hint="Stories reopened after done" />
-              <Stat label="Cycle time" value={hours(team?.mean_cycle_time_hours)} hint="Mean time in progress" />
+            <dl className="grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
+              <Stat icon={TrendingUpIcon} label="Velocity" value={team?.velocity_mean == null ? "—" : `${points(team.velocity_mean)} pts`} hint="Mean of the last 3 sprints" />
+              <Stat icon={ActivityIcon} label="Velocity variance" value={number(team?.velocity_variance, 1)} hint="Over the last 5 sprints" />
+              <Stat icon={SplitIcon} label="Spillover rate" value={percent(team?.spillover_rate)} hint="Stories not done in their sprint" />
+              <Stat icon={RotateCcwIcon} label="Reopen rate" value={percent(team?.reopen_rate)} hint="Stories reopened after done" />
+              <Stat icon={TimerIcon} label="Cycle time" value={hours(team?.mean_cycle_time_hours)} hint="Mean time in progress" />
             </dl>
           </section>
 
           <VelocityChart history={data} />
 
           <section aria-labelledby="sprints-heading" className="space-y-3">
-            <h2 id="sprints-heading" className="text-lg font-semibold">
+            <h2 id="sprints-heading" className="text-xl font-semibold tracking-tight">
               Sprints <span className="text-sm font-normal text-muted-foreground">({data.sprints.length}, newest first)</span>
             </h2>
             {data.sprints.length === 0 ? (
@@ -167,7 +183,7 @@ function History({ project }: { project: Project }) {
                 tabIndex={0}
                 role="region"
                 aria-labelledby="sprints-heading"
-                className="max-h-[28rem] overflow-auto rounded-xl border bg-card outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                className="max-h-[28rem] overflow-auto rounded-2xl border bg-card shadow-(--shadow-soft) outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
               >
                 <Table>
                   <TableHeader className="sticky top-0 bg-card">

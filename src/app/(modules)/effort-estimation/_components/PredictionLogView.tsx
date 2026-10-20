@@ -285,6 +285,10 @@ function Log({ project, initialFilters }: { project: Project; initialFilters: Pr
         ) : (
           <>
             <div className="flex flex-wrap items-center gap-2">
+              <p className="mr-auto text-sm text-muted-foreground" aria-live="polite">
+                {rows.length} {rows.length === 1 ? "prediction" : "predictions"} shown
+                {shown.length ? `, ${shown.length} selected` : ""}
+              </p>
               <Button variant="outline" size="sm" disabled={shown.length === 0} onClick={() => setConfirming("selected")}>
                 <Trash2Icon aria-hidden /> Delete selected{shown.length ? ` (${shown.length})` : ""}
               </Button>
@@ -292,7 +296,7 @@ function Log({ project, initialFilters }: { project: Project; initialFilters: Pr
                 <Trash2Icon aria-hidden /> Delete all of this project&apos;s predictions
               </Button>
             </div>
-            <div className="overflow-hidden rounded-xl border bg-card">
+            <div className="overflow-hidden rounded-2xl border bg-card shadow-(--shadow-soft)">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -328,15 +332,15 @@ function Log({ project, initialFilters }: { project: Project; initialFilters: Pr
                       </TableCell>
                       <TableCell className="text-sm">{when(row.created_at)}</TableCell>
                       <TableCell>
-                        <p className="font-mono text-xs">{row.story_id}</p>
+                        <p className="font-mono text-xs font-medium">{row.story_id}</p>
                         {row.sprint_id ? <p className="font-mono text-xs text-muted-foreground">{row.sprint_id}</p> : null}
                       </TableCell>
-                      <TableCell className="tabular-nums">
+                      <TableCell className="font-medium tabular-nums">
                         {points(row.predicted_story_points)}{" "}
                         <span className="text-xs text-muted-foreground">({interval(row.prediction_interval)})</span>
                       </TableCell>
                       <TableCell>
-                        <RiskBadge level={row.sprint_risk_level} suffix="" />
+                        <RiskBadge level={row.sprint_risk_level} suffix="" variant="subtle" />
                       </TableCell>
                       <TableCell>
                         <ConfidenceIndicator level={row.confidence_level} />

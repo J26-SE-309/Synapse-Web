@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRightIcon, GaugeIcon, TriangleAlertIcon } from "lucide-react";
+import { ArrowRightIcon, GaugeIcon, SparklesIcon, TriangleAlertIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 
@@ -70,8 +70,11 @@ export function SprintEstimates({ project, sprint, stories }: SprintPanelProps) 
       <Card>
         <CardHeader>
           <CardTitle>
-            <h2 id={`${ids}-heading`} className="flex items-center gap-2">
-              <GaugeIcon aria-hidden className="size-5 text-primary" /> Effort and sprint risk
+            <h2 id={`${ids}-heading`} className="flex items-center gap-3 text-lg">
+              <span className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-chart-3 text-primary-foreground shadow-sm shadow-primary/30">
+                <GaugeIcon aria-hidden className="size-[1.125rem]" />
+              </span>
+              Effort and sprint risk
             </h2>
           </CardTitle>
           <CardDescription>
@@ -90,7 +93,7 @@ export function SprintEstimates({ project, sprint, stories }: SprintPanelProps) 
           ) : covered.length === 0 ? (
             <p className="text-sm text-muted-foreground">Every story in this sprint is done: there is nothing left to estimate.</p>
           ) : (
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+            <div className="flex flex-col gap-4 rounded-xl bg-muted/40 p-4 sm:flex-row sm:items-end">
               <Field className="sm:max-w-80">
                 <FieldLabel htmlFor={`${ids}-model`}>Model</FieldLabel>
                 <NativeSelect
@@ -117,7 +120,7 @@ export function SprintEstimates({ project, sprint, stories }: SprintPanelProps) 
               </Field>
               <div className="flex flex-col gap-1 sm:pb-6">
                 <Button onClick={estimate} disabled={risk.isPending}>
-                  {risk.isPending ? <Spinner aria-hidden /> : null}
+                  {risk.isPending ? <Spinner aria-hidden /> : <SparklesIcon aria-hidden />}
                   Estimate {covered.length} {covered.length === 1 ? "story" : "stories"}
                 </Button>
               </div>
@@ -144,7 +147,7 @@ export function SprintEstimates({ project, sprint, stories }: SprintPanelProps) 
       {result ? (
         <section aria-labelledby={`${ids}-results`} className="space-y-4">
           <div className="space-y-1">
-            <h3 id={`${ids}-results`} ref={resultsRef} tabIndex={-1} className="text-lg font-semibold outline-none">
+            <h3 id={`${ids}-results`} ref={resultsRef} tabIndex={-1} className="text-xl font-semibold tracking-tight outline-none">
               Results
             </h3>
             <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">

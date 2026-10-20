@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { FolderPlusIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -25,6 +26,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
+  DialogIcon,
   DialogTitle,
 } from "@/shared/ui/dialog";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/shared/ui/field";
@@ -108,6 +110,7 @@ export function NewProjectDialog({
       <DialogContent className="sm:max-w-lg">
         <form noValidate onSubmit={form.handleSubmit(submit)} className="flex flex-col gap-6">
           <DialogHeader>
+            <DialogIcon icon={FolderPlusIcon} />
             <DialogTitle>New project</DialogTitle>
             <DialogDescription>
               A project is one team&apos;s backlog and sprints. Every component stores its data under the project&apos;s key.
