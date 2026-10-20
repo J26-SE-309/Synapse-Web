@@ -6,6 +6,7 @@ import {
   ArrowUpIcon,
   AwardIcon,
   CheckIcon,
+  FlaskConicalIcon,
   PinIcon,
   SparklesIcon,
   TimerIcon,
@@ -423,6 +424,8 @@ function Models({ project }: { project: Project }) {
   return (
     <div className="mx-auto max-w-6xl space-y-8">
       <PageHeader
+        icon={FlaskConicalIcon}
+        eyebrow="Effort & Sprint Risk"
         title="Models"
         description="The Comparative Model Arena's encoder + learner pairs: keep automatic selection or choose one for this project, see how they rank, and compare them on your own stories."
       />

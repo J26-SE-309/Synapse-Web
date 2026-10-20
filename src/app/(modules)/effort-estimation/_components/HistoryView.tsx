@@ -1,10 +1,12 @@
 "use client";
 
-import { CircleCheckIcon, HourglassIcon, TriangleAlertIcon } from "lucide-react";
+import { CircleCheckIcon, HistoryIcon, HourglassIcon, TriangleAlertIcon } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import { describeError } from "@/shared/api/gateway";
+import { EmptyState } from "@/shared/components/EmptyState";
 import { PageHeader } from "@/shared/components/PageHeader";
+import { SprintIllustration } from "@/shared/illustrations";
 import type { Project } from "@/shared/projects/api";
 import { ProjectGate } from "@/shared/projects/ProjectGate";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/alert";
@@ -18,7 +20,6 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/shared/ui/chart";
-import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/shared/ui/empty";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
 
@@ -93,6 +94,8 @@ function History({ project }: { project: Project }) {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <PageHeader
+        icon={HistoryIcon}
+        eyebrow="Effort & Sprint Risk"
         title="Team history"
         description="The sprints the models learn this team's pace from: velocity, spillover, reopened stories and cycle time. The platform sends each sprint as it changes; until then, import them from a CSV."
       >
@@ -152,12 +155,13 @@ function History({ project }: { project: Project }) {
               Sprints <span className="text-sm font-normal text-muted-foreground">({data.sprints.length}, newest first)</span>
             </h2>
             {data.sprints.length === 0 ? (
-              <Empty className="border">
-                <EmptyHeader>
-                  <EmptyTitle>No sprints yet</EmptyTitle>
-                  <EmptyDescription>Import them below, or wait for the platform to send them.</EmptyDescription>
-                </EmptyHeader>
-              </Empty>
+              <EmptyState
+                size="sm"
+                headingLevel="p"
+                illustration={SprintIllustration}
+                title="No sprints yet"
+                description="Import them below, or wait for the platform to send them."
+              />
             ) : (
               <div
                 tabIndex={0}

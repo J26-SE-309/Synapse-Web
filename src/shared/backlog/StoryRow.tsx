@@ -18,7 +18,7 @@ import {
 } from "@/shared/ui/dropdown-menu";
 
 import { StoryStatusBadge } from "./badges";
-import { EpicChip, IssueTypeIcon, PointsPill, PriorityIcon } from "./icons";
+import { EpicChip, IssueTypeIcon, PointsPill, PriorityLabel } from "./icons";
 import type { Sprint, Story } from "./types";
 
 export interface RowActions {
@@ -29,7 +29,10 @@ export interface RowActions {
   targets: Sprint[];
 }
 
-/** One line of a story: what it is, how big, how urgent, and where it stands. */
+/**
+ * A story in a list: its type, title and id, then epic and priority on a second line, and on the right its risk,
+ * status and size. The whole row opens the story; the handle and the menu keep their own clicks.
+ */
 export function StoryRowContent({
   project,
   story,
@@ -43,41 +46,40 @@ export function StoryRowContent({
   handle?: React.ReactNode;
   menu?: React.ReactNode;
 }) {
-  // Fixed-width slots so the columns line up from row to row.
   return (
-    <div className="flex min-h-11 items-center gap-2 px-2 py-1.5">
+    <div className="relative flex min-h-16 items-center gap-3 py-2.5 pr-3 pl-2 sm:pr-4">
       {handle}
-      <IssueTypeIcon type={story.issue_type} />
-      <span className="hidden w-28 shrink-0 truncate font-mono text-xs text-muted-foreground lg:inline" title={story.story_id}>
-        {story.story_id}
-      </span>
-      <span className="flex min-w-0 flex-1 items-center gap-1.5">
+      <IssueTypeIcon type={story.issue_type} size="lg" />
+      <div className="min-w-0 flex-1 space-y-1">
         <button
           type="button"
           onClick={() => onOpen?.(story)}
-          className="min-w-0 truncate rounded text-left text-sm font-medium hover:underline focus-visible:underline"
+          className="line-clamp-2 max-w-full rounded text-left text-[0.9375rem]/snug font-medium after:absolute after:inset-0 after:content-[''] hover:text-primary focus-visible:underline"
           title={story.title}
         >
-          <span className="font-mono text-xs font-normal text-muted-foreground lg:hidden">{story.story_id} </span>
           {story.title}
         </button>
-      </span>
-      <span className="hidden w-28 shrink-0 justify-end md:flex">{story.epic ? <EpicChip epic={story.epic} /> : null}</span>
-      <span className="hidden w-24 shrink-0 justify-end xl:flex">
-        {STORY_BADGES.map(({ slug, Component }) => (
-          <Component key={slug} project={project} story={story} />
-        ))}
-      </span>
-      <span className="flex w-5 shrink-0 justify-center">
-        <PriorityIcon priority={story.priority} />
-      </span>
-      <span className="hidden w-28 shrink-0 sm:flex">
-        <StoryStatusBadge status={story.status} />
-      </span>
-      <span className="flex w-8 shrink-0 justify-center">
-        <PointsPill points={story.story_points} />
-      </span>
-      {menu}
+        <p className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-muted-foreground">
+          <span className="font-mono">{story.story_id}</span>
+          {story.epic ? <EpicChip epic={story.epic} /> : null}
+          <PriorityLabel priority={story.priority} />
+          <span className="sm:hidden">
+            · <StoryStatusBadge status={story.status} plain />
+          </span>
+        </p>
+      </div>
+      <div className="relative z-10 flex shrink-0 items-center gap-3">
+        <span className="hidden w-24 lg:flex">
+          {STORY_BADGES.map(({ slug, Component }) => (
+            <Component key={slug} project={project} story={story} />
+          ))}
+        </span>
+        <span className="hidden w-28 sm:flex sm:justify-end">
+          <StoryStatusBadge status={story.status} />
+        </span>
+        <PointsPill points={story.story_points} size="lg" />
+        {menu}
+      </div>
     </div>
   );
 }
@@ -151,7 +153,7 @@ export function SortableStoryRow({
       {...listeners}
       disabled={!draggable}
       aria-label={`Drag ${story.story_id}: ${story.title}`}
-      className="-ml-1 flex size-7 shrink-0 cursor-grab touch-none items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-default disabled:opacity-30 active:cursor-grabbing"
+      className="relative z-10 -mr-1 flex h-9 w-6 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground/60 transition-colors group-hover/row:text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-default disabled:opacity-30 active:cursor-grabbing"
     >
       <GripVerticalIcon aria-hidden className="size-4" />
     </button>
@@ -161,7 +163,10 @@ export function SortableStoryRow({
     <li
       ref={setNodeRef}
       style={{ transform: CSS.Translate.toString(transform), transition }}
-      className={cn("border-b bg-card last:border-b-0", isDragging && "relative z-10 opacity-40")}
+      className={cn(
+        "group/row border-b border-border/70 bg-card transition-colors last:border-b-0 hover:bg-accent/40",
+        isDragging && "relative z-10 opacity-40",
+      )}
     >
       <StoryRowContent project={project} story={story} onOpen={actions.onOpen} handle={handle} menu={menu} />
     </li>

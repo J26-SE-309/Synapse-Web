@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRightIcon, HourglassIcon, PinIcon, SparklesIcon } from "lucide-react";
+import { ArrowRightIcon, GaugeIcon, HourglassIcon, PinIcon, SparklesIcon } from "lucide-react";
 import Link from "next/link";
 
 import { PageHeader } from "@/shared/components/PageHeader";
@@ -102,6 +102,7 @@ function Overview({ project }: { project: Project }) {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <PageHeader
+        icon={GaugeIcon}
         title="Effort & Sprint Risk"
         description="Story effort and sprint risk with calibrated confidence, the reasons behind them and what to do about them."
         actions={

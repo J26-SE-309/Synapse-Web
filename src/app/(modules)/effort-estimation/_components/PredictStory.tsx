@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ScrollTextIcon, TriangleAlertIcon } from "lucide-react";
+import { ScrollTextIcon, SparklesIcon, TriangleAlertIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch, type FieldErrors } from "react-hook-form";
@@ -438,6 +438,8 @@ function Predict({ project }: { project: Project }) {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <PageHeader
+        icon={SparklesIcon}
+        eyebrow="Effort & Sprint Risk"
         title="Predict a story"
         description="One story's full prediction: effort, sprint risk, confidence, why, what to do, and what the models saw."
       />

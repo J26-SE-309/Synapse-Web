@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftIcon, TriangleAlertIcon } from "lucide-react";
+import { ArrowLeftIcon, ScrollTextIcon, TriangleAlertIcon } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -386,6 +386,8 @@ export function PredictionDetailView({ predictionId }: { predictionId: string })
         </Link>
       </Button>
       <PageHeader
+        icon={ScrollTextIcon}
+        eyebrow="Prediction"
         title={<span className="font-mono">{prediction.story_id}</span>}
         description={`Estimated ${when(data.created_at)} for ${data.project_id}${data.sprint_id ? `, sprint ${data.sprint_id}` : ""}.`}
       >
