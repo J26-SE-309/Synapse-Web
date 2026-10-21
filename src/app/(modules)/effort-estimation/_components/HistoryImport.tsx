@@ -1,6 +1,6 @@
 "use client";
 
-import { DownloadIcon, UploadIcon } from "lucide-react";
+import { DownloadIcon, FileSpreadsheetIcon, UploadIcon } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -91,7 +91,10 @@ export function HistoryImport({ project, storedSprints }: { project: Project; st
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+        <div className="flex flex-col gap-4 rounded-2xl border border-dashed bg-muted/20 p-5 sm:flex-row sm:items-end">
+          <span className="hidden size-12 shrink-0 items-center justify-center self-center rounded-2xl bg-primary/12 text-primary sm:flex">
+            <FileSpreadsheetIcon aria-hidden className="size-6" />
+          </span>
           <Field className="sm:max-w-md" data-invalid={problems.length > 0}>
             <FieldLabel htmlFor={`${ids}-csv`}>CSV file</FieldLabel>
             <Input

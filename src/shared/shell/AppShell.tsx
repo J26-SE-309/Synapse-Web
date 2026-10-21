@@ -19,9 +19,9 @@ export function AppShell({ sidebarOpen, children }: { sidebarOpen: boolean; chil
       </a>
       <AppSidebar />
       {/* min-w-0: wide content (tables, boards) scrolls inside its own box instead of widening the page */}
-      <SidebarInset className="min-w-0">
+      <SidebarInset className="app-canvas min-w-0">
         <TopBar />
-        <div id="main" tabIndex={-1} className="flex-1 px-4 py-6 outline-none sm:px-6 lg:px-8">
+        <div id="main" tabIndex={-1} className="flex-1 px-4 pt-6 pb-16 outline-none sm:px-6 sm:pt-8 lg:px-10">
           {children}
         </div>
       </SidebarInset>

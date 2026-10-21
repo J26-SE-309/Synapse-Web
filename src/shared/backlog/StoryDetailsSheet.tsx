@@ -82,7 +82,7 @@ export function StoryDetailsSheet({
   return (
     <>
       <Sheet open={story !== null} onOpenChange={(next) => !next && onClose()}>
-        <SheetContent className="w-full gap-0 overflow-y-auto sm:max-w-xl">
+        <SheetContent className="w-full gap-0 overflow-y-auto data-[side=right]:sm:max-w-xl">
           {story ? (
             <>
               <SheetHeader className="gap-2 border-b pr-12">
