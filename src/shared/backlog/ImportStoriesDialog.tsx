@@ -1,6 +1,6 @@
 "use client";
 
-import { FileJsonIcon, SparklesIcon, TriangleAlertIcon } from "lucide-react";
+import { FileJsonIcon, FileUpIcon, SparklesIcon, TriangleAlertIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useId, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
+  DialogIcon,
   DialogTitle,
   DialogTrigger,
 } from "@/shared/ui/dialog";
@@ -110,6 +111,7 @@ export function ImportStoriesDialog({ projectId }: { projectId: string }) {
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
+          <DialogIcon icon={FileUpIcon} />
           <DialogTitle>Import stories</DialogTitle>
           <DialogDescription>
             Choose or paste a JSON backlog: a list of stories, or a backlog with a sprint id and capacity. Every story is

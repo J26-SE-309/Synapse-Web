@@ -29,7 +29,16 @@ const TYPES: Record<IssueType, { icon: LucideIcon; className: string }> = {
   "New Feature": { icon: SparklesIcon, className: "bg-chart-4/20 text-foreground" },
 };
 
-export function IssueTypeIcon({ type, className }: { type: IssueType | null; className?: string }) {
+export function IssueTypeIcon({
+  type,
+  size = "sm",
+  className,
+}: {
+  type: IssueType | null;
+  /** "lg": a rounded tile that leads a story's row. */
+  size?: "sm" | "lg";
+  className?: string;
+}) {
   const entry = type ? TYPES[type] : null;
   const Icon = entry?.icon ?? CircleSlashIcon;
   const label = type ?? "No type";
@@ -37,12 +46,13 @@ export function IssueTypeIcon({ type, className }: { type: IssueType | null; cla
     <span
       title={label}
       className={cn(
-        "inline-flex size-5 shrink-0 items-center justify-center rounded",
+        "inline-flex shrink-0 items-center justify-center",
+        size === "lg" ? "size-9 rounded-xl" : "size-5 rounded",
         entry?.className ?? "bg-muted text-muted-foreground",
         className,
       )}
     >
-      <Icon aria-hidden className="size-3.5" />
+      <Icon aria-hidden className={size === "lg" ? "size-[1.125rem]" : "size-3.5"} />
       <span className="sr-only">{label}</span>
     </span>
   );
@@ -76,6 +86,17 @@ export function PriorityIcon({
   );
 }
 
+/** The priority's icon and its name, for places with room for the word. */
+export function PriorityLabel({ priority, className }: { priority: Priority | null; className?: string }) {
+  if (!priority) return <span className={cn("text-muted-foreground", className)}>No priority</span>;
+  return (
+    <span className={cn("inline-flex items-center gap-0.5 whitespace-nowrap", className)}>
+      <PriorityIcon priority={priority} decorative className="[&_svg]:size-3.5" />
+      {priority}
+    </span>
+  );
+}
+
 const EPIC_COLOURS = [
   "bg-chart-1/15 text-foreground ring-chart-1/30",
   "bg-chart-2/15 text-foreground ring-chart-2/30",
@@ -103,13 +124,16 @@ export function EpicChip({ epic, className }: { epic: string; className?: string
   );
 }
 
-/** Story points as a small grey pill; a dash when the team has not estimated it. */
-export function PointsPill({ points, className }: { points: number | null; className?: string }) {
+/** Story points as a small grey pill (a round badge with `size="lg"`); a dash when the team has not estimated it. */
+export function PointsPill({ points, size = "sm", className }: { points: number | null; size?: "sm" | "lg"; className?: string }) {
   return (
     <span
       title={points === null ? "Not estimated" : `${points} story points`}
       className={cn(
-        "inline-flex h-5 min-w-6 shrink-0 items-center justify-center rounded-full bg-muted px-1.5 text-xs font-medium tabular-nums",
+        "inline-flex shrink-0 items-center justify-center rounded-full font-medium tabular-nums",
+        size === "lg"
+          ? "size-8 bg-secondary text-sm ring-1 ring-foreground/8"
+          : "h-5 min-w-6 bg-muted px-1.5 text-xs",
         points === null && "text-muted-foreground",
         className,
       )}

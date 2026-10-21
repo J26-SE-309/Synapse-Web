@@ -5,7 +5,8 @@ import { ConstructionIcon } from "lucide-react";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { StatusBadge, type Status } from "@/shared/components/StatusBadge";
 import { usePlatformHealth } from "@/shared/hooks/usePlatformHealth";
-import { getModule, type ModuleSlug } from "@/shared/modules";
+import { getModule, MODULES, type ModuleSlug } from "@/shared/modules";
+import { NAV_MODULES } from "@/shared/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 
 /** Starting page for a module until its owner builds the real one. */
@@ -13,17 +14,18 @@ export function ModulePlaceholder({ slug }: { slug: ModuleSlug }) {
   const info = getModule(slug);
   const health = usePlatformHealth();
   const status: Status = health.isPending ? "unknown" : health.data?.components[slug]?.status ?? "down";
+  const step = MODULES.findIndex((entry) => entry.slug === slug);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <PageHeader title={info.name} description={info.description}>
+      <PageHeader icon={NAV_MODULES[step].icon} eyebrow={`Component ${step + 1}`} title={info.name} description={info.description}>
         <div className="flex flex-wrap items-center gap-3 pt-1 text-sm text-muted-foreground">
           <StatusBadge status={status} />
           <span>Owner: @{info.owner}</span>
         </div>
       </PageHeader>
 
-      <Card className="border border-dashed bg-transparent ring-0">
+      <Card className="border border-dashed bg-card/50 shadow-none ring-0">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <ConstructionIcon aria-hidden className="size-4 text-muted-foreground" />

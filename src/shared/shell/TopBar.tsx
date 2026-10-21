@@ -24,7 +24,7 @@ export function TopBar() {
   const crumbs = breadcrumbs(usePathname());
 
   return (
-    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background/90 px-3 backdrop-blur supports-[backdrop-filter]:bg-background/75 sm:px-4">
+    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b border-border/70 bg-background/80 px-3 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 sm:px-5">
       <Tooltip>
         <TooltipTrigger asChild>
           <SidebarTrigger className="-ml-1" />

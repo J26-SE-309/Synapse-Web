@@ -1,14 +1,24 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { BookmarkPlusIcon, PencilIcon } from "lucide-react";
 import { useEffect } from "react";
 import { useForm, type FieldErrors } from "react-hook-form";
 import { toast } from "sonner";
 
 import { describeError, GatewayError } from "@/shared/api/gateway";
+import { useProject } from "@/shared/projects/ProjectProvider";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogIcon,
+  DialogTitle,
+} from "@/shared/ui/dialog";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/shared/ui/field";
 import { Input } from "@/shared/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/shared/ui/native-select";
@@ -43,6 +53,7 @@ export function StoryFormDialog({
     defaultValues: story ? toFormValues(story) : EMPTY_STORY,
     mode: "onTouched",
   });
+  const { project } = useProject(); // ids take the project's short key: MFP-12, MFP-S5
   const create = useCreateStory(projectId);
   const update = useUpdateStory(projectId);
   const { errors, isSubmitting } = form.formState;
@@ -105,6 +116,7 @@ export function StoryFormDialog({
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <form noValidate onSubmit={form.handleSubmit(submit, invalid)} className="flex flex-col gap-6">
           <DialogHeader>
+            <DialogIcon icon={editing ? PencilIcon : BookmarkPlusIcon} />
             <DialogTitle>{editing ? `Edit ${story.story_id}` : "New story"}</DialogTitle>
             <DialogDescription>
               {editing
@@ -142,7 +154,7 @@ export function StoryFormDialog({
                 autoComplete="off"
                 spellCheck={false}
                 readOnly={editing}
-                placeholder={`${projectId}-…`}
+                placeholder={`${project?.key ?? projectId}-…`}
                 {...form.register("story_id")}
               />
               <FieldDescription id="story-story_id-help">

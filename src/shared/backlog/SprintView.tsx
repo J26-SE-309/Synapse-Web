@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  IterationCwIcon,
   CircleCheckIcon,
   ColumnsIcon,
   ListIcon,
@@ -35,7 +36,8 @@ import {
 } from "@/shared/ui/alert-dialog";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
-import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/shared/ui/empty";
+import { EmptyState } from "@/shared/components/EmptyState";
+import { BacklogIllustration, ErrorIllustration, SprintIllustration } from "@/shared/illustrations";
 import { Progress } from "@/shared/ui/progress";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Spinner } from "@/shared/ui/spinner";
@@ -58,10 +60,10 @@ type Confirm = "start" | "close" | "delete" | null;
 
 function Stat({ label, value, children }: { label: string; value: React.ReactNode; children?: React.ReactNode }) {
   return (
-    <Card size="sm" className="gap-2">
+    <Card size="sm" className="gap-2.5">
       <CardHeader>
-        <CardDescription>{label}</CardDescription>
-        <CardTitle className="text-xl tabular-nums">{value}</CardTitle>
+        <CardDescription className="font-medium">{label}</CardDescription>
+        <CardTitle className="text-2xl tracking-tight tabular-nums">{value}</CardTitle>
       </CardHeader>
       {children ? <CardContent className="space-y-1.5 text-xs text-muted-foreground">{children}</CardContent> : null}
     </Card>
@@ -74,7 +76,7 @@ function Stats({ sprint, stories }: { sprint: Sprint; stories: Story[] }) {
   const over = stats.capacity !== null && stats.committed > stats.capacity;
   const muted = "text-sm font-normal text-muted-foreground";
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
       <Stat
         label="Time"
         value={
@@ -221,27 +223,45 @@ function SprintPage({ project, sprintId }: { project: Project; sprintId: string 
   const [view, setView] = useState<View>(initialView);
   const [selected, setSelected] = useState<string | null>(null);
 
-  if (sprints.isPending || stories.isPending) return <Skeleton className="mx-auto h-96 max-w-6xl" />;
+  if (sprints.isPending || stories.isPending) {
+    return (
+      <div className="mx-auto max-w-6xl space-y-4" aria-busy="true" aria-label="Loading the sprint">
+        <Skeleton className="h-16 w-80 rounded-2xl" />
+        <Skeleton className="h-28 w-full rounded-2xl" />
+        <Skeleton className="h-80 w-full rounded-2xl" />
+      </div>
+    );
+  }
   if (sprints.isError || stories.isError) {
     return (
-      <Alert variant="destructive" className="mx-auto max-w-6xl">
-        <TriangleAlertIcon aria-hidden />
-        <AlertTitle>The sprint could not be loaded</AlertTitle>
-        <AlertDescription>{describeError(sprints.error ?? stories.error)}</AlertDescription>
-      </Alert>
+      <EmptyState
+        className="mx-auto max-w-6xl"
+        headingLevel="h1"
+        illustration={ErrorIllustration}
+        title="The sprint could not be loaded"
+        description={describeError(sprints.error ?? stories.error)}
+        actions={
+          <Button variant="outline" onClick={() => void Promise.all([sprints.refetch(), stories.refetch()])}>
+            Try again
+          </Button>
+        }
+      />
     );
   }
   const sprint = sprints.data.find((entry) => entry.sprint_id === sprintId);
   if (!sprint) {
     return (
-      <Empty className="mx-auto max-w-6xl border">
-        <EmptyHeader>
-          <EmptyTitle>No sprint {sprintId} in {project.name}</EmptyTitle>
-          <EmptyDescription>
-            It may belong to another project. <Link href="/sprints">See this project&apos;s sprints</Link>.
-          </EmptyDescription>
-        </EmptyHeader>
-      </Empty>
+      <EmptyState
+        className="mx-auto max-w-6xl"
+        headingLevel="h1"
+        illustration={SprintIllustration}
+        title={`No sprint ${sprintId} in ${project.name}`}
+        description={
+          <>
+            It may belong to another project. <Link href="/sprints" className="font-medium text-primary hover:underline">See this project&apos;s sprints</Link>.
+          </>
+        }
+      />
     );
   }
 
@@ -284,8 +304,10 @@ function SprintPage({ project, sprintId }: { project: Project; sprintId: string 
       : `${formatDate(sprint.started_at)} – ${sprint.status === "closed" ? `closed ${formatDate(sprint.closed_at)}` : `ends ${formatDate(sprint.planned_end)}`}`;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-8">
       <PageHeader
+        icon={IterationCwIcon}
+        eyebrow={project.name}
         title={sprint.name}
         description={sprint.goal || undefined}
         actions={
@@ -347,9 +369,9 @@ function SprintPage({ project, sprintId }: { project: Project; sprintId: string 
         </Card>
       ) : null}
 
-      <section aria-labelledby="sprint-backlog-heading" className="space-y-3">
+      <section aria-labelledby="sprint-backlog-heading" className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 id="sprint-backlog-heading" className="text-lg font-semibold">
+          <h2 id="sprint-backlog-heading" className="text-xl font-semibold tracking-tight">
             Sprint backlog
           </h2>
           {sprint.status !== "closed" ? (
@@ -387,16 +409,17 @@ function SprintPage({ project, sprintId }: { project: Project; sprintId: string 
           ) : null}
         </div>
         {inSprint.length === 0 ? (
-          <Empty className="border">
-            <EmptyHeader>
-              <EmptyTitle>No stories in this sprint yet</EmptyTitle>
-              <EmptyDescription>
-                {backlog.length > 0
-                  ? `Add stories from the backlog (${backlog.length} waiting), or write a new one.`
-                  : "The backlog is empty: write a new story, or import some on the Backlog page."}
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
+          <EmptyState
+            size="sm"
+            headingLevel="p"
+            illustration={BacklogIllustration}
+            title="No stories in this sprint yet"
+            description={
+              backlog.length > 0
+                ? `Add stories from the backlog (${backlog.length} waiting), or write a new one.`
+                : "The backlog is empty: write a new story, or import some on the Backlog page."
+            }
+          />
         ) : sprint.status === "active" && view === "board" ? (
           <SprintBoard project={project} sprint={sprint} stories={inSprint} onOpen={(story) => setSelected(story.story_id)} />
         ) : (
