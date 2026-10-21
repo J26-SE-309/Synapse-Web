@@ -1,15 +1,25 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { CalendarPlusIcon, PencilIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { describeError, GatewayError } from "@/shared/api/gateway";
+import { useProject } from "@/shared/projects/ProjectProvider";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogIcon,
+  DialogTitle,
+} from "@/shared/ui/dialog";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/shared/ui/field";
 import { Input } from "@/shared/ui/input";
 import { Spinner } from "@/shared/ui/spinner";
@@ -51,6 +61,7 @@ export function SprintFormDialog({
     defaultValues: sprint ? values(sprint) : EMPTY_SPRINT,
     mode: "onTouched",
   });
+  const { project } = useProject(); // ids take the project's short key: MFP-12, MFP-S5
   const create = useCreateSprint(projectId);
   const update = useUpdateSprint(projectId, sprint?.sprint_id ?? "");
   const router = useRouter();
@@ -107,6 +118,7 @@ export function SprintFormDialog({
       <DialogContent className="sm:max-w-lg">
         <form noValidate onSubmit={form.handleSubmit(submit)} className="flex flex-col gap-6">
           <DialogHeader>
+            <DialogIcon icon={sprint ? PencilIcon : CalendarPlusIcon} />
             <DialogTitle>{sprint ? `Edit ${sprint.name}` : "Plan a sprint"}</DialogTitle>
             <DialogDescription>
               {sprint
@@ -138,7 +150,7 @@ export function SprintFormDialog({
                 autoComplete="off"
                 spellCheck={false}
                 readOnly={!!sprint}
-                placeholder={`${projectId}-S…`}
+                placeholder={`${project?.key ?? projectId}-S…`}
                 {...form.register("sprint_id")}
               />
               <FieldDescription id="sprint-sprint_id-help">{sprint ? "Ids don't change." : "Empty: the next free id."}</FieldDescription>

@@ -35,7 +35,7 @@ import {
 
 import { backlogKeys, useUpdateStory } from "./api";
 import { formatPoints, StoryStatusBadge } from "./badges";
-import { EpicChip, IssueTypeIcon, PointsPill, PriorityIcon } from "./icons";
+import { EpicChip, IssueTypeIcon, PointsPill, PriorityLabel } from "./icons";
 import { STATUS_LABELS, totalPoints, type Sprint, type Story, type StoryStatus } from "./types";
 
 const COLUMNS: StoryStatus[] = ["to_do", "in_progress", "done"];
@@ -62,8 +62,12 @@ const columnKeyboardCoordinates: KeyboardCoordinateGetter = (event, { context })
 function CardContent({ project, story, added }: { project: Project; story: Story; added: boolean }) {
   return (
     <>
-      <p className="line-clamp-3 text-sm font-medium leading-snug">{story.title}</p>
-      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+      <div className="flex h-7 items-center gap-2 pr-14 text-xs text-muted-foreground">
+        <IssueTypeIcon type={story.issue_type} />
+        <span className="truncate font-mono">{story.story_id}</span>
+      </div>
+      <p className="mt-2 line-clamp-3 text-sm/snug font-medium">{story.title}</p>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
         {story.epic ? <EpicChip epic={story.epic} /> : null}
         {STORY_BADGES.map(({ slug, Component }) => (
           <Component key={slug} project={project} story={story} />
@@ -74,13 +78,9 @@ function CardContent({ project, story, added }: { project: Project; story: Story
           </span>
         ) : null}
       </div>
-      <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
-        <IssueTypeIcon type={story.issue_type} />
-        <span className="truncate font-mono">{story.story_id}</span>
-        <span className="ml-auto flex items-center gap-1.5">
-          <PriorityIcon priority={story.priority} />
-          <PointsPill points={story.story_points} />
-        </span>
+      <div className="mt-3 flex items-center justify-between gap-2 border-t border-border/60 pt-3 text-xs text-muted-foreground">
+        <PriorityLabel priority={story.priority} />
+        <PointsPill points={story.story_points} />
       </div>
     </>
   );
@@ -107,18 +107,18 @@ function Card({
       // The whole card can be dragged with a pointer; the keyboard uses the handle, so Enter on the title still opens it.
       onPointerDown={listeners?.onPointerDown as React.PointerEventHandler | undefined}
       className={cn(
-        "group relative touch-none rounded-lg border bg-card shadow-xs transition-shadow hover:shadow-md",
+        "group relative touch-none rounded-xl border bg-card shadow-(--shadow-soft) transition-[box-shadow,border-color] hover:border-primary/30 hover:shadow-(--shadow-lift)",
         isDragging && "opacity-40",
       )}
     >
       <button
         type="button"
         onClick={() => onOpen(story)}
-        className="block w-full rounded-lg p-3 pr-16 text-left focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+        className="block w-full rounded-xl p-4 pt-3 text-left focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
       >
         <CardContent project={project} story={story} added={added} />
       </button>
-      <div className="absolute top-1.5 right-1.5 flex">
+      <div className="absolute top-2.5 right-2.5 flex">
         <button
           type="button"
           ref={setActivatorNodeRef}
@@ -163,25 +163,25 @@ function Column({
   return (
     <section
       aria-labelledby={`column-${status}`}
-      className="flex w-72 shrink-0 snap-start flex-col rounded-xl bg-muted/50 md:w-auto md:min-w-0 md:shrink"
+      className="flex w-76 shrink-0 snap-start flex-col rounded-2xl bg-muted/40 ring-1 ring-border/60 md:w-auto md:min-w-0 md:shrink"
     >
-      <header className="flex items-center gap-2 px-3 pt-3 pb-2">
+      <header className="flex items-center gap-2 px-4 pt-4 pb-2">
         <h3 id={`column-${status}`} className="sr-only">
           {STATUS_LABELS[status]}
         </h3>
         <StoryStatusBadge status={status} />
-        <span className="text-xs text-muted-foreground">
+        <span className="ml-auto text-xs text-muted-foreground tabular-nums">
           {stories.length} {stories.length === 1 ? "story" : "stories"} · {formatPoints(totalPoints(stories))} pts
         </span>
       </header>
       <ol
         ref={setNodeRef}
         aria-labelledby={`column-${status}`}
-        className={cn("flex min-h-32 flex-1 flex-col gap-2 rounded-b-xl p-2 transition-colors", isOver && "bg-primary/10 ring-2 ring-primary/30 ring-inset")}
+        className={cn("flex min-h-36 flex-1 flex-col gap-3 rounded-b-2xl p-3 transition-colors", isOver && "bg-primary/10 ring-2 ring-primary/30 ring-inset")}
       >
         {children}
         {stories.length === 0 ? (
-          <li className="rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground">
+          <li className="rounded-xl border border-dashed p-6 text-center text-xs text-muted-foreground">
             Drop a story here
           </li>
         ) : null}
@@ -260,7 +260,7 @@ export function SprintBoard({
         },
       }}
     >
-      <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0">
+      <div className="-mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0">
         {COLUMNS.map((status) => {
           const inColumn = stories.filter((story) => story.status === status);
           return (
@@ -274,7 +274,7 @@ export function SprintBoard({
       </div>
       <DragOverlay>
         {active ? (
-          <div className="w-72 rotate-2 rounded-lg border bg-card p-3 shadow-xl ring-2 ring-primary/40">
+          <div className="w-72 rotate-2 rounded-xl border bg-card p-4 shadow-(--shadow-lift) ring-2 ring-primary/40">
             <CardContent project={project} story={active} added={added.has(active.story_id)} />
           </div>
         ) : null}

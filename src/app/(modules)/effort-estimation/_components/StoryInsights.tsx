@@ -17,7 +17,7 @@ export function StoryRiskBadge({ project, story }: StoryInsightProps) {
   if (!latest) return null;
   return (
     <span title={`Estimated ${points(latest.predicted_story_points)} points; ${percent(latest.spillover_probability)} chance to spill over`}>
-      <RiskBadge level={latest.sprint_risk_level} className="px-1.5 py-0" />
+      <RiskBadge level={latest.sprint_risk_level} variant="subtle" />
     </span>
   );
 }

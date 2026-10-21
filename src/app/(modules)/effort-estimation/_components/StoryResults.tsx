@@ -33,7 +33,7 @@ export function StoryResults({
     });
 
   return (
-    <div className="overflow-hidden rounded-xl border bg-card">
+    <div className="overflow-hidden rounded-2xl border bg-card shadow-(--shadow-soft)">
       <Table>
         <TableHeader>
           <TableRow>
@@ -83,7 +83,7 @@ export function StoryResults({
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col items-start gap-1">
-                      <RiskBadge level={prediction.sprint_risk_level} />
+                      <RiskBadge level={prediction.sprint_risk_level} variant="subtle" />
                       <span className="text-xs text-muted-foreground tabular-nums">
                         {percent(prediction.spillover_probability)} chance to spill over
                       </span>
@@ -114,9 +114,9 @@ export function StoryResults({
                   </TableCell>
                 </TableRow>
                 {expanded ? (
-                  <TableRow id={detailsId} className="bg-muted/30 hover:bg-muted/30">
+                  <TableRow id={detailsId} className="bg-muted/25 hover:bg-muted/25">
                     <TableCell />
-                    <TableCell colSpan={6} className="py-4 whitespace-normal">
+                    <TableCell colSpan={6} className="py-6 whitespace-normal">
                       <PredictionDetails prediction={prediction} />
                     </TableCell>
                   </TableRow>
