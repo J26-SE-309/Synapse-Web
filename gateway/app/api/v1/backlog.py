@@ -216,6 +216,11 @@ def _now() -> datetime:
     return datetime.now(UTC)
 
 
+def _aware(value: datetime) -> datetime:
+    """SQLite gives back naive datetimes; they are UTC."""
+    return value if value.tzinfo else value.replace(tzinfo=UTC)
+
+
 def _project(session: Session, project_id: str) -> tables.Project:
     project = session.get(tables.Project, project_id)
     if project is None:
@@ -338,8 +343,8 @@ def _set_status(story: tables.Story, new: str, now: datetime) -> None:
         return
     if story.status == "done":  # back from done: reopened (R6)
         story.reopened, story.resolved_at = True, None
-    if new in ("in_progress", "done") and story.started_at is None:
-        story.started_at = now
+    if new in ("in_progress", "done") and (story.started_at is None or _aware(story.started_at) > now):
+        story.started_at = now  # never later than the moment it is finished
     if new == "done":
         story.resolved_at = now
     story.status = new

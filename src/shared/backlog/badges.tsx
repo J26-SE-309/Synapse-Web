@@ -17,7 +17,7 @@ function Pill({ icon: Icon, label, className }: { icon: LucideIcon; label: strin
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap",
+        "inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap",
         className,
       )}
     >
@@ -33,7 +33,9 @@ const STORY: Record<StoryStatus, { icon: LucideIcon; className: string }> = {
   done: { icon: CircleCheckIcon, className: "bg-success-soft text-success" },
 };
 
-export function StoryStatusBadge({ status }: { status: StoryStatus }) {
+/** `plain`: the word alone, for a line of text that already has its own styling. */
+export function StoryStatusBadge({ status, plain = false }: { status: StoryStatus; plain?: boolean }) {
+  if (plain) return <>{STATUS_LABELS[status]}</>;
   return <Pill {...STORY[status]} label={STATUS_LABELS[status]} />;
 }
 

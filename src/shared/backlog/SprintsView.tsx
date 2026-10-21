@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRightIcon, CalendarPlusIcon, ListTodoIcon, TriangleAlertIcon } from "lucide-react";
+import { ArrowRightIcon, CalendarPlusIcon, IterationCwIcon, ListTodoIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
@@ -9,11 +9,11 @@ import { describeError } from "@/shared/api/gateway";
 import { PageHeader } from "@/shared/components/PageHeader";
 import type { Project } from "@/shared/projects/api";
 import { ProjectGate } from "@/shared/projects/ProjectGate";
-import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/alert";
+import { EmptyState } from "@/shared/components/EmptyState";
+import { ErrorIllustration, SprintIllustration } from "@/shared/illustrations";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/shared/ui/chart";
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "@/shared/ui/empty";
 import { Progress } from "@/shared/ui/progress";
 import { Skeleton } from "@/shared/ui/skeleton";
 
@@ -44,8 +44,9 @@ function ActiveSprint({ sprint, stories }: { sprint: Sprint; stories: Story[] })
   const stats = sprintStats(sprint, stories);
   const left = daysLeft(sprint);
   return (
-    <Card className="relative border-primary/40 bg-gradient-to-br from-primary/5 to-transparent">
-      <CardHeader>
+    <Card className="relative pt-0 ring-primary/30">
+      <div aria-hidden className="h-1 bg-gradient-to-r from-primary via-chart-3 to-chart-2" />
+      <CardHeader className="pt-1">
         <SprintTitle sprint={sprint} />
         <CardDescription>
           {formatDate(sprint.started_at)} – {formatDate(sprint.planned_end)} ·{" "}
@@ -53,8 +54,8 @@ function ActiveSprint({ sprint, stories }: { sprint: Sprint; stories: Story[] })
           {sprint.goal ? <span className="mt-1 block text-foreground">{sprint.goal}</span> : null}
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
-        <div className="space-y-4">
+      <CardContent className="grid gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
+        <div className="space-y-5">
           <div className="space-y-1.5">
             <div className="flex justify-between text-sm">
               <span>Points done</span>
@@ -81,9 +82,9 @@ function ActiveSprint({ sprint, stories }: { sprint: Sprint; stories: Story[] })
                 ["Done", stats.counts.done],
               ] as const
             ).map(([label, value]) => (
-              <div key={label} className="flex flex-col-reverse rounded-lg bg-muted/60 p-2">
+              <div key={label} className="flex flex-col-reverse gap-0.5 rounded-xl bg-muted/60 px-3 py-3">
                 <dt className="text-xs text-muted-foreground">{label}</dt>
-                <dd className="text-lg font-semibold tabular-nums">{value}</dd>
+                <dd className="text-2xl font-semibold tracking-tight tabular-nums">{value}</dd>
               </div>
             ))}
           </dl>
@@ -106,7 +107,7 @@ function ActiveSprint({ sprint, stories }: { sprint: Sprint; stories: Story[] })
 function PlannedSprint({ sprint, stories }: { sprint: Sprint; stories: Story[] }) {
   const stats = sprintStats(sprint, stories);
   return (
-    <Card size="sm" className="relative transition-shadow hover:shadow-md">
+    <Card size="sm" className="relative transition-[box-shadow,translate] hover:-translate-y-0.5 hover:shadow-(--shadow-lift)">
       <CardHeader>
         <SprintTitle sprint={sprint} />
         <CardDescription className="line-clamp-2">{sprint.goal || `${sprint.length_days} days once started`}</CardDescription>
@@ -125,7 +126,7 @@ function ClosedSprint({ sprint, stories }: { sprint: Sprint; stories: Story[] })
   const stats = sprintStats(sprint, stories);
   const share = stats.committed ? Math.round((stats.done / stats.committed) * 100) : 0;
   return (
-    <Card size="sm" className="relative transition-shadow hover:shadow-md">
+    <Card size="sm" className="relative transition-[box-shadow,translate] hover:-translate-y-0.5 hover:shadow-(--shadow-lift)">
       <CardHeader>
         <SprintTitle sprint={sprint} />
         <CardDescription>
@@ -199,8 +200,10 @@ function Sprints({ project }: { project: Project }) {
   const closed = all.filter((sprint) => sprint.status === "closed");
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8">
+    <div className="mx-auto max-w-6xl space-y-10">
       <PageHeader
+        icon={IterationCwIcon}
+        eyebrow={project.name}
         title="Sprints"
         description="The sprint in progress, the ones planned next, and how the finished ones went."
         actions={
@@ -218,52 +221,63 @@ function Sprints({ project }: { project: Project }) {
       />
 
       {sprints.isPending || stories.isPending ? (
-        <Skeleton className="h-72 w-full" />
+        <div className="space-y-4" aria-busy="true" aria-label="Loading the sprints">
+          <Skeleton className="h-80 w-full rounded-2xl" />
+          <Skeleton className="h-36 w-full rounded-2xl" />
+        </div>
       ) : sprints.isError || stories.isError ? (
-        <Alert variant="destructive">
-          <TriangleAlertIcon aria-hidden />
-          <AlertTitle>The sprints could not be loaded</AlertTitle>
-          <AlertDescription>{describeError(sprints.error ?? stories.error)}</AlertDescription>
-        </Alert>
+        <EmptyState
+          illustration={ErrorIllustration}
+          title="The sprints could not be loaded"
+          description={describeError(sprints.error ?? stories.error)}
+          actions={
+            <Button variant="outline" onClick={() => void Promise.all([sprints.refetch(), stories.refetch()])}>
+              Try again
+            </Button>
+          }
+        />
       ) : all.length === 0 ? (
-        <Empty className="border">
-          <EmptyHeader>
-            <EmptyTitle>No sprints yet</EmptyTitle>
-            <EmptyDescription>Plan the first sprint, then fill it from the backlog.</EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
+        <EmptyState
+          illustration={SprintIllustration}
+          title="No sprints yet"
+          description="Plan the first sprint, then fill it from the backlog. Synapse tracks its progress, burndown and risk from there."
+          actions={
             <Button onClick={() => setCreating(true)}>
               <CalendarPlusIcon aria-hidden /> Plan a sprint
             </Button>
-          </EmptyContent>
-        </Empty>
+          }
+        />
       ) : (
         <>
-          <section aria-labelledby="sprints-active" className="space-y-3">
-            <h2 id="sprints-active" className="text-lg font-semibold">
+          <section aria-labelledby="sprints-active" className="space-y-4">
+            <h2 id="sprints-active" className="text-xl font-semibold tracking-tight">
               In progress
             </h2>
             {active ? (
               <ActiveSprint sprint={active} stories={storiesIn(active, list)} />
             ) : (
-              <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
-                No sprint is running. Start a planned one from its page.
-              </p>
+              <EmptyState
+                illustration={SprintIllustration}
+                size="sm"
+                headingLevel="p"
+                title="No sprint is running"
+                description="Start a planned one from its page."
+              />
             )}
           </section>
 
-          <section aria-labelledby="sprints-planned" className="space-y-3">
-            <h2 id="sprints-planned" className="text-lg font-semibold">
+          <section aria-labelledby="sprints-planned" className="space-y-4">
+            <h2 id="sprints-planned" className="text-xl font-semibold tracking-tight">
               Planned
             </h2>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {planned.map((sprint) => (
                 <PlannedSprint key={sprint.sprint_id} sprint={sprint} stories={storiesIn(sprint, list)} />
               ))}
               <button
                 type="button"
                 onClick={() => setCreating(true)}
-                className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-xl border border-dashed text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:bg-primary/5 hover:text-foreground"
+                className="flex min-h-36 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:bg-primary/5 hover:text-foreground"
               >
                 <CalendarPlusIcon aria-hidden className="size-5" /> Plan a sprint
               </button>
@@ -271,12 +285,12 @@ function Sprints({ project }: { project: Project }) {
           </section>
 
           {closed.length > 0 ? (
-            <section aria-labelledby="sprints-closed" className="space-y-3">
-              <h2 id="sprints-closed" className="text-lg font-semibold">
+            <section aria-labelledby="sprints-closed" className="space-y-4">
+              <h2 id="sprints-closed" className="text-xl font-semibold tracking-tight">
                 Closed
               </h2>
               <Velocity closed={closed} stories={list} />
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {closed.map((sprint) => (
                   <ClosedSprint key={sprint.sprint_id} sprint={sprint} stories={storiesIn(sprint, list)} />
                 ))}

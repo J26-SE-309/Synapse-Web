@@ -1,10 +1,11 @@
 "use client";
 
-import { ChevronRightIcon, WaypointsIcon } from "lucide-react";
+import { ChevronRightIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { usePlatformHealth } from "@/shared/hooks/usePlatformHealth";
+import { SynapseMark } from "@/shared/illustrations";
 import { cn } from "@/shared/lib/utils";
 import { isCurrent, NAV_MODULES, PLATFORM_PAGES, type NavModule } from "@/shared/navigation";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/shared/ui/collapsible";
@@ -122,16 +123,14 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader>
+      <SidebarHeader className="pt-3">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild size="lg" tooltip="Synapse">
               <Link href="/" onClick={() => setOpenMobile(false)}>
-                <span className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <WaypointsIcon aria-hidden className="size-4" />
-                </span>
+                <SynapseMark className="shrink-0 shadow-sm shadow-primary/30" />
                 <span className="grid flex-1 text-left leading-tight">
-                  <span className="truncate font-semibold">Synapse</span>
+                  <span className="truncate text-[0.9375rem] font-semibold tracking-tight">Synapse</span>
                   <span className="truncate text-xs text-muted-foreground">Agile requirements platform</span>
                 </span>
               </Link>
@@ -141,7 +140,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        <nav aria-label="Main" className="flex flex-col gap-2">
+        <nav aria-label="Main" className="flex flex-col gap-1 pt-2">
         <SidebarGroup>
           <SidebarGroupLabel>Platform</SidebarGroupLabel>
           <SidebarGroupContent>
