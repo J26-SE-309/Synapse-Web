@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PlusIcon, Trash2Icon } from "lucide-react";
+import { ColumnsIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
@@ -105,7 +105,11 @@ export function CompareModels({ project, models }: { project: Project; models: M
                   {available.map((model) => {
                     const checked = field.value.includes(model.configuration_id);
                     return (
-                      <Field key={model.configuration_id} orientation="horizontal">
+                      <Field
+                        key={model.configuration_id}
+                        orientation="horizontal"
+                        className="items-center rounded-xl border p-3 transition-colors has-data-checked:border-primary/30 has-data-checked:bg-primary/5 dark:has-data-checked:bg-primary/10"
+                      >
                         <Checkbox
                           id={`compare-${model.configuration_id}`}
                           checked={checked}
@@ -135,7 +139,7 @@ export function CompareModels({ project, models }: { project: Project; models: M
             {stories.fields.map((field, index) => {
               const error = errors.stories?.[index]?.title;
               return (
-                <div key={field.id} className="grid gap-2 rounded-lg border p-3 md:grid-cols-[1fr_1fr_auto]">
+                <div key={field.id} className="grid gap-3 rounded-xl border bg-muted/20 p-4 md:grid-cols-[1fr_1fr_auto]">
                   <Field data-invalid={!!error}>
                     <FieldLabel htmlFor={`compare-story-${index}-title`}>Title of story {index + 1}</FieldLabel>
                     <Input
@@ -184,9 +188,9 @@ export function CompareModels({ project, models }: { project: Project; models: M
             </Alert>
           ) : null}
 
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? <Spinner aria-hidden /> : null}
-            Compare
+          <Button type="submit" size="lg" disabled={isSubmitting}>
+            {isSubmitting ? <Spinner aria-hidden /> : <ColumnsIcon aria-hidden />}
+            {isSubmitting ? "Comparing…" : "Compare"}
           </Button>
         </form>
 
@@ -195,7 +199,7 @@ export function CompareModels({ project, models }: { project: Project; models: M
             <h3 id="compare-result" ref={resultRef} tabIndex={-1} className="font-semibold outline-none">
               How the pairs answered
             </h3>
-            <div className="overflow-hidden rounded-lg border">
+            <div className="overflow-x-auto rounded-xl border">
               <Table>
                 <TableHeader>
                   <TableRow>
