@@ -14,35 +14,38 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
 import { CONFIDENCE_LABELS, EFFORT_LABELS, interval, label, percent, points, RISK_LABELS } from "../_lib/format";
 import type { ConfidenceLevel, RiskLevel, RiskReason, SelectionMode } from "../_lib/types";
 
-const RISK_STYLES: Record<RiskLevel, { className: string; icon: typeof CircleCheckIcon }> = {
-  low: { className: "bg-success-soft text-success", icon: CircleCheckIcon },
-  medium: { className: "bg-warning-soft text-warning", icon: CircleAlertIcon },
-  high: { className: "bg-danger-soft text-danger", icon: OctagonAlertIcon },
+const RISK_STYLES: Record<RiskLevel, { className: string; tone: string; icon: typeof CircleCheckIcon }> = {
+  low: { className: "bg-success-soft text-success", tone: "text-success", icon: CircleCheckIcon },
+  medium: { className: "bg-warning-soft text-warning", tone: "text-warning", icon: CircleAlertIcon },
+  high: { className: "bg-danger-soft text-danger", tone: "text-danger", icon: OctagonAlertIcon },
 };
 
 /** Risk as an icon, a word and a colour: never colour alone (NFR11). */
 export function RiskBadge({
   level,
   suffix = "risk",
+  variant = "solid",
   className,
 }: {
   level: RiskLevel | null | undefined;
   suffix?: string;
+  /** "subtle": a coloured icon and a plain word, for lists where many stories carry one. */
+  variant?: "solid" | "subtle";
   className?: string;
 }) {
   if (!level) {
     return <span className={cn("text-sm text-muted-foreground", className)}>Unknown</span>;
   }
-  const { className: style, icon: Icon } = RISK_STYLES[level];
+  const { className: style, icon: Icon, tone } = RISK_STYLES[level];
   return (
     <span
       className={cn(
         "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap",
-        style,
+        variant === "solid" ? style : "gap-1.5 bg-transparent px-0 text-muted-foreground",
         className,
       )}
     >
-      <Icon aria-hidden className="size-3.5" />
+      <Icon aria-hidden className={cn("size-3.5", variant === "subtle" && tone)} />
       {RISK_LABELS[level]}
       {suffix ? ` ${suffix}` : ""}
     </span>

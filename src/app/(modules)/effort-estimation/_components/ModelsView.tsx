@@ -6,6 +6,7 @@ import {
   ArrowUpIcon,
   AwardIcon,
   CheckIcon,
+  FlaskConicalIcon,
   PinIcon,
   SparklesIcon,
   TimerIcon,
@@ -16,6 +17,7 @@ import { toast } from "sonner";
 
 import { describeError } from "@/shared/api/gateway";
 import { PageHeader } from "@/shared/components/PageHeader";
+import { InsightsIllustration } from "@/shared/illustrations";
 import { cn } from "@/shared/lib/utils";
 import type { Project } from "@/shared/projects/api";
 import { ProjectGate } from "@/shared/projects/ProjectGate";
@@ -111,10 +113,27 @@ function Meter({ label, value, score }: { label: string; value: string; score: n
         <span className="text-muted-foreground">{label}</span>
         <span className="font-medium tabular-nums">{value}</span>
       </div>
-      <div aria-hidden className="h-1.5 overflow-hidden rounded-full bg-muted">
-        {score !== null ? <div className="h-full rounded-full bg-primary" style={{ width: `${Math.round(score * 100)}%` }} /> : null}
+      <div aria-hidden className="h-2 overflow-hidden rounded-full bg-muted">
+        {score !== null ? (
+          <div className="h-full rounded-full bg-gradient-to-r from-primary to-chart-3" style={{ width: `${Math.round(score * 100)}%` }} />
+        ) : null}
       </div>
     </div>
+  );
+}
+
+/** A pair's place on the leaderboard; the first three on the brand gradient. */
+function RankChip({ rank }: { rank: number }) {
+  return (
+    <span
+      title="Rank on the leaderboard"
+      className={cn(
+        "inline-flex h-6 min-w-8 shrink-0 items-center justify-center rounded-full px-2 text-xs font-semibold tabular-nums",
+        rank <= 3 ? "bg-gradient-to-br from-primary to-chart-3 text-primary-foreground shadow-sm shadow-primary/30" : "bg-muted text-muted-foreground",
+      )}
+    >
+      <span className="sr-only">Rank </span>#{rank}
+    </span>
   );
 }
 
@@ -142,15 +161,17 @@ function ModelCard({
   return (
     <Card
       size="sm"
-      className={cn("relative gap-3 transition-shadow", inUse ? "ring-2 ring-primary" : "hover:shadow-md", !available && "opacity-75")}
+      className={cn(
+        "relative gap-4 transition-[box-shadow,translate]",
+        inUse ? "ring-2 ring-primary" : "hover:-translate-y-0.5 hover:shadow-(--shadow-lift)",
+        !available && "opacity-75",
+      )}
     >
       <CardHeader>
         <CardTitle className="flex items-start justify-between gap-2">
           <h3 className="leading-snug">{model.label}</h3>
           {rank !== null ? (
-            <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-xs font-medium tabular-nums" title="Rank on the leaderboard">
-              #{rank}
-            </span>
+            <RankChip rank={rank} />
           ) : null}
         </CardTitle>
         <CardDescription className="space-y-2">
@@ -166,7 +187,7 @@ function ModelCard({
           </span>
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-2.5">
+      <CardContent className="grid gap-3">
         <Meter
           label="Effort accuracy"
           value={model.metrics.sa == null ? "—" : `${number(model.metrics.sa, 1)}%`}
@@ -228,19 +249,22 @@ function ModelCards({ project, models }: { project: Project; models: ModelsRespo
   return (
     <section aria-labelledby="choose-heading" className="space-y-4">
       <div className="space-y-1">
-        <h2 id="choose-heading" className="text-lg font-semibold">
+        <h2 id="choose-heading" className="text-xl font-semibold tracking-tight">
           Model for {project.name}
         </h2>
         <p className="text-sm text-muted-foreground">
           Automatic uses the pair ranked best for this project (FR11). Choose one yourself to use it for every estimate of
           this project until you change it (FR12). The bars compare each pair with the others.
         </p>
-        <p className="text-sm" aria-live="polite">
+        <p className="mt-3 flex items-center gap-2 rounded-xl bg-primary/8 px-4 py-2.5 text-sm ring-1 ring-primary/20" aria-live="polite">
+          <CheckIcon aria-hidden className="size-4 shrink-0 text-primary" />
           {pin.isPending ? (
             "Loading…"
           ) : current ? (
             <span className="inline-flex items-center gap-1">
-              <PinIcon aria-hidden className="size-3.5" /> In use: {models.configurations.find((m) => m.configuration_id === current)?.label ?? current}, chosen {when(pin.data?.pinned_at)}
+              <PinIcon aria-hidden className="size-3.5" /> In use:{" "}
+              <strong>{models.configurations.find((m) => m.configuration_id === current)?.label ?? current}</strong>, chosen{" "}
+              {when(pin.data?.pinned_at)}
             </span>
           ) : (
             `In use: automatic selection (${winner?.label ?? models.pooled_winner} overall).`
@@ -248,10 +272,10 @@ function ModelCards({ project, models }: { project: Project; models: ModelsRespo
         </p>
       </div>
       {pin.isPending ? (
-        <Skeleton className="h-72 w-full" />
+        <Skeleton className="h-72 w-full rounded-2xl" />
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          <Card size="sm" className={cn("relative gap-3 bg-gradient-to-br from-primary/10 to-transparent", current === null && "ring-2 ring-primary")}>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <Card size="sm" className={cn("relative gap-4 bg-gradient-to-br from-primary/12 via-chart-3/6 to-transparent", current === null && "ring-2 ring-primary")}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <SparklesIcon aria-hidden className="size-4 text-primary" />
@@ -263,8 +287,9 @@ function ModelCards({ project, models }: { project: Project; models: ModelsRespo
                 best overall. Now: <strong className="text-foreground">{winner?.label ?? models.pooled_winner}</strong>.
               </CardDescription>
             </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              Pairs that miss a requirement (for example the 2-second limit) are never picked automatically.
+            <CardContent className="space-y-3 text-sm text-muted-foreground">
+              <InsightsIllustration className="mx-auto w-36" />
+              <p>Pairs that miss a requirement (for example the 2-second limit) are never picked automatically.</p>
             </CardContent>
             <CardFooter className="mt-auto">
               {current === null ? (
@@ -350,9 +375,9 @@ function Leaderboard({ models, pinned }: { models: ModelsResponse; pinned: strin
   const columns = ["sa", "mae", "f1", "ece", "latency_p95"] as const;
 
   return (
-    <section aria-labelledby="leaderboard-heading" className="space-y-3">
+    <section aria-labelledby="leaderboard-heading" className="space-y-4">
       <div className="space-y-1">
-        <h2 id="leaderboard-heading" className="text-lg font-semibold">
+        <h2 id="leaderboard-heading" className="text-xl font-semibold tracking-tight">
           Leaderboard
         </h2>
         <p className="text-sm text-muted-foreground">
@@ -360,7 +385,7 @@ function Leaderboard({ models, pinned }: { models: ModelsResponse; pinned: strin
           {weights}. Sort by any column.
         </p>
       </div>
-      <div className="overflow-hidden rounded-xl border bg-card">
+      <div className="overflow-hidden rounded-2xl border bg-card shadow-(--shadow-soft)">
         <Table>
           <caption className="sr-only">Leaderboard, sorted by {sort.key === "composite" ? "score" : METRIC_LABELS[sort.key].label}</caption>
           <TableHeader>
@@ -378,7 +403,9 @@ function Leaderboard({ models, pinned }: { models: ModelsResponse; pinned: strin
               const status = statusText(model);
               return (
                 <TableRow key={model.configuration_id} className={cn(status && "text-muted-foreground")}>
-                  <TableCell className="tabular-nums">{ranks.get(model.configuration_id) ?? "—"}</TableCell>
+                  <TableCell className="tabular-nums">
+                    {ranks.get(model.configuration_id) ? <RankChip rank={ranks.get(model.configuration_id)!} /> : "—"}
+                  </TableCell>
                   <TableCell className="min-w-60 whitespace-normal">
                     <div className="flex flex-wrap items-center gap-2 font-medium">
                       {model.label}
@@ -390,7 +417,16 @@ function Leaderboard({ models, pinned }: { models: ModelsResponse; pinned: strin
                     </div>
                     <p className="text-xs text-muted-foreground">{status ?? model.role}</p>
                   </TableCell>
-                  <TableCell className="text-right font-medium tabular-nums">{number(model.composite, 3)}</TableCell>
+                  <TableCell className="text-right font-medium tabular-nums">
+                    <span className="inline-flex items-center gap-2">
+                      {model.composite != null ? (
+                        <span aria-hidden className="hidden h-1.5 w-14 overflow-hidden rounded-full bg-muted md:block">
+                          <span className="block h-full rounded-full bg-gradient-to-r from-primary to-chart-3" style={{ width: `${Math.round(model.composite * 100)}%` }} />
+                        </span>
+                      ) : null}
+                      {number(model.composite, 3)}
+                    </span>
+                  </TableCell>
                   <TableCell className="text-right tabular-nums">
                     {model.metrics.sa == null ? "—" : `${number(model.metrics.sa, 1)}%`}
                   </TableCell>
@@ -421,13 +457,15 @@ function Models({ project }: { project: Project }) {
   const pin = usePin(project.id);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8">
+    <div className="mx-auto max-w-6xl space-y-10">
       <PageHeader
+        icon={FlaskConicalIcon}
+        eyebrow="Effort & Sprint Risk"
         title="Models"
         description="The Comparative Model Arena's encoder + learner pairs: keep automatic selection or choose one for this project, see how they rank, and compare them on your own stories."
       />
       {models.isPending ? (
-        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-64 w-full rounded-2xl" />
       ) : models.isError ? (
         <Alert variant="destructive">
           <TriangleAlertIcon aria-hidden />

@@ -30,7 +30,8 @@ import { NativeSelect, NativeSelectOption } from "@/shared/ui/native-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
 
 import { useDeleteStory, useUpdateStory } from "./api";
-import { formatDateTime, StoryStatusBadge, SyntheticBadge } from "./badges";
+import { formatDateTime, StoryStatusBadge } from "./badges";
+import { IssueTypeIcon, PointsPill } from "./icons";
 import { StoryFormDialog } from "./StoryFormDialog";
 import { STATUS_LABELS, type Sprint, type SprintItem, type Story, type StoryStatus, type StoryUpdate } from "./types";
 
@@ -165,7 +166,7 @@ export function StoryTable({
 
   return (
     <>
-      <div className="overflow-hidden rounded-xl border bg-card">
+      <div className="overflow-hidden rounded-2xl border bg-card shadow-(--shadow-soft)">
         <Table>
           <caption className="sr-only">{caption}</caption>
           <TableHeader>
@@ -203,7 +204,6 @@ export function StoryTable({
                           <span className="block font-medium">{story.title}</span>
                           <span className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-muted-foreground">
                             {story.story_id}
-                            {story.synthetic ? <SyntheticBadge /> : null}
                             {item?.added_mid_sprint ? (
                               <span className="font-sans">Added mid-sprint</span>
                             ) : null}
@@ -212,8 +212,15 @@ export function StoryTable({
                         </span>
                       </button>
                     </TableCell>
-                    <TableCell>{story.issue_type ?? "–"}</TableCell>
-                    <TableCell className="text-right tabular-nums">{story.story_points ?? "–"}</TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center gap-2">
+                        <IssueTypeIcon type={story.issue_type} />
+                        <span aria-hidden>{story.issue_type ?? "–"}</span>
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <PointsPill points={story.story_points} />
+                    </TableCell>
                     <TableCell>
                       {statusEditable ? (
                         <NativeSelect
@@ -308,7 +315,7 @@ export function StoryTable({
                   </TableRow>
                   {expanded ? (
                     <TableRow className="hover:bg-transparent">
-                      <TableCell colSpan={columns} id={`story-details-${story.story_id}`} className="bg-muted/30 whitespace-normal">
+                      <TableCell colSpan={columns} id={`story-details-${story.story_id}`} className="bg-muted/25 py-5 whitespace-normal">
                         <Details story={story} item={item} />
                       </TableCell>
                     </TableRow>

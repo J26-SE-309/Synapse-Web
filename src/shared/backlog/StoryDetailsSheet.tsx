@@ -22,7 +22,7 @@ import { NativeSelect, NativeSelectOption } from "@/shared/ui/native-select";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/shared/ui/sheet";
 
 import { useDeleteStory, useUpdateStory } from "./api";
-import { formatDateTime, StoryStatusBadge, SyntheticBadge } from "./badges";
+import { formatDateTime, StoryStatusBadge } from "./badges";
 import { EpicChip, IssueTypeIcon, PointsPill, PriorityIcon } from "./icons";
 import { StoryFormDialog } from "./StoryFormDialog";
 import { STATUS_LABELS, type Sprint, type Story, type StoryStatus, type StoryUpdate } from "./types";
@@ -82,14 +82,13 @@ export function StoryDetailsSheet({
   return (
     <>
       <Sheet open={story !== null} onOpenChange={(next) => !next && onClose()}>
-        <SheetContent className="w-full gap-0 overflow-y-auto sm:max-w-xl">
+        <SheetContent className="w-full gap-0 overflow-y-auto data-[side=right]:sm:max-w-xl">
           {story ? (
             <>
               <SheetHeader className="gap-2 border-b pr-12">
                 <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <IssueTypeIcon type={story.issue_type} />
                   <span className="font-mono">{story.story_id}</span>
-                  {story.synthetic ? <SyntheticBadge /> : null}
                 </p>
                 <SheetTitle className="text-lg leading-snug">{story.title}</SheetTitle>
                 <SheetDescription className="flex flex-wrap items-center gap-2">

@@ -1,14 +1,17 @@
 import json
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from sqlalchemy import inspect
+
+from app import db, tables
 
 PROJECT = "/api/v1/projects/TUTOR"
 
 
 @pytest.fixture
 def tutor(client, database):
-    client.post("/api/v1/projects", json={"id": "TUTOR", "name": "Tutoring app"})
+    client.post("/api/v1/projects", json={"id": "TUTOR", "name": "Tutoring app", "key": "TUTOR"})
     return client
 
 
@@ -163,6 +166,15 @@ def test_reopening_a_done_story_is_recorded(tutor):
     tutor.patch(f"{PROJECT}/stories/TUTOR-1", json={"status": "done"})
     reopened = tutor.patch(f"{PROJECT}/stories/TUTOR-1", json={"status": "in_progress"}).json()
     assert reopened["reopened"] and reopened["resolved_at"] is None and reopened["started_at"]
+
+
+def test_a_story_is_never_resolved_before_its_work_started(tutor):
+    tutor.post(f"{PROJECT}/stories", json=story("A"))
+    with db.SessionLocal() as session:  # a start time still in the future, as the demo once gave its running sprint
+        session.get(tables.Story, ("TUTOR", "TUTOR-1")).started_at = datetime.now(UTC) + timedelta(days=2)
+        session.commit()
+    done = tutor.patch(f"{PROJECT}/stories/TUTOR-1", json={"status": "done"}).json()
+    assert done["started_at"] <= done["resolved_at"]
 
 
 def test_history_stays_but_plans_can_be_undone(tutor):

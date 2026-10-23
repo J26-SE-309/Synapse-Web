@@ -1,6 +1,6 @@
 "use client";
 
-import { PlusIcon } from "lucide-react";
+import { ListPlusIcon, PlusIcon } from "lucide-react";
 import { useId, useState } from "react";
 import { toast } from "sonner";
 
@@ -13,13 +13,14 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
+  DialogIcon,
   DialogTitle,
   DialogTrigger,
 } from "@/shared/ui/dialog";
 import { Spinner } from "@/shared/ui/spinner";
 
 import { useUpdateStory } from "./api";
-import { formatPoints, SyntheticBadge } from "./badges";
+import { formatPoints } from "./badges";
 import { totalPoints, type Sprint, type Story } from "./types";
 
 /** Choose backlog stories for a sprint. Added to an active sprint, they count as added mid-sprint. */
@@ -71,6 +72,7 @@ export function AddStoriesDialog({ projectId, sprint, backlog }: { projectId: st
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
+          <DialogIcon icon={ListPlusIcon} />
           <DialogTitle>Add stories to {sprint.name}</DialogTitle>
           <DialogDescription>
             {sprint.status === "active"
@@ -96,7 +98,6 @@ export function AddStoriesDialog({ projectId, sprint, backlog }: { projectId: st
                     <span className="font-mono">{story.story_id}</span>
                     <span>{story.issue_type ?? "No type"}</span>
                     <span>{story.story_points === null ? "No estimate" : `${story.story_points} points`}</span>
-                    {story.synthetic ? <SyntheticBadge /> : null}
                   </span>
                 </label>
               </div>

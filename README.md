@@ -174,6 +174,14 @@ The gateway creates and updates its tables itself at start-up (Alembic migration
 .venv\Scripts\python -m app.devdata load     # or: list, delete
 ```
 
+Every story carries what Components 1–3 report about it (requirement quality, acceptance criteria and INVEST, traceability): until those components are connected through the pipeline, the gateway works the signals out from the story itself (`gateway/app/signals.py`) whenever a story is created or changed. Stories saved before that get theirs with `python -m app.devdata signals`.
+
+A project can be filled with a complete demonstration backlog (`gateway/app/demo.py`): a small team building a task-management app, with four finished sprints, a fifth starting today and a backlog of what comes next, sent to the effort service as the team's history. It replaces the project's own stories and sprints:
+
+```powershell
+.venv\Scripts\python -m app.devdata demo MY-PROJECT --replace
+```
+
 ### Everything in Docker
 
 - This repository only (web app, gateway and its database): `docker compose up --build`

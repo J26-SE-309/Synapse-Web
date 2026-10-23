@@ -3,16 +3,17 @@ import { InfoIcon } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/alert";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
 
-import { number, percent, points } from "../_lib/format";
+import { number, points } from "../_lib/format";
 import type { SprintRisk } from "../_lib/types";
 import { RiskBadge } from "./indicators";
 import { RecommendationList } from "./PredictionDetails";
+import { RiskGauge } from "./visuals";
 
 function Figure({ label, value, detail }: { label: string; value: string; detail?: string }) {
   return (
-    <div className="space-y-0.5">
+    <div className="space-y-1 rounded-xl bg-muted/50 p-4">
       <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="text-xl font-semibold tabular-nums">{value}</dd>
+      <dd className="text-2xl font-semibold tracking-tight tabular-nums">{value}</dd>
       {detail ? <dd className="text-xs text-muted-foreground tabular-nums">{detail}</dd> : null}
     </div>
   );
@@ -34,28 +35,33 @@ export function SprintRiskCard({ sprint }: { sprint: SprintRisk }) {
           <RiskBadge level={sprint.sprint_risk_level} />
         </CardAction>
       </CardHeader>
-      <CardContent className="space-y-5">
-        <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <Figure
-            label="Chance of over-committing"
-            value={sprint.overcommit_probability == null ? "—" : percent(sprint.overcommit_probability)}
-          />
-          <Figure
-            label="Committed points"
-            value={points(sprint.committed_points.p50)}
-            detail={`likely ${points(sprint.committed_points.p10)}–${points(sprint.committed_points.p90)}`}
-          />
-          <Figure
-            label="Capacity"
-            value={capacity ? points(capacity.p50) : "Unknown"}
-            detail={capacity ? `likely ${points(capacity.p10)}–${points(capacity.p90)}` : undefined}
-          />
-          <Figure
-            label="Stories likely to spill over"
-            value={number(sprint.expected_stories_at_risk, 1)}
-            detail={`up to ${sprint.stories_at_risk_p90} of ${sprint.stories}`}
-          />
-        </dl>
+      <CardContent className="space-y-6">
+        <div className="grid items-center gap-6 md:grid-cols-[14rem_minmax(0,1fr)]">
+          {sprint.overcommit_probability != null && sprint.sprint_risk_level ? (
+            <RiskGauge probability={sprint.overcommit_probability} level={sprint.sprint_risk_level} caption="chance of over-committing" />
+          ) : (
+            <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
+              Chance of over-committing: not known
+            </p>
+          )}
+          <dl className="grid gap-3 sm:grid-cols-3">
+            <Figure
+              label="Committed points"
+              value={points(sprint.committed_points.p50)}
+              detail={`likely ${points(sprint.committed_points.p10)}–${points(sprint.committed_points.p90)}`}
+            />
+            <Figure
+              label="Capacity"
+              value={capacity ? points(capacity.p50) : "Unknown"}
+              detail={capacity ? `likely ${points(capacity.p10)}–${points(capacity.p90)}` : undefined}
+            />
+            <Figure
+              label="Stories likely to spill over"
+              value={number(sprint.expected_stories_at_risk, 1)}
+              detail={`up to ${sprint.stories_at_risk_p90} of ${sprint.stories}`}
+            />
+          </dl>
+        </div>
 
         {capacity == null ? (
           <Alert>

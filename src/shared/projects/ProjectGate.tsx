@@ -1,14 +1,14 @@
 "use client";
 
-import { FolderKanbanIcon, TriangleAlertIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { describeError } from "@/shared/api/gateway";
+import { EmptyState } from "@/shared/components/EmptyState";
+import { ErrorIllustration, ProjectIllustration } from "@/shared/illustrations";
 import type { Project } from "@/shared/projects/api";
 import { useProject } from "@/shared/projects/ProjectProvider";
 import { ProjectSwitcher } from "@/shared/projects/ProjectSwitcher";
 import { Button } from "@/shared/ui/button";
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/shared/ui/empty";
 import { Skeleton } from "@/shared/ui/skeleton";
 
 /**
@@ -23,45 +23,35 @@ export function ProjectGate({ children }: { children: (project: Project) => Reac
   if (projects.isPending) {
     return (
       <div className="space-y-3" aria-busy="true" aria-label="Loading the project">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-10 w-72 rounded-xl" />
+        <Skeleton className="h-64 w-full rounded-2xl" />
       </div>
     );
   }
 
   if (projects.isError) {
     return (
-      <Empty className="border">
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <TriangleAlertIcon aria-hidden />
-          </EmptyMedia>
-          <EmptyTitle>Projects could not be loaded</EmptyTitle>
-          <EmptyDescription>{describeError(projects.error)}</EmptyDescription>
-        </EmptyHeader>
-        <EmptyContent>
+      <EmptyState
+        illustration={ErrorIllustration}
+        title="Projects could not be loaded"
+        headingLevel="h1"
+        description={describeError(projects.error)}
+        actions={
           <Button variant="outline" onClick={() => projects.refetch()}>
             Try again
           </Button>
-        </EmptyContent>
-      </Empty>
+        }
+      />
     );
   }
 
   return (
-    <Empty className="border">
-      <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <FolderKanbanIcon aria-hidden />
-        </EmptyMedia>
-        <EmptyTitle>{projectId ? `Project ${projectId} no longer exists` : "Choose a project"}</EmptyTitle>
-        <EmptyDescription>
-          This page works on one project at a time. Choose one, or create a new project for your team.
-        </EmptyDescription>
-      </EmptyHeader>
-      <EmptyContent>
-        <ProjectSwitcher />
-      </EmptyContent>
-    </Empty>
+    <EmptyState
+      illustration={ProjectIllustration}
+      title={projectId ? `Project ${projectId} no longer exists` : "Choose a project"}
+      description="This page works on one project at a time. Choose one, or create a new project for your team."
+      actions={<ProjectSwitcher />}
+      headingLevel="h1"
+    />
   );
 }

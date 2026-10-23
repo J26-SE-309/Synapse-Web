@@ -1,23 +1,47 @@
 "use client";
 
-import { ArrowRightIcon, PinIcon, SearchIcon, TriangleAlertIcon, XIcon } from "lucide-react";
+import {
+  ArrowRightIcon,
+  PinIcon,
+  ScrollTextIcon,
+  SearchIcon,
+  SlidersHorizontalIcon,
+  Trash2Icon,
+  TriangleAlertIcon,
+  XIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { describeError } from "@/shared/api/gateway";
+import { useSprints } from "@/shared/backlog/api";
+import { EmptyState } from "@/shared/components/EmptyState";
 import { PageHeader } from "@/shared/components/PageHeader";
+import { InsightsIllustration, SearchIllustration } from "@/shared/illustrations";
 import type { Project } from "@/shared/projects/api";
 import { ProjectGate } from "@/shared/projects/ProjectGate";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/shared/ui/alert-dialog";
 import { Button } from "@/shared/ui/button";
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "@/shared/ui/empty";
+import { Checkbox } from "@/shared/ui/checkbox";
 import { Field, FieldLabel } from "@/shared/ui/field";
 import { Input } from "@/shared/ui/input";
+import { NativeSelect, NativeSelectOption } from "@/shared/ui/native-select";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Spinner } from "@/shared/ui/spinner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
 
-import { useModels, usePredictionPages, type PredictionFilters } from "../_lib/api";
+import { useDeletePredictions, useModels, usePredictionPages, type PredictionFilters } from "../_lib/api";
 import { DECISION_LABELS, interval, points, when } from "../_lib/format";
 import type { OutcomeBrief } from "../_lib/types";
 import { ConfidenceIndicator, RiskBadge } from "./indicators";
@@ -34,18 +58,71 @@ function Outcome({ outcome }: { outcome: OutcomeBrief | null | undefined }) {
   );
 }
 
+/** The filter form's values: everything as typed (times as the datetime-local input gives them). */
+type Draft = Record<keyof PredictionFilters, string>;
+
+const EMPTY_DRAFT: Draft = { sprintId: "", storyId: "", from: "", to: "", risk: "", confidence: "", model: "", decision: "", outcome: "" };
+
+function toFilters(draft: Draft): PredictionFilters {
+  const time = (value: string) => (value ? new Date(value).toISOString() : undefined);
+  const text = (value: string) => value.trim() || undefined;
+  return {
+    sprintId: text(draft.sprintId),
+    storyId: text(draft.storyId),
+    from: time(draft.from),
+    to: time(draft.to),
+    risk: (text(draft.risk) as PredictionFilters["risk"]) ?? undefined,
+    confidence: (text(draft.confidence) as PredictionFilters["confidence"]) ?? undefined,
+    model: text(draft.model),
+    decision: (text(draft.decision) as PredictionFilters["decision"]) ?? undefined,
+    outcome: (text(draft.outcome) as PredictionFilters["outcome"]) ?? undefined,
+  };
+}
+
 function Log({ project, initialFilters }: { project: Project; initialFilters: PredictionFilters }) {
-  const [draft, setDraft] = useState<PredictionFilters>(initialFilters);
+  const [draft, setDraft] = useState<Draft>({ ...EMPTY_DRAFT, sprintId: initialFilters.sprintId ?? "", storyId: initialFilters.storyId ?? "" });
   const [filters, setFilters] = useState<PredictionFilters>(initialFilters);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [confirming, setConfirming] = useState<"selected" | "all" | null>(null);
+  const [showMore, setShowMore] = useState(false);
+  const advanced = (["from", "to", "confidence", "model", "outcome"] as const).filter((key) => draft[key] !== "").length;
   const pages = usePredictionPages(project.id, filters);
   const models = useModels();
+  const sprints = useSprints(project.id);
+  const remove = useDeletePredictions(project.id);
   const labels = Object.fromEntries((models.data?.configurations ?? []).map((model) => [model.configuration_id, model.label]));
   const rows = pages.data?.pages.flatMap((page) => page.predictions) ?? [];
-  const filtered = !!(filters.sprintId || filters.storyId);
+  const filtered = Object.values(filters).some(Boolean);
+  const shown = rows.filter((row) => selected.has(row.prediction_id));
+  const allShown = rows.length > 0 && shown.length === rows.length;
+
+  const set = (name: keyof Draft) => (event: { target: { value: string } }) => setDraft({ ...draft, [name]: event.target.value });
+
+  function toggle(id: string, on: boolean) {
+    const next = new Set(selected);
+    if (on) next.add(id);
+    else next.delete(id);
+    setSelected(next);
+  }
+
+  async function confirmDelete() {
+    const ids = confirming === "selected" ? shown.map((row) => row.prediction_id) : null;
+    try {
+      const result = await remove.mutateAsync(ids);
+      toast.success(`Deleted ${result.deleted} ${result.deleted === 1 ? "prediction" : "predictions"}`);
+      setSelected(new Set());
+    } catch (error) {
+      toast.error("The predictions were not deleted", { description: describeError(error) });
+    } finally {
+      setConfirming(null);
+    }
+  }
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <PageHeader
+        icon={ScrollTextIcon}
+        eyebrow="Effort & Sprint Risk"
         title="Prediction log"
         description="Every estimate made for this project, which model made it (FR21), what was decided about it, and what happened in the sprint (FR19)."
       />
@@ -53,49 +130,120 @@ function Log({ project, initialFilters }: { project: Project; initialFilters: Pr
       <SummaryCards project={project} />
 
       <section aria-labelledby="log-heading" className="space-y-3">
-        <h2 id="log-heading" className="text-lg font-semibold">
+        <h2 id="log-heading" className="text-xl font-semibold tracking-tight">
           Predictions <span className="text-sm font-normal text-muted-foreground">(newest first)</span>
         </h2>
         <form
           role="search"
           aria-label="Filter the predictions"
-          className="flex flex-col gap-3 sm:flex-row sm:items-end"
+          className="space-y-3 rounded-2xl border bg-card p-4 shadow-(--shadow-soft) sm:p-5"
           onSubmit={(event) => {
             event.preventDefault();
-            setFilters({ sprintId: draft.sprintId?.trim() || undefined, storyId: draft.storyId?.trim() || undefined });
+            setSelected(new Set());
+            setFilters(toFilters(draft));
           }}
         >
-          <Field className="sm:max-w-56">
-            <FieldLabel htmlFor="filter-sprint">Sprint id</FieldLabel>
-            <Input
-              id="filter-sprint"
-              className="font-mono"
-              maxLength={100}
-              value={draft.sprintId ?? ""}
-              onChange={(event) => setDraft({ ...draft, sprintId: event.target.value })}
-            />
-          </Field>
-          <Field className="sm:max-w-56">
-            <FieldLabel htmlFor="filter-story">Story id</FieldLabel>
-            <Input
-              id="filter-story"
-              className="font-mono"
-              maxLength={200}
-              value={draft.storyId ?? ""}
-              onChange={(event) => setDraft({ ...draft, storyId: event.target.value })}
-            />
-          </Field>
-          <div className="flex gap-2">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <Field>
+              <FieldLabel htmlFor="filter-sprint">Sprint</FieldLabel>
+              <NativeSelect id="filter-sprint" className="w-full" value={draft.sprintId} onChange={set("sprintId")}>
+                <NativeSelectOption value="">Any sprint</NativeSelectOption>
+                {(sprints.data ?? []).map((sprint) => (
+                  <NativeSelectOption key={sprint.sprint_id} value={sprint.sprint_id}>
+                    {sprint.name} ({sprint.sprint_id})
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="filter-story">Story id</FieldLabel>
+              <Input id="filter-story" className="font-mono" maxLength={200} placeholder={`${project.key ?? project.id}-12`} value={draft.storyId} onChange={set("storyId")} />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="filter-risk">Risk</FieldLabel>
+              <NativeSelect id="filter-risk" className="w-full" value={draft.risk} onChange={set("risk")}>
+                <NativeSelectOption value="">Any risk</NativeSelectOption>
+                <NativeSelectOption value="high">High</NativeSelectOption>
+                <NativeSelectOption value="medium">Medium</NativeSelectOption>
+                <NativeSelectOption value="low">Low</NativeSelectOption>
+              </NativeSelect>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="filter-decision">Decision</FieldLabel>
+              <NativeSelect id="filter-decision" className="w-full" value={draft.decision} onChange={set("decision")}>
+                <NativeSelectOption value="">Any decision</NativeSelectOption>
+                <NativeSelectOption value="none">Not reviewed yet</NativeSelectOption>
+                <NativeSelectOption value="accept">Accepted</NativeSelectOption>
+                <NativeSelectOption value="adjust">Adjusted</NativeSelectOption>
+                <NativeSelectOption value="reject">Rejected</NativeSelectOption>
+              </NativeSelect>
+            </Field>
+          </div>
+          {showMore ? (
+            <div id="log-more-filters" className="grid gap-3 border-t pt-3 sm:grid-cols-2 lg:grid-cols-5">
+              <Field>
+                <FieldLabel htmlFor="filter-from">From</FieldLabel>
+                <Input id="filter-from" type="datetime-local" value={draft.from} onChange={set("from")} />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="filter-to">To</FieldLabel>
+                <Input id="filter-to" type="datetime-local" value={draft.to} onChange={set("to")} />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="filter-confidence">Confidence</FieldLabel>
+                <NativeSelect id="filter-confidence" className="w-full" value={draft.confidence} onChange={set("confidence")}>
+                  <NativeSelectOption value="">Any confidence</NativeSelectOption>
+                  <NativeSelectOption value="high">High</NativeSelectOption>
+                  <NativeSelectOption value="medium">Medium</NativeSelectOption>
+                  <NativeSelectOption value="low">Low</NativeSelectOption>
+                </NativeSelect>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="filter-model">Model</FieldLabel>
+                <NativeSelect id="filter-model" className="w-full" value={draft.model} onChange={set("model")}>
+                  <NativeSelectOption value="">Any model</NativeSelectOption>
+                  {(models.data?.configurations ?? [])
+                    .filter((model) => model.status === "available")
+                    .map((model) => (
+                      <NativeSelectOption key={model.configuration_id} value={model.configuration_id}>
+                        {model.label}
+                      </NativeSelectOption>
+                    ))}
+                </NativeSelect>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="filter-outcome">Outcome</FieldLabel>
+                <NativeSelect id="filter-outcome" className="w-full" value={draft.outcome} onChange={set("outcome")}>
+                  <NativeSelectOption value="">Any outcome</NativeSelectOption>
+                  <NativeSelectOption value="pending">Not known yet</NativeSelectOption>
+                  <NativeSelectOption value="done">Done in the sprint</NativeSelectOption>
+                  <NativeSelectOption value="spilled">Spilled over</NativeSelectOption>
+                </NativeSelect>
+              </Field>
+            </div>
+          ) : null}
+          <div className="flex flex-wrap gap-2">
             <Button type="submit" variant="secondary">
               <SearchIcon aria-hidden /> Filter
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              aria-expanded={showMore}
+              aria-controls="log-more-filters"
+              onClick={() => setShowMore((open) => !open)}
+            >
+              <SlidersHorizontalIcon aria-hidden />
+              {showMore ? "Fewer filters" : `More filters${advanced ? ` (${advanced})` : ""}`}
             </Button>
             {filtered ? (
               <Button
                 type="button"
                 variant="ghost"
                 onClick={() => {
-                  setDraft({});
+                  setDraft(EMPTY_DRAFT);
                   setFilters({});
+                  setSelected(new Set());
                 }}
               >
                 <XIcon aria-hidden /> Clear
@@ -113,27 +261,52 @@ function Log({ project, initialFilters }: { project: Project; initialFilters: Pr
             <AlertDescription>{describeError(pages.error)}</AlertDescription>
           </Alert>
         ) : rows.length === 0 ? (
-          <Empty className="border">
-            <EmptyHeader>
-              <EmptyTitle>{filtered ? "No prediction matches" : "No predictions yet"}</EmptyTitle>
-              <EmptyDescription>
-                {filtered ? "Try another sprint or story id." : "Estimate a sprint from its page, under Sprints, and every story's estimate appears here."}
-              </EmptyDescription>
-            </EmptyHeader>
-            {!filtered ? (
-              <EmptyContent>
-                <Button asChild>
-                  <Link href="/sprints">Go to sprints</Link>
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
+          <EmptyState
+            illustration={filtered ? SearchIllustration : InsightsIllustration}
+            title={filtered ? "No prediction matches" : "No predictions yet"}
+            description={
+              filtered
+                ? "Try other filters."
+                : "Estimate a sprint from its page, under Sprints, or one story under Predict a story, and every estimate appears here."
+            }
+            actions={
+              filtered ? null : (
+                <>
+                  <Button asChild>
+                    <Link href="/sprints">Go to sprints</Link>
+                  </Button>
+                  <Button asChild variant="outline">
+                    <Link href="/effort-estimation/predict">Predict a story</Link>
+                  </Button>
+                </>
+              )
+            }
+          />
         ) : (
           <>
-            <div className="overflow-hidden rounded-xl border bg-card">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="mr-auto text-sm text-muted-foreground" aria-live="polite">
+                {rows.length} {rows.length === 1 ? "prediction" : "predictions"} shown
+                {shown.length ? `, ${shown.length} selected` : ""}
+              </p>
+              <Button variant="outline" size="sm" disabled={shown.length === 0} onClick={() => setConfirming("selected")}>
+                <Trash2Icon aria-hidden /> Delete selected{shown.length ? ` (${shown.length})` : ""}
+              </Button>
+              <Button variant="outline" size="sm" className="text-destructive" onClick={() => setConfirming("all")}>
+                <Trash2Icon aria-hidden /> Delete all of this project&apos;s predictions
+              </Button>
+            </div>
+            <div className="overflow-hidden rounded-2xl border bg-card shadow-(--shadow-soft)">
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-10">
+                      <Checkbox
+                        checked={allShown ? true : shown.length > 0 ? "indeterminate" : false}
+                        onCheckedChange={(on) => setSelected(on === true ? new Set(rows.map((row) => row.prediction_id)) : new Set())}
+                        aria-label="Select every prediction listed"
+                      />
+                    </TableHead>
                     <TableHead>When</TableHead>
                     <TableHead>Story</TableHead>
                     <TableHead>Effort</TableHead>
@@ -149,18 +322,25 @@ function Log({ project, initialFilters }: { project: Project; initialFilters: Pr
                 </TableHeader>
                 <TableBody>
                   {rows.map((row) => (
-                    <TableRow key={row.prediction_id}>
+                    <TableRow key={row.prediction_id} data-state={selected.has(row.prediction_id) ? "selected" : undefined}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selected.has(row.prediction_id)}
+                          onCheckedChange={(on) => toggle(row.prediction_id, on === true)}
+                          aria-label={`Select the prediction for ${row.story_id} made ${when(row.created_at)}`}
+                        />
+                      </TableCell>
                       <TableCell className="text-sm">{when(row.created_at)}</TableCell>
                       <TableCell>
-                        <p className="font-mono text-xs">{row.story_id}</p>
+                        <p className="font-mono text-xs font-medium">{row.story_id}</p>
                         {row.sprint_id ? <p className="font-mono text-xs text-muted-foreground">{row.sprint_id}</p> : null}
                       </TableCell>
-                      <TableCell className="tabular-nums">
+                      <TableCell className="font-medium tabular-nums">
                         {points(row.predicted_story_points)}{" "}
                         <span className="text-xs text-muted-foreground">({interval(row.prediction_interval)})</span>
                       </TableCell>
                       <TableCell>
-                        <RiskBadge level={row.sprint_risk_level} suffix="" />
+                        <RiskBadge level={row.sprint_risk_level} suffix="" variant="subtle" />
                       </TableCell>
                       <TableCell>
                         <ConfidenceIndicator level={row.confidence_level} />
@@ -202,6 +382,30 @@ function Log({ project, initialFilters }: { project: Project; initialFilters: Pr
           </>
         )}
       </section>
+
+      <AlertDialog open={confirming !== null} onOpenChange={(open) => (open ? null : setConfirming(null))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirming === "all"
+                ? `Delete every prediction of ${project.name}?`
+                : `Delete ${shown.length} ${shown.length === 1 ? "prediction" : "predictions"}?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirming === "all"
+                ? "The whole prediction log of this project is removed, whatever the filters show, with every decision and outcome recorded on it. This cannot be undone."
+                : "The selected predictions are removed with the decisions and outcomes recorded on them. This cannot be undone."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep them</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={confirmDelete} disabled={remove.isPending}>
+              {remove.isPending ? <Spinner aria-hidden /> : null}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

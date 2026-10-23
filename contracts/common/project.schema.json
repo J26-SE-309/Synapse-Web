@@ -9,12 +9,17 @@
       "title": "Name",
       "type": "string"
     },
+    "key": {
+      "description": "Prefix of its story and sprint ids (MFP-12, MFP-S5)",
+      "title": "Key",
+      "type": "string"
+    },
     "description": {
       "title": "Description",
       "type": "string"
     },
     "data_source": {
-      "description": "platform: created in Synapse; tawos or synthetic: development data, not for evaluation",
+      "description": "platform: created in Synapse; tawos: a TAWOS project's sprints replayed",
       "enum": [
         "platform",
         "tawos",
@@ -32,6 +37,7 @@
   "required": [
     "id",
     "name",
+    "key",
     "description",
     "data_source",
     "created_at"
