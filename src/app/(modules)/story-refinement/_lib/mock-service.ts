@@ -455,6 +455,9 @@ export function getMockImprovementRecommendations(candidate: StoryCandidate, con
 }
 
 export async function generateCandidates(request: GenerateRequest): Promise<GenerationResult> {
+  if (process.env.NEXT_PUBLIC_STORY_REFINEMENT_API === "true") {
+    return generateCandidatesFromApi(request);
+  }
   await new Promise((resolve) => window.setTimeout(resolve, 550));
   const id = `generation-${Date.now()}`;
   const contextualRequirement = request.context.actor.trim()
@@ -471,6 +474,61 @@ export async function generateCandidates(request: GenerateRequest): Promise<Gene
     candidates,
     selectedCandidateId: candidates[0].id,
     draft: draftFromCandidate(candidates[0]),
+  };
+}
+
+async function generateCandidatesFromApi(request: GenerateRequest): Promise<GenerationResult> {
+  const gatewayUrl = process.env.NEXT_PUBLIC_GATEWAY_URL ?? "http://localhost:8000";
+  const response = await fetch(`${gatewayUrl}/api/v1/story-refinement/refine`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      requirement_id: request.requirement.id,
+      project_id: request.projectId,
+      validated_requirement: request.requirement.text,
+      user_role: request.context.actor || undefined,
+      project_context: Object.entries(request.context)
+        .filter(([, value]) => value.trim())
+        .map(([key, value]) => `${key}: ${value}`)
+        .join("\n"),
+    }),
+  });
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(detail || `Story refinement service returned ${response.status}.`);
+  }
+  const result = await response.json() as {
+    refinement_id?: number;
+    requirement_id: string;
+    story_id: string;
+    user_story: string;
+    acceptance_criteria: AcceptanceCriterion[];
+    unsupported_assumptions?: string[];
+  };
+  const generationId = String(result.refinement_id ?? Date.now());
+  const candidate: StoryCandidate = {
+    id: `${generationId}-candidate`,
+    storyId: result.story_id,
+    label: "Backend baseline",
+    userStory: result.user_story,
+    acceptanceCriteria: result.acceptance_criteria,
+    assessment: [],
+    invest: [],
+    unsupportedAssumptions: (result.unsupported_assumptions ?? []).map((assumption) => ({
+      assumption,
+      why: "The backend flagged this item for human clarification.",
+    })),
+  };
+  return {
+    id: generationId,
+    requirementId: result.requirement_id,
+    requirementText: request.requirement.text,
+    context: request.context,
+    projectId: request.projectId,
+    createdAt: new Date().toISOString(),
+    candidates: [candidate],
+    selectedCandidateId: candidate.id,
+    draft: draftFromCandidate(candidate),
   };
 }
 

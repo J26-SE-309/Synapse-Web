@@ -12,6 +12,7 @@ function Progress({
   return (
     <ProgressPrimitive.Root
       data-slot="progress"
+      aria-valuenow={value ?? undefined}
       className={cn(
         "relative flex h-1 w-full items-center overflow-x-hidden rounded-full bg-muted",
         className

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ReviewDecisionRequest",
+  "type": "object",
+  "required": ["reviewer", "status"],
+  "properties": {
+    "reviewer": {"type": "string", "minLength": 1, "maxLength": 200},
+    "status": {"enum": ["approved", "rejected", "edited", "changes_requested"]},
+    "candidate_id": {"anyOf": [{"type": "integer", "exclusiveMinimum": 0}, {"type": "null"}]},
+    "notes": {"type": "string"}
+  }
+}

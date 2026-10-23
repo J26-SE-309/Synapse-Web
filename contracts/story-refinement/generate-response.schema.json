@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StoryRefinementGenerateResponse",
+  "type": "object",
+  "required": ["generation_id", "requirement_id", "project_id", "status", "candidates", "selected_candidate", "context_references", "risks", "metadata"],
+  "properties": {
+    "generation_id": {"type": "integer", "minimum": 1},
+    "requirement_id": {"type": "string"},
+    "project_id": {"type": "string"},
+    "status": {"enum": ["completed", "review_required"]},
+    "candidates": {"type": "array", "items": {"$ref": "#/$defs/candidate"}},
+    "selected_candidate": {"anyOf": [{"$ref": "#/$defs/candidate"}, {"type": "null"}]},
+    "context_references": {"type": "array", "items": {"$ref": "#/$defs/contextReference"}},
+    "risks": {"type": "array", "items": {"type": "object"}},
+    "metadata": {"type": "object"}
+  },
+  "$defs": {
+    "acceptanceCriterion": {
+      "type": "object",
+      "required": ["id", "given", "when", "then"],
+      "properties": {
+        "id": {"type": "string"},
+        "given": {"type": "string"},
+        "when": {"type": "string"},
+        "then": {"type": "string"}
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "required": ["story_id", "user_story", "acceptance_criteria", "rank", "selected", "quality_scores", "invest", "explanations", "unsupported_assumptions", "risks", "ranking_rationale"],
+      "properties": {
+        "id": {"anyOf": [{"type": "integer"}, {"type": "null"}]},
+        "story_id": {"type": "string"},
+        "user_story": {"type": "string"},
+        "acceptance_criteria": {"type": "array", "items": {"$ref": "#/$defs/acceptanceCriterion"}},
+        "rank": {"type": "integer", "minimum": 1},
+        "selected": {"type": "boolean"},
+        "quality_scores": {"type": "object", "additionalProperties": {"type": "number"}},
+        "invest": {"type": "object", "additionalProperties": {"type": "boolean"}},
+        "explanations": {"type": "object", "additionalProperties": {"type": "string"}},
+        "unsupported_assumptions": {"type": "array", "items": {"type": "string"}},
+        "risks": {"type": "array", "items": {"type": "object"}},
+        "ranking_rationale": {"type": "string"}
+      }
+    },
+    "contextReference": {
+      "type": "object",
+      "required": ["source_id", "source_type", "source_reference", "text", "score"],
+      "properties": {
+        "source_id": {"type": "string"},
+        "source_type": {"type": "string"},
+        "source_reference": {"type": "string"},
+        "text": {"type": "string"},
+        "score": {"type": "number"}
+      }
+    }
+  }
+}

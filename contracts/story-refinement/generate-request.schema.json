@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StoryRefinementGenerateRequest",
+  "type": "object",
+  "required": ["requirement_id", "project_id", "validated_requirement"],
+  "properties": {
+    "requirement_id": {"type": "string", "minLength": 1, "maxLength": 200},
+    "project_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "validated_requirement": {"type": "string", "minLength": 1},
+    "context": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["context_key", "context_type", "content"],
+        "properties": {
+          "context_key": {"type": "string", "minLength": 1, "maxLength": 200},
+          "context_type": {"type": "string", "minLength": 1, "maxLength": 40},
+          "content": {"type": "string", "minLength": 1},
+          "source_reference": {"type": ["string", "null"], "maxLength": 500},
+          "authoritative": {"type": "boolean", "default": true}
+        }
+      }
+    },
+    "options": {
+      "type": "object",
+      "properties": {
+        "candidate_count": {"type": "integer", "minimum": 1, "maximum": 10, "default": 3},
+        "context_limit": {"type": "integer", "minimum": 1, "maximum": 50, "default": 8}
+      }
+    }
+  }
+}
