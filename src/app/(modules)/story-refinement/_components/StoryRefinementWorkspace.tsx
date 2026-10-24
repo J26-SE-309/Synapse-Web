@@ -252,7 +252,7 @@ export function StoryRefinementWorkspace({
             </Button>
             <span className="inline-flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-xs font-medium">
               <span className="size-2 rounded-full bg-warning" aria-hidden />
-              Mock research mode
+            Research workspace
             </span>
             <span className="rounded-md border bg-card px-3 py-2 text-xs text-muted-foreground">
               {project ? `${project.name} · ${project.id}` : "No project selected"}

@@ -34,6 +34,14 @@
       "default": null,
       "description": "Project-context package to retrieve from",
       "title": "Context Reference"
+    },
+    "project_context": {"anyOf": [{"type": "string"}, {"type": "null"}], "default": null},
+    "user_role": {"anyOf": [{"type": "string"}, {"type": "null"}], "default": null},
+    "feature_module": {"anyOf": [{"type": "string"}, {"type": "null"}], "default": null},
+    "business_goal": {"anyOf": [{"type": "string"}, {"type": "null"}], "default": null},
+    "related_requirements": {"anyOf": [{"type": "string"}, {"type": "null"}], "default": null},
+    "existing_system_context": {"anyOf": [{"type": "string"}, {"type": "null"}], "default": null},
+    "additional_constraints": {"anyOf": [{"type": "string"}, {"type": "null"}], "default": null
     }
   },
   "required": [
