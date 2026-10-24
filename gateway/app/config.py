@@ -12,8 +12,11 @@ COMPONENTS = ("requirement-quality", "story-refinement", "traceability", "effort
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    # The gateway's own database (orchestration runs, audit). Components keep their data in their own databases.
-    database_url: str = "postgresql+psycopg://platform_user:platform-local@localhost:5440/platform_db"
+    # The gateway's own database (projects, backlogs, sprints; orchestration runs). Components keep their data in
+    # their own databases. DATABASE_URL (in gateway/.env, never committed) names the hosted database (Neon); without
+    # it the gateway uses the local one, the platform-db container of docker-compose.yml.
+    database_url: str | None = None
+    local_database_url: str = "postgresql+psycopg://platform_user:platform-local@localhost:5440/platform_db"
     cors_origins: list[str] = ["http://localhost:3000"]
 
     requirement_quality_url: str = "http://localhost:8001"
@@ -23,6 +26,15 @@ class Settings(BaseSettings):
 
     service_timeout_seconds: float = 30.0
     health_timeout_seconds: float = 2.0
+
+    @property
+    def database(self) -> str:
+        """The database to use, with the driver SQLAlchemy needs (hosted providers hand out postgresql:// URLs)."""
+        url = self.database_url or self.local_database_url
+        for scheme in ("postgresql://", "postgres://"):
+            if url.startswith(scheme):
+                return "postgresql+psycopg://" + url.removeprefix(scheme)
+        return url
 
     def component_urls(self) -> dict[str, str]:
         """Base URL of each component service, keyed by slug, in pipeline order."""

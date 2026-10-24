@@ -28,7 +28,11 @@ class PlatformHealth(BaseModel):
 
 @router.get("/health", response_model=PlatformHealth)
 async def health(client: Annotated[httpx2.AsyncClient, Depends(get_http_client)]) -> PlatformHealth:
-    """The gateway's own status plus whether each component service is reachable."""
+    """The gateway's own status plus whether each component service is reachable.
+
+    A hosted database is not queried: the web app asks for the platform's health every 15 s, which would keep Neon
+    from ever suspending (its free plan has 100 compute-hours a month). Its status is then the last one seen.
+    """
     settings = get_settings()
 
     async def check(base_url: str) -> ComponentStatus:
@@ -41,7 +45,7 @@ async def health(client: Annotated[httpx2.AsyncClient, Depends(get_http_client)]
 
     urls = settings.component_urls()
     statuses = await asyncio.gather(*(check(url) for url in urls.values()))
-    database_ok = await run_in_threadpool(db.database_ok)
+    database_ok = not db.recently_down() if db.hosted else await run_in_threadpool(db.database_ok)
     return PlatformHealth(
         status="ok",
         version=__version__,

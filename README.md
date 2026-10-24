@@ -168,7 +168,11 @@ py -3.12 -m venv .venv
 
 Open http://localhost:8000/docs. The gateway expects the components on ports 8001–8004 (see `gateway/.env.example`); components that are not running show as *Not reachable* in the web app. Tests: `.venv\Scripts\python -m pytest` and `.venv\Scripts\ruff check .` from `gateway/`.
 
-The gateway creates and updates its tables itself at start-up (Alembic migrations in `gateway/app/migrations`), so start its database first (`docker compose up -d platform-db`). To try the pages with the effort service's development teams, add them as projects (they are labelled *Synthetic* or *TAWOS replay* in the picker and can be removed again):
+The gateway creates and updates its tables itself at start-up (Alembic migrations in `gateway/app/migrations`), so start its database first (`docker compose up -d platform-db`).
+
+The projects, backlogs and sprints can live in a hosted database instead (Neon, like the effort service's data): put its connection string in `gateway/.env` as `DATABASE_URL` (see `gateway/.env.example`; never commit it). The gateway then uses it whether it runs with uvicorn or in Docker, and falls back to `platform-db` without it. Its `/health` does not query a hosted database, so that Neon can suspend while the web app polls; it reports the last connection it saw.
+
+To try the pages with the effort service's development teams, add them as projects (they are labelled *Synthetic* or *TAWOS replay* in the picker and can be removed again):
 
 ```powershell
 .venv\Scripts\python -m app.devdata load     # or: list, delete
