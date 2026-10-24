@@ -32,22 +32,11 @@ interface ModelStatus {
   message: string;
 }
 
-const contextFields = [
-  ["user_role", "User / Actor"],
-  ["feature_module", "Feature / Module"],
-  ["business_goal", "Business Goal"],
-  ["related_requirements", "Related Requirements"],
-  ["existing_system_context", "Existing System Context"],
-  ["additional_constraints", "Additional Constraints"],
-] as const;
-type ContextKey = (typeof contextFields)[number][0];
-
 export function ModelRefinementForm({ initialRequirementId }: { initialRequirementId?: string }) {
   const { projectId } = useProject();
   const [requirementId, setRequirementId] = useState(initialRequirementId ?? "");
   const [formProjectId, setFormProjectId] = useState(projectId ?? "");
   const [requirement, setRequirement] = useState("");
-  const [context, setContext] = useState<Partial<Record<ContextKey, string>>>({});
   const [result, setResult] = useState<RefinementResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -76,7 +65,6 @@ export function ModelRefinementForm({ initialRequirementId }: { initialRequireme
           requirement_id: requirementId.trim(),
           project_id: formProjectId.trim() || undefined,
           validated_requirement: trimmedRequirement,
-          ...Object.fromEntries(Object.entries(context).filter(([, value]) => value?.trim())),
         }),
       });
       setResult(response);
@@ -110,14 +98,6 @@ export function ModelRefinementForm({ initialRequirementId }: { initialRequireme
               Validated requirement
               <Textarea id="model-validated-requirement" required rows={5} value={requirement} onChange={(event) => setRequirement(event.target.value)} placeholder="A student can book an available tutoring session." />
             </label>
-            <div className="grid gap-4 md:grid-cols-2">
-              {contextFields.map(([key, label]) => (
-                <label className="space-y-1.5 text-sm font-medium" htmlFor={`model-${key}`} key={key}>
-                  {label} <span className="font-normal text-muted-foreground">(optional)</span>
-                  <Textarea id={`model-${key}`} rows={2} value={context[key] ?? ""} onChange={(event) => setContext((current) => ({ ...current, [key]: event.target.value }))} />
-                </label>
-              ))}
-            </div>
             <Button type="submit" disabled={isLoading}>
               {isLoading ? <LoaderCircleIcon className="animate-spin" aria-hidden /> : <SparklesIcon aria-hidden />}
               {isLoading ? "Refining..." : "Refine"}
