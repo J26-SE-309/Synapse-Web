@@ -64,7 +64,7 @@ export function ValidatedRequirementsView() {
         description="Requirements already reviewed by Component 1, ready to continue into user story refinement."
         actions={
           <Button asChild variant="outline">
-            <Link href="/story-refinement"><ArrowLeftIcon aria-hidden /> Refine user story</Link>
+            <Link href="/story-refinement"><ArrowLeftIcon aria-hidden /> Story refinement</Link>
           </Button>
         }
       >
@@ -154,7 +154,7 @@ export function ValidatedRequirementsView() {
                     <td className="whitespace-nowrap px-3 py-4 text-xs text-muted-foreground">{formatDate(requirement.validatedAt)}</td>
                     <td className="whitespace-nowrap px-3 py-4 text-right">
                       <Button asChild size="sm">
-                        <Link href={`/story-refinement?requirementId=${encodeURIComponent(requirement.id)}`}>
+                        <Link href={`/story-refinement/refine?requirementId=${encodeURIComponent(requirement.id)}`}>
                           Refine User Story <ArrowRightIcon aria-hidden />
                         </Link>
                       </Button>

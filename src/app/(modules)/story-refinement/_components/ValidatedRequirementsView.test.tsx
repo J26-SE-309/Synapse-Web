@@ -36,7 +36,7 @@ describe("ValidatedRequirementsView", () => {
     expect(firstRow).not.toBeNull();
     expect(within(firstRow!).getByRole("link", { name: /Refine User Story/ })).toHaveAttribute(
       "href",
-      "/story-refinement?requirementId=REQ-104",
+      "/story-refinement/refine?requirementId=REQ-104",
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Next page" }));
