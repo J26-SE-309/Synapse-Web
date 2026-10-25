@@ -45,7 +45,9 @@ export function ModelRefinementForm({ initialRequirementId }: { initialRequireme
   useEffect(() => {
     void gatewayFetch<ModelStatus & { status: string }>("api/v1/story-refinement/models/status")
       .then(setModelStatus)
-      .catch(() => setModelStatus({ available: false, message: "Model unavailable — check backend and model configuration." }));
+      .catch((statusError: unknown) =>
+        setModelStatus({ available: false, message: describeError(statusError) }),
+      );
   }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {

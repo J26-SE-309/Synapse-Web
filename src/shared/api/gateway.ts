@@ -5,7 +5,7 @@ import type { ModuleSlug } from "@/shared/modules";
  * A component's own endpoints are reached at `api/v1/<module-slug>/...`,
  * e.g. gatewayFetch("api/v1/effort-estimation/estimate", { method: "POST", body }).
  */
-export const GATEWAY_URL = (process.env.NEXT_PUBLIC_GATEWAY_URL ?? "http://localhost:8000").replace(/\/+$/, "");
+export const GATEWAY_URL = (process.env.NEXT_PUBLIC_GATEWAY_URL ?? "http://127.0.0.1:8000").replace(/\/+$/, "");
 
 /** One problem FastAPI found in a request body: where (`loc`) and what (`msg`). */
 export interface ValidationProblem {
