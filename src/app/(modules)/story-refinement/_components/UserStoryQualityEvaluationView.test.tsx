@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { UserStoryQualityEvaluationView } from "./UserStoryQualityEvaluationView";
+import { createDemoGeneration, MOCK_REQUIREMENTS } from "../_lib/mock-service";
 
 describe("UserStoryQualityEvaluationView", () => {
   it("evaluates the selected story and displays quality, INVEST, assumptions, and recommendations", () => {
@@ -20,6 +21,7 @@ describe("UserStoryQualityEvaluationView", () => {
     expect(screen.getByRole("button", { name: "Optimize User Story" })).toBeInTheDocument();
   });
 
+
   it("links Improve User Story back to the same selected requirement and candidate", () => {
     render(<UserStoryQualityEvaluationView initialRequirementId="REQ-104" initialCandidateId="REQ-104-S2" />);
 
@@ -36,5 +38,12 @@ describe("UserStoryQualityEvaluationView", () => {
 
     expect(screen.getByText("As a student, I want to book an available tutoring session, so that I can attend a lesson at a suitable time.")).toBeInTheDocument();
     expect(screen.getByText(/using only the validated requirement/)).toBeInTheDocument();
+  });
+
+  it("flags unresolved bank policy assumptions instead of showing an empty assessment", () => {
+    expect(createDemoGeneration(MOCK_REQUIREMENTS.find((item) => item.id === "REQ-BANK-001")!).candidates[0].unsupportedAssumptions).toHaveLength(1);
+    render(<UserStoryQualityEvaluationView initialRequirementId="REQ-BANK-001" initialCandidateId="REQ-BANK-001-S1" />);
+
+    expect(screen.queryByText("No unsupported assumptions detected in the current mock assessment.")).not.toBeInTheDocument();
   });
 });

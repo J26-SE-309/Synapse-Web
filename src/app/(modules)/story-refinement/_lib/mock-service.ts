@@ -395,11 +395,16 @@ function makeCandidate(requirement: ValidatedRequirement, index: number, generat
     `As ${requirement.actor}, I want to ${requirement.goal} with a clear response when the requested option is unavailable, so that ${requirement.benefit.replace(/^I /, "I ")}.`,
   ];
   const labels = ["Balanced option", "Minimal option", "Edge-case option"];
-  const unsupported: StoryCandidate["unsupportedAssumptions"][] = [
-    [],
-    [{ assumption: "Students already have an account.", why: "The requirement does not specify whether account creation or guest booking is in scope." }],
-    [{ assumption: "Unavailable selections must be handled in this story.", why: "The source requirement does not state whether conflict handling belongs in this scope." }],
-  ];
+  const unsupported = requirement.id === "REQ-BANK-001"
+    ? [{
+      assumption: "The bank's approved transfer rules are already defined.",
+      why: "The requirement requires compliance with bank rules, but it does not identify the approved policies that determine whether a transfer is allowed.",
+    }]
+    : [
+      [],
+      [{ assumption: "Students already have an account.", why: "The requirement does not specify whether account creation or guest booking is in scope." }],
+      [{ assumption: "Unavailable selections must be handled in this story.", why: "The source requirement does not state whether conflict handling belongs in this scope." }],
+    ][index];
   return {
     id: `${generationId}-candidate-${index + 1}`,
     storyId: `${requirement.id}-S${index + 1}`,
@@ -408,7 +413,7 @@ function makeCandidate(requirement: ValidatedRequirement, index: number, generat
     acceptanceCriteria: makeCriteria(requirement),
     assessment: qualityAssessments(index),
     invest: evaluateInvestLocally(storyForms[index], makeCriteria(requirement)),
-    unsupportedAssumptions: unsupported[index],
+    unsupportedAssumptions: unsupported,
   };
 }
 
